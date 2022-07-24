@@ -1,0 +1,35 @@
+{
+    "name": "Client",
+    "version": "1.0.0",
+    "main": "Client.ts",
+    "dependencies": {
+        "@sapphire/snowflake": "^3.2.2",
+        "ts-node": "^10.7.0",
+        "ws": "^8.6.0"
+    },
+    "devDependencies": {
+        "@types/node": "^17.0.31",
+        "@types/ws": "^8.5.3",
+        "@typescript-eslint/eslint-plugin": "^5.22.0",
+        "@typescript-eslint/parser": "^5.22.0",
+        "eslint": "^8.15.0",
+        "prettier": "^2.6.2",
+        "typescript": "^4.6.4"
+    },
+    "types": "./types/index.d.ts",
+    "scripts": {
+        "start": "ts-node foo",
+        "lint": "eslint src/**/*.ts types/**/*.d.ts",
+        "lint-fix": "eslint --fix src/**/*.ts types/**/*.ts",
+        "write": "prettier --write .",
+        "check": "prettier --check .",
+        "tsc": "tsc -d",
+        "pre-tsc": "tsc -d --emitDeclarationOnly",
+        "test": "npm run write && npm run lint-fix && npm run pre-tsc",
+        "build": "npm run write && npm run lint-fix && npm run tsc"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "MIT",
+    "description": ""
+}
