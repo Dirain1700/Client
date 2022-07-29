@@ -20,8 +20,15 @@ export type {
     PostLoginOptions,
     PendingMessage,
     UserSettings,
-    MessageInput, UserMessageOptions, RoomMessageOptions, MessageWaits, awaitMessageOptions,
-    RoomOptions, UhtmlOptions, BattleRoom,
+    MessageInput,
+    UserMessageOptions,
+    RoomMessageOptions,
+    MessageWaits,
+    awaitMessageOptions,
+    RoomOptions,
+    UhtmlOptions,
+    BattleRoom,
     UserOptions,
-    GroupSymbol, AuthLevel
+    GroupSymbol,
+    AuthLevel,
 } from "../types/index";
