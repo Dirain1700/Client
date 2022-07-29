@@ -1,6 +1,6 @@
 {
     "name": "@dirain/client",
-    "version": "0.0.1-dev",
+    "version": "0.0.3-dev",
     "main": "dist/src/index.js",
     "dependencies": {
         "@sapphire/snowflake": "^3.2.2",
