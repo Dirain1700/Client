@@ -1,7 +1,7 @@
 {
-    "name": "Client",
-    "version": "1.0.0",
-    "main": "Client.ts",
+    "name": "client",
+    "version": "0.0.1-dev",
+    "main": "src/index.ts",
     "dependencies": {
         "@sapphire/snowflake": "^3.2.2",
         "ts-node": "^10.7.0",
