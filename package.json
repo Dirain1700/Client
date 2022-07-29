@@ -1,5 +1,5 @@
 {
-    "name": "client",
+    "name": "@dirain/client",
     "version": "0.0.2-dev",
     "main": "src/index.js",
     "dependencies": {
