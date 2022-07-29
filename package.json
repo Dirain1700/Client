@@ -1,6 +1,6 @@
 {
     "name": "@dirain/client",
-    "version": "0.0.3-dev",
+    "version": "0.0.4-dev",
     "main": "dist/src/index.js",
     "dependencies": {
         "@sapphire/snowflake": "^3.2.2",
@@ -17,6 +17,11 @@
         "typescript": "^4.6.4"
     },
     "types": "./types/index.d.ts",
+    "files": [
+        "src",
+        "types",
+        "dist"
+    ],
     "scripts": {
         "start": "ts-node foo",
         "lint": "eslint src/**/*.ts types/**/*.d.ts",
