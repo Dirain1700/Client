@@ -1,0 +1,4 @@
+src/*
+types/*
+node_modules/*
+tsconfig.json
