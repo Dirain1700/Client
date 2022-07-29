@@ -1,4 +1,4 @@
-export {
+export type {
     ClientOptions,
     EventOptions,
     OpenListener,
@@ -14,12 +14,18 @@ export {
     PendingMessage,
 } from "./Client";
 
-export { UserSettings } from "./ClientUser";
+export type { UserSettings } from "./ClientUser";
 
-export { MessageInput, UserMessageOptions, RoomMessageOptions, MessageWaits, awaitMessageOptions } from "./Message";
+export type {
+    MessageInput,
+    UserMessageOptions,
+    RoomMessageOptions,
+    MessageWaits,
+    awaitMessageOptions,
+} from "./Message";
 
-export { RoomOptions, UhtmlOptions, BattleRoom } from "./Room";
+export type { RoomOptions, UhtmlOptions, BattleRoom } from "./Room";
 
-export { UserOptions } from "./User";
+export type { UserOptions } from "./User";
 
-export { GroupSymbol, AuthLevel } from "./UserGroups";
+export type { GroupSymbol, AuthLevel } from "./UserGroups";
