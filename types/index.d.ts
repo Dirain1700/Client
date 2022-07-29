@@ -16,7 +16,7 @@ export {
 
 export { UserSettings } from "./ClientUser";
 
-export { MessageInput, BaseMessageOptions, awaitMessageOptions } from "./Message";
+export { MessageInput, UserMessageOptions, RoomMessageOptions, MessageWaits, awaitMessageOptions } from "./Message";
 
 export { RoomOptions, UhtmlOptions, BattleRoom } from "./Room";
 
