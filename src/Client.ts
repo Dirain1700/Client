@@ -1,5 +1,5 @@
 import * as https from "https";
-import * as EventEmitter from "node:events";
+import { EventEmitter } from "node:events";
 import * as url from "url";
 import * as util from "util";
 import { WebSocket } from "ws";
