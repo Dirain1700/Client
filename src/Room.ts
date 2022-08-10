@@ -63,6 +63,10 @@ export class Room {
         this.client.sendRoom(this.id, options);
     }
 
+    deleteMessages(user: string, lines?: number) {
+        this.client.sendRoom(this.id, `/${lines ? "clearlines" : "cleartext"} ${user},${lines || ""}`);
+    }
+
     awaitMessages(options: awaitMessageOptions<Room>): Promise<Message<Room>[] | null> {
         const isValidOption = (arg: unknown): arg is awaitMessageOptions<Room> => {
             if (typeof arg !== "object") return false;

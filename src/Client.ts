@@ -77,7 +77,6 @@ export class Client extends EventEmitter {
     /* eslint-enable */
 
     constructor(options: ClientOptions) {
-        if (typeof options.pass !== "string") throw new TypeError("Password must be string, not a function.");
         super();
         this.options = {
             openListener: options.openListener,
@@ -86,7 +85,7 @@ export class Client extends EventEmitter {
             errorListener: options.errorListener,
             customListener: options.customListener,
             name: options.name,
-            pass: () => options.pass as string,
+            pass: () => (options.pass as string) ?? "",
             status: options.status,
             avatar: options.avatar,
             autoJoin: options.autoJoin,
@@ -155,6 +154,16 @@ export class Client extends EventEmitter {
             .on("error", (error) => {
                 console.error("Error: " + error.message);
             });
+    }
+
+    public logout(): void {
+        this.disconnect();
+    }
+
+    public disconnect(): void {
+        this.loggedIn = false;
+        this.closed = true;
+        this.webSocket.close();
     }
 
     private setEventListeners(): void {

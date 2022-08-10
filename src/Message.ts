@@ -32,11 +32,6 @@ export class Message<T extends Room | User> {
             })
             .toString();
         this.raw = init.raw;
-        this.id = snowflake
-            .generate({
-                timestamp: init.time,
-            })
-            .toString();
         const match = init.content.match(/^[/!][^ ]+/);
         if (match) this.command = match[0] as string;
         else this.command = false;
