@@ -476,13 +476,13 @@ export class Client extends EventEmitter {
                                 for (let p = n + 1; p < lines.length; p++) {
                                     nextLine = lines[p]!.trim();
                                     if (
-                                        nextLine.startsWith('|raw|<div class="infobox infobox-roomintro">') &&
+                                        nextLine.startsWith("|raw|<div class=\"infobox infobox-roomintro\">") &&
                                         nextLine.endsWith("</div>")
                                     ) {
                                         this.parseMessage(room, nextLine);
                                         continue;
                                     } else if (
-                                        nextLine.startsWith('|raw|<div class="broadcast-blue">') &&
+                                        nextLine.startsWith("|raw|<div class=\"broadcast-blue\">") &&
                                         nextLine.endsWith("</div>")
                                     ) {
                                         this.parseMessage(room, nextLine);
@@ -513,14 +513,14 @@ export class Client extends EventEmitter {
         switch (eventName) {
             case "raw": {
                 const message = event.join("").substring(4);
-                if (message.startsWith('<div class="infobox infobox-roomintro">')) {
+                if (message.startsWith("<div class=\"infobox infobox-roomintro\">")) {
                     const intro = message.slice(39, -6);
                     const roomintro =
-                        intro.startsWith('<div class="infobox-limited"') && intro.endsWith("</div>")
+                        intro.startsWith("<div class=\"infobox-limited\"") && intro.endsWith("</div>")
                             ? intro.slice(29, -6)
                             : intro;
                     room.intro = roomintro;
-                } else if (message.startsWith('<div class="broadcast-blue">')) {
+                } else if (message.startsWith("<div class=\"broadcast-blue\">")) {
                     const announce = message.slice(28, -6);
                     room.announce = announce;
                 }
