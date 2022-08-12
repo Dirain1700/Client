@@ -1,13 +1,9 @@
-import { Snowflake } from "@sapphire/snowflake";
-
 import type { Client } from "./Client";
 import { User } from "./User";
 import { Room } from "./Room";
 import type { MessageInput, MessageWaits, UserMessageOptions, RoomMessageOptions } from "../types/Message";
 import type { RoomOptions } from "../types/Room";
 import type { UserOptions } from "../types/User";
-
-export const snowflake = new Snowflake(1577836800000n);
 
 export class Message<T extends Room | User> {
     author: User;
@@ -26,11 +22,7 @@ export class Message<T extends Room | User> {
         this.author = init.author;
         this.content = init.content;
         this.target = init.target;
-        this.id = snowflake
-            .generate({
-                timestamp: init.time,
-            })
-            .toString();
+        this.id = (init.time ?? Date.now()).toString();
         this.raw = init.raw;
         const match = init.content.match(/^[/!][^ ]+/);
         if (match) this.command = match[0] as string;

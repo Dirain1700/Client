@@ -1,11 +1,10 @@
 {
     "compilerOptions": {
         // module settings
-        "resolveJsonModule": true,
 
         // emit settings
         "target": "esnext",
-        "rootDir": "./",
+        "rootDir": "./src",
         "declaration": true,
         "declarationMap": true,
         "sourceMap": true,

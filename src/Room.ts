@@ -1,6 +1,5 @@
 import * as Tools from "./Tools";
 import { User as UserClass } from "./User";
-import { snowflake as Snowflake } from "./Message";
 
 import type { RoomOptions, UhtmlOptions } from "../types/Room";
 import type { Client } from "./Client";
@@ -81,9 +80,7 @@ export class Room {
         const room = this;
         return new Promise((resolve, reject) => {
             const CollectorOptions: MessageWaits<Room> = {
-                id: Snowflake.generate({
-                    timestamp: Date.now(),
-                }).toString(),
+                id: Date.now().toString(),
                 roomid: this.roomid!,
                 messages: [],
                 filter: options.filter,

@@ -8,7 +8,6 @@ import type { GroupSymbol } from "./UserGroups";
 export interface MessageInput<T extends User | Room> {
     author: User;
     content: string;
-    id: string;
     target: T;
     raw: string;
     type: "Room" | "PM";

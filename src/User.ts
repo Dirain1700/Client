@@ -1,5 +1,3 @@
-import { snowflake as Snowflake } from "./Message";
-
 import type { Client } from "./Client";
 import type { UserOptions } from "../types/User";
 import type { MessageWaits, awaitMessageOptions } from "../types/Message";
@@ -58,9 +56,7 @@ export class User {
         const user = this;
         return new Promise((resolve, reject) => {
             const CollectorOptions: MessageWaits<User> = {
-                id: Snowflake.generate({
-                    timestamp: Date.now(),
-                }).toString(),
+                id: Date.now().toString(),
                 userid: user.userid,
                 messages: [],
                 filter: options.filter,

@@ -6,7 +6,7 @@ import { WebSocket } from "ws";
 import * as querystring from "querystring";
 import * as Tools from "./Tools";
 import { ClientUser } from "./ClientUser";
-import { Message, snowflake as Snowflake } from "./Message";
+import { Message } from "./Message";
 import { Room } from "./Room";
 import { User } from "./User";
 
@@ -694,9 +694,6 @@ export class Client extends EventEmitter {
                         type: "Room",
                         target: room,
                         raw: rawMessage,
-                        id: Snowflake.generate({
-                            timestamp: Date.now(),
-                        }).toString(),
                         time: Date.now(),
                         client: this,
                     } as MessageInput<Room>);
@@ -720,9 +717,6 @@ export class Client extends EventEmitter {
                         type: "Room",
                         target: room,
                         raw: rawMessage,
-                        id: Snowflake.generate({
-                            timestamp: parseInt(event[0] as string),
-                        }).toString(),
                         client: this,
                         time: parseInt(event[0] as string),
                     } as MessageInput<Room>);
@@ -750,9 +744,6 @@ export class Client extends EventEmitter {
                     type: "PM",
                     target: target,
                     raw: rawMessage,
-                    id: Snowflake.generate({
-                        timestamp: Date.now(),
-                    }).toString(),
                     client: this,
                     time: Date.now(),
                 } as MessageInput<User>);
@@ -842,7 +833,7 @@ export class Client extends EventEmitter {
 
             userid = Tools.toId(userid);
 
-            const time = Snowflake.generate({ timestamp: Date.now() }).toString();
+            const time = Date.now().toString();
             const user = {
                 id: userid,
                 time: time,
@@ -883,7 +874,7 @@ export class Client extends EventEmitter {
     fetchRoom(roomid: string): Promise<Room> {
         roomid = Tools.toRoomId(roomid);
         const client = this;
-        const time = Snowflake.generate({ timestamp: Date.now() }).toString();
+        const time = Date.now().toString();
         return new Promise((resolve, reject) => {
             const r: PromisedRoom = {
                 id: roomid,
