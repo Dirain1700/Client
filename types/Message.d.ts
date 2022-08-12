@@ -1,7 +1,7 @@
-import type { Client } from "./../src/Client";
-import type { User } from "./../src/User";
-import type { Room } from "./../src/Room";
-import type { Message } from "./../src/Message";
+import type { Client } from "../src/Client";
+import type { User } from "../src/User";
+import type { Room } from "../src/Room";
+import type { Message } from "../src/Message";
 import type { UhtmlOptions } from "./Room";
 import type { GroupSymbol } from "./UserGroups";
 

@@ -2,12 +2,12 @@ import * as Tools from "./Tools";
 import { User as UserClass } from "./User";
 import { snowflake as Snowflake } from "./Message";
 
-import type { RoomOptions, UhtmlOptions } from "./../types/Room";
+import type { RoomOptions, UhtmlOptions } from "../types/Room";
 import type { Client } from "./Client";
 import type { User } from "./User";
 import type { Message } from "./Message";
-import type { MessageWaits, awaitMessageOptions } from "./../types/Message";
-import type { GroupSymbol, AuthLevel } from "./../types/UserGroups";
+import type { MessageWaits, awaitMessageOptions } from "../types/Message";
+import type { GroupSymbol, AuthLevel } from "../types/UserGroups";
 
 export class Room {
     id: string;

@@ -1,9 +1,9 @@
 import { snowflake as Snowflake } from "./Message";
 
 import type { Client } from "./Client";
-import type { UserOptions } from "./../types/User";
-import type { MessageWaits, awaitMessageOptions } from "./../types/Message";
-import type { AuthLevel } from "./../types/UserGroups";
+import type { UserOptions } from "../types/User";
+import type { MessageWaits, awaitMessageOptions } from "../types/Message";
+import type { AuthLevel } from "../types/UserGroups";
 import type { Message } from "./Message";
 
 export class User {

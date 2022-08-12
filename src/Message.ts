@@ -3,9 +3,9 @@ import { Snowflake } from "@sapphire/snowflake";
 import type { Client } from "./Client";
 import { User } from "./User";
 import { Room } from "./Room";
-import type { MessageInput, MessageWaits, UserMessageOptions, RoomMessageOptions } from "./../types/Message";
-import type { RoomOptions } from "./../types/Room";
-import type { UserOptions } from "./../types/User";
+import type { MessageInput, MessageWaits, UserMessageOptions, RoomMessageOptions } from "../types/Message";
+import type { RoomOptions } from "../types/Room";
+import type { UserOptions } from "../types/User";
 
 export const snowflake = new Snowflake(1577836800000n);
 

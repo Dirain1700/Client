@@ -4,21 +4,31 @@
         "commonjs": true,
         "es2022": true
     },
-    "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
-    "parser": "@typescript-eslint/parser",
+    "extends": ["eslint:recommended"],
     "parserOptions": {
         "ecmaVersion": "latest"
     },
-    "plugins": ["@typescript-eslint"],
     "rules": {
         "no-unused-vars": "error",
         "semi": ["error", "always"],
         "comma-spacing": "error",
         "no-extra-semi": "error",
         "quotes": ["error", "double"],
-        "no-var": "error",
-        "@typescript-eslint/no-inferrable-types": "off",
-        "@typescript-eslint/no-this-alias": "off",
-        "@typescript-eslint/no-non-null-assertion": "off"
-    }
+        "no-var": "off"
+    },
+    "overrides": [
+        {
+            "files": ["*.ts"],
+            "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+            "parser": "@typescript-eslint/parser",
+            "plugins": ["@typescript-eslint"],
+            "rules": {
+                "no-unused-vars": "off",
+                "@typescript-eslint/no-inferrable-types": "off",
+                "@typescript-eslint/no-this-alias": "off",
+                "@typescript-eslint/no-non-null-assertion": "off",
+                "@typescript-eslint/no-unused-vars": "error"
+            }
+        }
+    ]
 }

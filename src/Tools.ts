@@ -1,4 +1,4 @@
-import type { GroupSymbol } from "./../types/UserGroups";
+import type { GroupSymbol } from "../types/UserGroups";
 
 export const toId = (id: string): string => {
     return id.toLowerCase().replace(/[^a-z0-9]/g, "");

@@ -2,3 +2,7 @@ node_modules/*
 tsconfig.json
 tsconfig.cjs.json
 tsconfig.esm.json
+.gitignore
+.prettierignore
+.eslintrc.json
+package-lock.json

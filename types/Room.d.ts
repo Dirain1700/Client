@@ -1,5 +1,5 @@
 import type { AuthLevel } from "./UserGroups";
-import type { Room } from "./../src/Room";
+import type { Room } from "../src/Room";
 import type { MessageWaits } from "./Message";
 
 export interface RoomOptions {
