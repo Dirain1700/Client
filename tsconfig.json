@@ -20,7 +20,7 @@
         "noUncheckedIndexedAccess": true,
         "strictBindCallApply": true,
         "noPropertyAccessFromIndexSignature": false,
-        "typeRoots": ["node_modules/@types", "types", "types/Class"]
+        "typeRoots": ["node_modules/@types", "types"]
     },
     "include": ["src/*.ts"]
 }
