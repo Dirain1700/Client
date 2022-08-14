@@ -29,6 +29,7 @@ const MAIN_HOST = "sim3.psim.us";
 const defaultRoom: string = "lobby";
 const Events = {
     READY: "ready",
+    QUERY_RESPONSE: "queryResponse",
     MESSAGE_CREATE: "messageCreate",
     MESSAGE_DELETE: "messageDelete",
     ROOM_USER_ADD: "roomUserAdd",
@@ -66,7 +67,7 @@ export class Client extends EventEmitter {
     formats: {
         [key: string]: string[];
     } = {};
-    /* eslint-disable no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types */
+
     private userdetailsQueue: PromisedUser[] = [];
     private roominfoQueue: PromisedRoom[] = [];
     resolvedRoom: string[] = [];
@@ -74,7 +75,6 @@ export class Client extends EventEmitter {
     private PromisedPM: PendingMessage<Message<User>>[] = [];
     private PromisedChat: PendingMessage<Message<Room>>[] = [];
     private challstr: { key: string; value: string } = { key: "", value: "" };
-    /* eslint-enable */
 
     constructor(options: ClientOptions) {
         super();
@@ -110,7 +110,7 @@ export class Client extends EventEmitter {
             },
         };
 
-        console.info("Attempting to connect to the server " + this.serverURL + "...");
+        console.info("Trying to connect to the server " + this.serverURL + "...");
         https
             .get(httpsOptions, (response: IncomingMessage) => {
                 response.setEncoding("utf8");
@@ -122,7 +122,7 @@ export class Client extends EventEmitter {
                     const configData = data.split("var config = ")[1];
                     if (configData) {
                         let config = JSON.parse(configData.split(";")[0] as string) as ServerConfig | string;
-                        // the config is potentially encoded twice by the server
+
                         if (typeof config === "string") config = JSON.parse(config) as ServerConfig;
                         if (config.host) {
                             let address: string;
@@ -143,7 +143,7 @@ export class Client extends EventEmitter {
 
                             this.webSocket = new WebSocket(address, [], wsOptions);
                             this.setEventListeners();
-                            //const client = this;
+
                             this.webSocket.on("message", (message: Buffer) => {
                                 this.onMessage(message.toString());
                             });
@@ -236,7 +236,7 @@ export class Client extends EventEmitter {
                     challstr: `${this.challstr.key}|${this.challstr.value}`,
                 });
         }
-        //eslint-disable-next-line @typescript-eslint/no-this-alias
+
         const client = this;
         const request = https.request(options, (response: IncomingMessage) => {
             response.setEncoding("utf8");
@@ -276,8 +276,7 @@ export class Client extends EventEmitter {
                 } catch (e) {}
                 console.log("Sending login trn...");
                 client.send(`|/trn ${name},0,${data}`);
-                setTimeout(client.upkeep.bind(client), 5000);
-                Tools.sleep(5 * 60 * 1000).then(() => setTimeout(client.upkeep.bind(client), 5 * 60 * 1000));
+                setInterval(client.upkeep.bind(client), 5000);
             });
         });
         request.on("error", function (err) {
@@ -290,9 +289,6 @@ export class Client extends EventEmitter {
         });
         if (postData) request.write(postData);
         request.end();
-        setTimeout(() => {
-            process.exit(0);
-        }, 15 * 1000);
     }
 
     upkeep(): void {
@@ -433,7 +429,6 @@ export class Client extends EventEmitter {
     }
 
     onMessage(message: string) {
-        /* eslint-disable @typescript-eslint/no-non-null-assertion */
         const lines: string[] = message.trim().split("\n");
         let roomid: string;
         if (lines[0]!.startsWith(">")) {
@@ -455,7 +450,6 @@ export class Client extends EventEmitter {
         for (let i = 0; i < lines.length; i++) {
             const line: string | undefined = lines[i]!.trim();
             if (!line) continue;
-            //if (line.includes("typing")) console.log(line);
 
             try {
                 this.parseMessage(room, line!);
@@ -503,7 +497,6 @@ export class Client extends EventEmitter {
                 console.error(e);
             }
         }
-        /* eslint-enable */
     }
 
     async parseMessage(room: Room, rawMessage: string): Promise<void> {
@@ -611,7 +604,6 @@ export class Client extends EventEmitter {
                     }
                     this.setMessageInterval();
                 }
-                //this.emit("html", room, event.join("|"), isIntro);
                 break;
             }
             case "queryresponse": {
@@ -622,8 +614,7 @@ export class Client extends EventEmitter {
                         try {
                             roominfo = JSON.parse(event.slice(1).join("|")) as RoomOptions;
                         } catch (e: unknown) {
-                            //eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            console.error(`Error in parsing roominfo: ${(e as any).message}`);
+                            console.error(`Error in parsing roominfo: ${(e as SyntaxError).message}`);
                         }
                         if (!roominfo || !roominfo.id) return;
                         if (roominfo.users && !this.rooms.has(roominfo.id)) {
@@ -663,8 +654,7 @@ export class Client extends EventEmitter {
                         try {
                             userdetails = JSON.parse(event.slice(1).join("|")) as UserOptions;
                         } catch (e: unknown) {
-                            //eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            console.error(`Error in parsing userdetails: ${(e as any).message}`);
+                            console.error(`Error in parsing userdetails: ${(e as SyntaxError).message}`);
                         }
                         if (!userdetails || !userdetails.userid) return;
                         if (userdetails.id === this.status.id!) {
@@ -681,7 +671,7 @@ export class Client extends EventEmitter {
                         break;
                     }
                 }
-                //this.emit("queryresponse", room, event.join("|"), isIntro);
+                this.emit(Events.QUERY_RESPONSE, room, event);
                 break;
             }
             case "chat":
@@ -819,10 +809,9 @@ export class Client extends EventEmitter {
                 this.emit(Events.ERROR, room, error);
                 break;
             }
-            /*
+
             default:
-                console.log(eventName, event);
-                */
+                this.emit(eventName, event);
         }
     }
 
