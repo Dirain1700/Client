@@ -5,7 +5,7 @@ import type { MessageInput, MessageWaits, UserMessageOptions, RoomMessageOptions
 import type { RoomOptions } from "../types/Room";
 import type { UserOptions } from "../types/User";
 
-export class Message<T extends Room | User | undefined> {
+export class Message<T extends Room | User | unknown> {
     author: User;
     content: string;
     target: T;
@@ -18,7 +18,7 @@ export class Message<T extends Room | User | undefined> {
     awaited: boolean = false;
     readonly client: Client;
 
-    constructor(init: MessageInput<T extends undefined ? never : T>) {
+    constructor(init: MessageInput<T>) {
         const initIsNotUnknown = (): this is Exclude<T, unknown> => {
             return (
                 (init as MessageInput<User>).target instanceof User ||

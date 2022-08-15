@@ -5,7 +5,7 @@ import type { Message } from "../src/Message";
 import type { UhtmlOptions } from "./Room";
 import type { GroupSymbol } from "./UserGroups";
 
-export interface MessageInput<T extends User | Room> {
+export interface MessageInput<T extends User | Room | unknown> {
     author: User;
     content: string;
     target: T;
