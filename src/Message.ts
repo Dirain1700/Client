@@ -19,13 +19,6 @@ export class Message<T extends Room | User | unknown> {
     readonly client: Client;
 
     constructor(init: MessageInput<T>) {
-        const initIsNotUnknown = (): this is Exclude<T, unknown> => {
-            return (
-                (init as MessageInput<User>).target instanceof User ||
-                (init as MessageInput<Room>).target instanceof Room
-            );
-        };
-        initIsNotUnknown();
         this.author = init.author;
         this.content = init.content;
         this.target = init.target;
@@ -102,5 +95,9 @@ export class Message<T extends Room | User | unknown> {
 
     isRoomMessage(): this is Message<Room> {
         return this.target instanceof Room;
+    }
+
+    isNotUnknown(): this is Message<Room | User> {
+        return !this.isUserMessage() || this.isRoomMessage();
     }
 }

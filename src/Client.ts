@@ -37,6 +37,10 @@ const Events = {
     USER_RENAME: "userRename",
     CLIENT_ROOM_ADD: "clienRoomAdd",
     CLIENT_ROOM_REMOVE: "clientRoomRemove",
+    TOUR_CREATE: "tourCreate",
+    TOUR_UPDATE: "tourUpdate",
+    TOUR_START: "tourStart",
+    TOUR_END: "tourEnd",
     OPEN_HTML_PAGE: "openHtmlPage",
     CLOSE_HTML_PAGE: "closeHtmlPage",
     ERROR: "chatError",
@@ -812,6 +816,63 @@ export class Client extends EventEmitter {
                 if (!room) return;
                 const error = event.join("|");
                 this.emit(Events.ERROR, room, error);
+                break;
+            }
+
+            case "tournament": {
+                const tourEventName = event[0]!;
+                const tourEvent = event.slice(1);
+                switch (tourEventName) {
+                    case "create": {
+                        const format = tourEvent[0]!,
+                            type = tourEvent[1]!,
+                            playerCap = tourEvent[2];
+
+                        this.emit(Events.TOUR_CREATE, room, format, type, playerCap);
+                        break;
+                    }
+
+                    case "update": {
+                        interface UpdateData {
+                            format: string;
+                            teambuilderFormat: string;
+                            isStarted: boolean;
+                            isJoined: boolean;
+                            generator: string & ("Elimination" | "Round Robin");
+                            playerCap: number;
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            bracketData: any;
+                            challenges: string[];
+                            challengeBys: string[];
+                            challenged: string;
+
+                            challenging: string;
+                        }
+                        const data: UpdateData = JSON.parse(tourEvent[0]!);
+
+                        this.emit(Events.TOUR_UPDATE, room, data);
+                        break;
+                    }
+
+                    case "start": {
+                        const numPlayers = tourEvent[0]!;
+                        this.emit(Events.TOUR_START, room, numPlayers);
+                        break;
+                    }
+
+                    case "end": {
+                        interface tourData {
+                            results: string;
+                            format: string;
+                            generator: string;
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            bracketData: any;
+                        }
+                        const data: tourData = JSON.parse(tourEvent[0]!);
+                        this.emit(Events.TOUR_END, room, data);
+                        break;
+                    }
+                }
                 break;
             }
 
