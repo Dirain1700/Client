@@ -469,12 +469,14 @@ export class Client extends EventEmitter {
                                 this.parseMessage(room, nextLine.trim());
                                 for (let p = n + 1; p < lines.length; p++) {
                                     nextLine = lines[p]!.trim();
+                                    // prettier-ignore
                                     if (
                                         nextLine.startsWith("|raw|<div class=\"infobox infobox-roomintro\">") &&
                                         nextLine.endsWith("</div>")
                                     ) {
                                         this.parseMessage(room, nextLine);
                                         continue;
+                                        // prettier-ignore
                                     } else if (
                                         nextLine.startsWith("|raw|<div class=\"broadcast-blue\">") &&
                                         nextLine.endsWith("</div>")
@@ -506,13 +508,16 @@ export class Client extends EventEmitter {
         switch (eventName) {
             case "raw": {
                 const message = event.join("").substring(4);
+                // prettier-ignore
                 if (message.startsWith("<div class=\"infobox infobox-roomintro\">")) {
                     const intro = message.slice(39, -6);
+                    // prettier-ignore
                     const roomintro =
                         intro.startsWith("<div class=\"infobox-limited\"") && intro.endsWith("</div>")
                             ? intro.slice(29, -6)
                             : intro;
                     room.intro = roomintro;
+                    // prettier-ignore
                 } else if (message.startsWith("<div class=\"broadcast-blue\">")) {
                     const announce = message.slice(28, -6);
                     room.announce = announce;

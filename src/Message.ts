@@ -5,7 +5,7 @@ import type { MessageInput, MessageWaits, UserMessageOptions, RoomMessageOptions
 import type { RoomOptions } from "../types/Room";
 import type { UserOptions } from "../types/User";
 
-export class Message<T extends Room | User> {
+export class Message<T extends Room | User | undefined> {
     author: User;
     content: string;
     target: T;
@@ -18,7 +18,14 @@ export class Message<T extends Room | User> {
     awaited: boolean = false;
     readonly client: Client;
 
-    constructor(init: MessageInput<T>) {
+    constructor(init: MessageInput<T extends undefined ? never : T>) {
+        const initIsNotUnknown = (): this is Exclude<T, unknown> => {
+            return (
+                (init as MessageInput<User>).target instanceof User ||
+                (init as MessageInput<Room>).target instanceof Room
+            );
+        };
+        initIsNotUnknown();
         this.author = init.author;
         this.content = init.content;
         this.target = init.target;
@@ -86,6 +93,14 @@ export class Message<T extends Room | User> {
             return this.client.sendRoom(this.target.id, option as RoomMessageOptions | string);
         else if (this.target instanceof User)
             return this.client.sendUser(this.target.id, option as UserMessageOptions | string);
-        else throw new Error("<Message>.target is neither Room or User.");
+        else throw new Error("<Message<T>>.target is neither Room or User.");
+    }
+
+    isUserMessage(): this is Message<User> {
+        return this.target instanceof User;
+    }
+
+    isRoomMessage(): this is Message<Room> {
+        return this.target instanceof Room;
     }
 }
