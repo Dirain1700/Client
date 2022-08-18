@@ -97,7 +97,7 @@ export class Message<T extends Room | User | unknown> {
         return this.target instanceof Room;
     }
 
-    isNotUnknown(): this is Message<Room | User> {
+    isNotUnknown(): this is Message<Room> | Message<User> {
         return !this.isUserMessage() || this.isRoomMessage();
     }
 }
