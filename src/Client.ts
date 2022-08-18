@@ -30,6 +30,7 @@ const defaultRoom: string = "lobby";
 const Events = {
     READY: "ready",
     QUERY_RESPONSE: "queryResponse",
+    RAW_DATA: "rawData",
     MESSAGE_CREATE: "messageCreate",
     MESSAGE_DELETE: "messageDelete",
     ROOM_USER_ADD: "roomUserAdd",
@@ -511,7 +512,7 @@ export class Client extends EventEmitter {
 
         switch (eventName) {
             case "raw": {
-                const message = event.join("").substring(4);
+                const message = event.join("|").substring(4);
                 // prettier-ignore
                 if (message.startsWith("<div class=\"infobox infobox-roomintro\">")) {
                     const intro = message.slice(39, -6);
@@ -526,6 +527,7 @@ export class Client extends EventEmitter {
                     const announce = message.slice(28, -6);
                     room.announce = announce;
                 }
+                this.emit(Events.RAW_DATA, message!)
                 break;
             }
             case "formats": {
