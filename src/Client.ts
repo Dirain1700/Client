@@ -25,6 +25,8 @@ import type { UserOptions } from "../types/User";
 import type { RoomOptions } from "../types/Room";
 import type { MessageInput, UserMessageOptions, RoomMessageOptions } from "./../types/Message";
 
+type valueOf<T> = T[keyof T];
+
 const MAIN_HOST = "sim3.psim.us";
 const defaultRoom: string = "lobby";
 const Events = {
@@ -345,17 +347,19 @@ export class Client extends EventEmitter {
     sendUser(user: string, input: string | UserMessageOptions): Promise<Message<User>> | null {
         let str: string = "";
         if (input instanceof String) str += input!;
-        const { content, html } = input as UserMessageOptions;
-        if (!html && !content) throw new TypeError("Argument must be string or have 1 or more property.");
+        else {
+            const { content, html } = input as UserMessageOptions;
+            if (!html && !content) throw new TypeError("Argument must be string or have 1 or more property.");
 
-        if (html) {
-            const { id, content, edit, box } = html;
-            if (edit && box) throw new TypeError("You cannot edit HTML box.");
-            if (!box) str += `/${edit ? "change" : "add"}uhtml ${id},`;
-            else str += "/addhtmlbox";
+            if (html) {
+                const { id, content, edit, box } = html;
+                if (edit && box) throw new TypeError("You cannot edit HTML box.");
+                if (!box) str += `/${edit ? "change" : "add"}uhtml ${id},`;
+                else str += "/addhtmlbox";
 
-            str += content;
-        } else str += content!;
+                str += content;
+            } else str += content!;
+        }
 
         user = Tools.toId(user);
 
@@ -382,22 +386,24 @@ export class Client extends EventEmitter {
     sendRoom(room: string, input: string | RoomMessageOptions): Promise<Message<Room>> | null {
         let str: string = "";
         if (input instanceof String) str += input!;
-        const { content, html } = input as RoomMessageOptions;
-        if (!html && !content) throw new TypeError("Argument must be string or have 1 or more property.");
+        else {
+            const { content, html } = input as RoomMessageOptions;
+            if (!html && !content) throw new TypeError("Argument must be string or have 1 or more property.");
 
-        if (html) {
-            const { id, content, edit, box, allowedDisplay } = html;
-            if (edit && box) throw new TypeError("You cannot edit HTML box.");
-            if (!allowedDisplay) {
-                if (!box) str += `/${edit ? "change" : "add"}uhtml ${id},`;
-                else str += "/addhtmlbox";
-            } else {
-                if (!box) str += `/${edit ? "change" : "add"}rankuhtml ${allowedDisplay},`;
-                else str += `/addrankhtmlbox ${allowedDisplay},`;
-            }
-            if (!box) str += `${id},`;
-            str += content;
-        } else str += content!;
+            if (html) {
+                const { id, content, edit, box, allowedDisplay } = html;
+                if (edit && box) throw new TypeError("You cannot edit HTML box.");
+                if (!allowedDisplay) {
+                    if (!box) str += `/${edit ? "change" : "add"}uhtml ${id},`;
+                    else str += "/addhtmlbox";
+                } else {
+                    if (!box) str += `/${edit ? "change" : "add"}rankuhtml ${allowedDisplay},`;
+                    else str += `/addrankhtmlbox ${allowedDisplay},`;
+                }
+                if (!box) str += `${id},`;
+                str += content;
+            } else str += content!;
+        }
 
         room = Tools.toRoomId(room);
         this.send(`${room}|${str}`);
@@ -968,5 +974,15 @@ export class Client extends EventEmitter {
         } else Object.assign(room!, input);
         this.rooms.set(room.roomid!, room);
         return room as Room;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    on(eventName: valueOf<typeof Events>, listener: (...args: any[]) => void): this {
+        return super.on(eventName, listener);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    emit(eventName: valueOf<typeof Events>, ...args: any[]): boolean {
+        return super.emit(eventName, ...args);
     }
 }
