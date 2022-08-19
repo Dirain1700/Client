@@ -533,7 +533,7 @@ export class Client extends EventEmitter {
                     const announce = message.slice(28, -6);
                     room.announce = announce;
                 }
-                this.emit(Events.RAW_DATA, message!)
+                this.emit(Events.RAW_DATA, message!);
                 break;
             }
             case "formats": {
