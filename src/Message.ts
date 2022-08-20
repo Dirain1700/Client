@@ -98,6 +98,6 @@ export class Message<T extends Room | User | unknown> {
     }
 
     isNotUnknown(): this is Message<Room> | Message<User> {
-        return !this.isUserMessage() || this.isRoomMessage();
+        return this.isUserMessage() || this.isRoomMessage();
     }
 }
