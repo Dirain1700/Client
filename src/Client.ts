@@ -315,7 +315,7 @@ export class Client extends EventEmitter {
     }
 
     send(content: string): void {
-        if (content.split("\n").length >= 5) return void this.sendArray(content.split("\n"));
+        if (content.match(/\n/g) && content.match(/\n/g).length >= 5) return void this.sendArray(content.split("\n"));
         else this.webSocket.send(content);
     }
 
@@ -347,7 +347,7 @@ export class Client extends EventEmitter {
 
     sendUser(user: string, input: string | UserMessageOptions): Promise<Message<User>> | null {
         let str: string = "";
-        if (input instanceof String) str += input!;
+        if (typeof input === "string") str += input!;
         else {
             const { content, html } = input as UserMessageOptions;
             if (!html && !content) throw new TypeError("Argument must be string or have 1 or more property.");
@@ -386,7 +386,7 @@ export class Client extends EventEmitter {
 
     sendRoom(room: string, input: string | RoomMessageOptions): Promise<Message<Room>> | null {
         let str: string = "";
-        if (input instanceof String) str += input!;
+        if (typeof input === "string") str += input!;
         else {
             const { content, html } = input as RoomMessageOptions;
             if (!html && !content) throw new TypeError("Argument must be string or have 1 or more property.");
