@@ -315,8 +315,8 @@ export class Client extends EventEmitter {
     }
 
     send(content: string): void {
-        if (content.match(/\\n/g) && content.match(/\\n/g).length >= 5) return void this.sendArray(content.split("\n"));
-        else this.webSocket.send(content);
+        if ((content.match(/\\n/g)?.length ?? 0) <= 5) this.webSocket.send(content);
+        else this.sendArray(content.split("\n"));
     }
 
     sendArray(contents: string[]): Promise<void> {
