@@ -47,7 +47,7 @@ const Events = {
     OPEN_HTML_PAGE: "openHtmlPage",
     CLOSE_HTML_PAGE: "closeHtmlPage",
     ERROR: "chatError",
-};
+} as const;
 
 export class Client extends EventEmitter {
     readonly options: ClientOptions;
