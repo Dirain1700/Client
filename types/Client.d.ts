@@ -19,6 +19,29 @@ export interface ClientOptions {
     autoReconnect?: number;
 }
 
+export interface ClientEvents {
+    READY: "ready";
+    QUERY_RESPONSE: "queryResponse";
+    RAW_DATA: "rawData";
+    MESSAGE_CREATE: "messageCreate";
+    MESSAGE_DELETE: "messageDelete";
+    ROOM_USER_ADD: "roomUserAdd";
+    ROOM_USER_REMOVE: "roomUserRemove";
+    USER_RENAME: "userRename";
+    CLIENT_ROOM_ADD: "clienRoomAdd";
+    CLIENT_ROOM_REMOVE: "clientRoomRemove";
+    TOUR_CREATE: "tourCreate";
+    TOUR_UPDATE: "tourUpdate";
+    TOUR_START: "tourStart";
+    TOUR_END: "tourEnd";
+    OPEN_HTML_PAGE: "openHtmlPage";
+    CLOSE_HTML_PAGE: "closeHtmlPage";
+    CHAT_ERROR: "chatError";
+    CLIENT_ERROR: "error";
+}
+
+export type EmitEvents = ClientEvents[keyof ClientEvents] | string;
+
 interface EventOptions {
     capture?: boolean;
     once?: boolean;

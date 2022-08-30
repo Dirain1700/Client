@@ -1,5 +1,6 @@
 export type {
     ClientOptions,
+    ClientEvents,
     EventOptions,
     OpenListener,
     MessageListener,

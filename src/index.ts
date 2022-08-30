@@ -7,6 +7,7 @@ export * as Tools from "./Tools";
 
 export type {
     ClientOptions,
+    ClientEvents,
     EventOptions,
     OpenListener,
     MessageListener,

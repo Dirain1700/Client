@@ -14,6 +14,8 @@ import type { ClientOptions as wsClientOptions } from "ws";
 import type { IncomingMessage } from "http";
 import type {
     ClientOptions,
+    ClientEvents,
+    EmitEvents,
     PromisedRoom,
     PromisedUser,
     StatusType,
@@ -25,11 +27,9 @@ import type { UserOptions } from "../types/User";
 import type { RoomOptions } from "../types/Room";
 import type { MessageInput, UserMessageOptions, RoomMessageOptions } from "./../types/Message";
 
-type valueOf<T> = T[keyof T];
-
 const MAIN_HOST = "sim3.psim.us";
 const defaultRoom: string = "lobby";
-const Events = {
+const Events: ClientEvents = {
     READY: "ready",
     QUERY_RESPONSE: "queryResponse",
     RAW_DATA: "rawData",
@@ -46,8 +46,9 @@ const Events = {
     TOUR_END: "tourEnd",
     OPEN_HTML_PAGE: "openHtmlPage",
     CLOSE_HTML_PAGE: "closeHtmlPage",
-    ERROR: "chatError",
-} as const;
+    CHAT_ERROR: "chatError",
+    CLIENT_ERROR: "error",
+};
 
 export class Client extends EventEmitter {
     readonly options: ClientOptions;
@@ -101,6 +102,16 @@ export class Client extends EventEmitter {
         };
         this.user = null;
     }
+
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    on(eventName: EmitEvents, listener: (...args: any[]) => void): this {
+        return super.on(eventName, listener);
+    }
+
+    emit(eventName: EmitEvents, ...args: any[]): boolean {
+        return super.emit(eventName, ...args);
+    }
+    /* eslint-enable */
 
     public connect(): void {
         const httpsOptions = {
@@ -823,7 +834,7 @@ export class Client extends EventEmitter {
                 room = await this.fetchRoom(room.id, true).catch((r) => r);
                 if (!room) return;
                 const error = event.join("|");
-                this.emit(Events.ERROR, room, error);
+                this.emit(Events.CHAT_ERROR, room, error);
                 break;
             }
 
@@ -991,15 +1002,5 @@ export class Client extends EventEmitter {
         } else Object.assign(room!, input);
         this.rooms.set(room.roomid!, room);
         return room as Room;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    on(eventName: valueOf<typeof Events>, listener: (...args: any[]) => void): this {
-        return super.on(eventName, listener);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    emit(eventName: valueOf<typeof Events>, ...args: any[]): boolean {
-        return super.emit(eventName, ...args);
     }
 }
