@@ -1,6 +1,6 @@
 {
     "name": "@dirain/client",
-    "version": "0.0.5-0",
+    "version": "0.0.5-2",
     "type": "commonjs",
     "dependencies": {
         "@types/node": "^18.7.14",
@@ -34,7 +34,7 @@
         "pre-tsc": "npm run pre:cjs && npm run pre:esm",
         "pre:cjs": "tsc -p tsconfig.cjs.json --noEmit",
         "pre:esm": "tsc -p tsconfig.esm.json --noEmit",
-        "ci": "npm run write && npm run lint-fix && npm run pre-tsc",
+        "ci": "npm run check && npm run lint && npm run pre-tsc",
         "build": "npm run write && npm run lint-fix && npm run tsc"
     },
     "keywords": [],
