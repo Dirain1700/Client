@@ -28,7 +28,6 @@ import type { RoomOptions } from "../types/Room";
 import type { MessageInput, UserMessageOptions, RoomMessageOptions } from "./../types/Message";
 
 const MAIN_HOST = "sim3.psim.us";
-const defaultRoom: string = "lobby";
 const Events: ClientEvents = {
     READY: "ready",
     QUERY_RESPONSE: "queryResponse",
@@ -70,6 +69,7 @@ export class Client extends EventEmitter {
         name: null,
         id: null,
     };
+    connected: boolean = false;
     closed: boolean = true;
     trusted: boolean = false;
     formats: {
@@ -160,6 +160,8 @@ export class Client extends EventEmitter {
                             };
 
                             this.webSocket = new WebSocket(address, [], wsOptions);
+                            this.connected = true;
+                            this.closed = false;
                             this.setEventListeners();
 
                             this.webSocket.on("message", (message: Buffer) => {
@@ -179,6 +181,7 @@ export class Client extends EventEmitter {
     }
 
     public disconnect(): void {
+        this.connected = false;
         this.loggedIn = false;
         this.closed = true;
         this.webSocket.close();
@@ -450,45 +453,52 @@ export class Client extends EventEmitter {
         });
     }
 
-    onMessage(message: string) {
+    async onMessage(message: string): Promise<void> {
         const lines: string[] = message.trim().split("\n");
         let roomid: string;
         if (lines[0]!.startsWith(">")) {
             roomid = lines[0]!.substring(1).trim();
             lines.shift();
-        } else roomid = defaultRoom;
+        } else roomid = "defaultRoom";
 
-        const room: Room =
-            (this.rooms.get(roomid) as Room | undefined) ??
-            new Room(
-                {
-                    id: roomid,
-                    roomid: roomid,
-                    type: roomid.startsWith("battle-") ? "battle" : roomid.startsWith("view-") ? "html" : "chat",
-                },
-                this
-            );
+        const room: Room | null =
+            roomid === "defaultRoom"
+                ? this.connected
+                    ? await this.fetchRoom(roomid, false).catch(() => null)
+                    : new Room(
+                          {
+                              id: roomid,
+                              roomid: roomid,
+                              type: roomid.startsWith("battle-")
+                                  ? "battle"
+                                  : roomid.startsWith("view-")
+                                  ? "html"
+                                  : "chat",
+                          },
+                          this
+                      )
+                : null;
 
         for (let i = 0; i < lines.length; i++) {
             const line: string | undefined = lines[i]!.trim();
             if (!line) continue;
 
             try {
-                this.parseMessage(room, line!);
+                this.parseMessage(line!, room);
 
                 if (line.startsWith("|init|")) {
-                    const page = room.type === "html";
-                    const chat = !page && room.type === "chat";
+                    const page = room!.type === "html";
+                    const chat = !page && room!.type === "chat";
                     for (let n = i + 1; n < lines.length; n++) {
                         let nextLine: string = lines[n]!.trim();
                         if (page) {
                             if (nextLine!.startsWith("|pagehtml|")) {
-                                this.parseMessage(room, nextLine);
+                                this.parseMessage(nextLine, room!);
                                 break;
                             }
                         } else if (chat) {
                             if (nextLine!.startsWith("|users|")) {
-                                this.parseMessage(room, nextLine.trim());
+                                this.parseMessage(nextLine.trim(), room!);
                                 for (let p = n + 1; p < lines.length; p++) {
                                     nextLine = lines[p]!.trim();
                                     // prettier-ignore
@@ -496,17 +506,17 @@ export class Client extends EventEmitter {
                                         nextLine.startsWith("|raw|<div class=\"infobox infobox-roomintro\">") &&
                                         nextLine.endsWith("</div>")
                                     ) {
-                                        this.parseMessage(room, nextLine);
+                                        this.parseMessage(nextLine!, room);
                                         continue;
                                         // prettier-ignore
                                     } else if (
                                         nextLine.startsWith("|raw|<div class=\"broadcast-blue\">") &&
                                         nextLine.endsWith("</div>")
                                     ) {
-                                        this.parseMessage(room, nextLine);
+                                        this.parseMessage(nextLine, room!);
                                         continue;
                                     } else if (nextLine.startsWith("|:|")) {
-                                        this.parseMessage(room, nextLine);
+                                        this.parseMessage(nextLine, room!);
                                         continue;
                                     }
                                 }
@@ -523,7 +533,7 @@ export class Client extends EventEmitter {
         }
     }
 
-    async parseMessage(room: Room, rawMessage: string): Promise<void> {
+    async parseMessage(rawMessage: string, room: Room | null): Promise<void> {
         const eventName: string = rawMessage.split("|")[1] as string;
         const event: string[] = rawMessage.split("|").slice(2)!;
 
@@ -538,11 +548,11 @@ export class Client extends EventEmitter {
                         intro.startsWith("<div class=\"infobox-limited\"") && intro.endsWith("</div>")
                             ? intro.slice(29, -6)
                             : intro;
-                    room.intro = roomintro;
+                    room!.intro = roomintro;
                     // prettier-ignore
                 } else if (message.startsWith("<div class=\"broadcast-blue\">")) {
                     const announce = message.slice(28, -6);
-                    room.announce = announce;
+                    room!.announce = announce;
                 }
                 this.emit(Events.RAW_DATA, message!);
                 break;
@@ -609,18 +619,18 @@ export class Client extends EventEmitter {
             }
             case "init": {
                 room = await this.fetchRoom((room as Room).id, true).catch((r) => r);
-                if (!room.roomid) break;
+                if (!room || !room.roomid) break;
                 this.fetchUser((this.user as ClientUser)?.userid ?? this.status.id!, true);
                 if (room.id.startsWith("view-")) this.emit(Events.OPEN_HTML_PAGE, room);
-                else this.emit(Events.CLIENT_ROOM_ADD, room);
+                else this.emit(Events.CLIENT_ROOM_ADD, room!);
                 break;
             }
             case "deinit": {
                 this.fetchUser((this.user as ClientUser)?.userid ?? this.status.id!, false);
                 if ((room as Room).id.startsWith("view-")) this.emit(Events.CLOSE_HTML_PAGE, room);
-                else this.emit(Events.CLIENT_ROOM_REMOVE, room);
+                else this.emit(Events.CLIENT_ROOM_REMOVE, room!);
 
-                if (this.rooms.has(room.id)) this.rooms.delete(room.id);
+                if (this.rooms.has(room!.id)) this.rooms.delete(room!.id);
                 break;
             }
             case "html": {
@@ -699,7 +709,7 @@ export class Client extends EventEmitter {
                         break;
                     }
                 }
-                this.emit(Events.QUERY_RESPONSE, room, event);
+                this.emit(Events.QUERY_RESPONSE, room!, event);
                 break;
             }
             case "chat":
@@ -710,7 +720,7 @@ export class Client extends EventEmitter {
                         author: author,
                         content: content,
                         type: "Room",
-                        target: room,
+                        target: room!,
                         raw: rawMessage,
                         time: Date.now(),
                         client: this,
@@ -733,7 +743,7 @@ export class Client extends EventEmitter {
                         author: by,
                         content: value,
                         type: "Room",
-                        target: room,
+                        target: room!,
                         raw: rawMessage,
                         client: this,
                         time: parseInt(event[0] as string),
@@ -798,9 +808,9 @@ export class Client extends EventEmitter {
             case "J":
             case "join": {
                 room = await this.fetchRoom((room as Room).id, true).catch((err) => err);
-                if (!room.roomid) break;
+                if (!room || !room.roomid) break;
                 const user = this.fetchUser(Tools.toId(event.join("|")), true);
-                this.emit(Events.ROOM_USER_ADD, room, user);
+                this.emit(Events.ROOM_USER_ADD, room!, user);
                 break;
             }
 
@@ -831,7 +841,7 @@ export class Client extends EventEmitter {
             }
 
             case "error": {
-                room = await this.fetchRoom(room.id, true).catch((r) => r);
+                room = await this.fetchRoom(room!.id, true).catch((r) => r);
                 if (!room) return;
                 const error = event.join("|");
                 this.emit(Events.CHAT_ERROR, room, error);
@@ -847,7 +857,7 @@ export class Client extends EventEmitter {
                             type = tourEvent[1]!,
                             playerCap = tourEvent[2];
 
-                        this.emit(Events.TOUR_CREATE, room, format, type, playerCap);
+                        this.emit(Events.TOUR_CREATE, room!, format, type, playerCap);
                         break;
                     }
 
@@ -869,13 +879,13 @@ export class Client extends EventEmitter {
                         }
                         const data: UpdateData = JSON.parse(tourEvent[0]!);
 
-                        this.emit(Events.TOUR_UPDATE, room, data);
+                        this.emit(Events.TOUR_UPDATE, room!, data);
                         break;
                     }
 
                     case "start": {
                         const numPlayers = tourEvent[0]!;
-                        this.emit(Events.TOUR_START, room, numPlayers);
+                        this.emit(Events.TOUR_START, room!, numPlayers);
                         break;
                     }
 
@@ -888,7 +898,7 @@ export class Client extends EventEmitter {
                             bracketData: any;
                         }
                         const data: tourData = JSON.parse(tourEvent[0]!);
-                        this.emit(Events.TOUR_END, room, data);
+                        this.emit(Events.TOUR_END, room!, data);
                         break;
                     }
                 }
