@@ -537,10 +537,10 @@ export class Client extends EventEmitter {
 
         switch (eventName) {
             case "raw": {
-                room = await this.fetchRoom(room!.id, false).catch(() => null);
+                if (room) = await this.fetchRoom(room?.id, false).catch(() => null);
                 const message = event.join("|").substring(4);
                 // prettier-ignore
-                if (message.startsWith("<div class=\"infobox infobox-roomintro\">")) {
+                if (room && message.startsWith("<div class=\"infobox infobox-roomintro\">")) {
                     const intro = message.slice(39, -6);
                     // prettier-ignore
                     const roomintro =
@@ -549,7 +549,7 @@ export class Client extends EventEmitter {
                             : intro;
                     room!.intro = roomintro;
                     // prettier-ignore
-                } else if (message.startsWith("<div class=\"broadcast-blue\">")) {
+                } else if (room && message.startsWith("<div class=\"broadcast-blue\">")) {
                     const announce = message.slice(28, -6);
                     room!.announce = announce;
                 }
@@ -787,15 +787,16 @@ export class Client extends EventEmitter {
                     else (this.user as ClientUser).trusted = false;
                 }
 
-                if (!["~", "&"].some((id) => [author.id, target.id].includes(id))) break;
-                //prettier-ignore
-                if (content.includes("<small style=\"color:gray\">(trusted)</small>"))
+                if (!["~", "&"].some((id) => [author.id, target.id].includes(id))) {
+                    //prettier-ignore
+                    if (content.includes("<small style=\"color:gray\">(trusted)</small>"))
                         this.trusted = true;
                     else this.trusted = false;
 
-                if (this.user) this.user.trusted = this.trusted;
+                    if (this.user) this.user.trusted = this.trusted;
 
-                this.setMessageInterval();
+                    this.setMessageInterval();
+                }
 
                 if (!this.user) break;
                 for (const element of this.PromisedPM) {
