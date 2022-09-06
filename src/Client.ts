@@ -713,6 +713,7 @@ export class Client extends EventEmitter {
             }
             case "chat":
             case "c": {
+                if (!event[0] || !Tools.toId(event[0])) break;
                 room = await this.fetchRoom(room!.id, false).catch(() => null);
                 const author = await this.fetchUser(event[0] as string, false),
                     content = event.slice(1).join("|") as string,
@@ -761,6 +762,7 @@ export class Client extends EventEmitter {
             }
 
             case "pm": {
+                if (!event[0] || !Tools.toId(event[0])) break;
                 const author = await this.fetchUser(event[0] as string, true),
                     sendTo = await this.fetchUser(event[1] as string, true),
                     content = event.slice(2).join("|") as string;
