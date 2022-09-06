@@ -765,7 +765,7 @@ export class Client extends EventEmitter {
                     sendTo = await this.fetchUser(event[1] as string, true),
                     content = event.slice(2).join("|") as string;
                 let target: User;
-                if (author.id !== this.status.id) target = sendTo;
+                if (author.id === this.status.id) target = sendTo;
                 else target = author;
                 const message = new Message<User>({
                     author: author,
