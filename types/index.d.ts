@@ -25,7 +25,17 @@ export type {
     awaitMessageOptions,
 } from "./Message";
 
-export type { RoomOptions, UhtmlOptions, BattleRoom } from "./Room";
+export type {
+    RoomOptions,
+    UhtmlOptions,
+    HTMLBoxOptions,
+    RankuHTMLOptions,
+    RankHTMLBoxOptions,
+    NormalHTMLOptions,
+    RankHTMLOptions,
+    HTMLOptions,
+    BattleRoom,
+} from "./Room";
 
 export type { UserOptions } from "./User";
 

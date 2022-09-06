@@ -24,7 +24,7 @@ import type {
     PendingMessage,
 } from "../types/Client";
 import type { UserOptions } from "../types/User";
-import type { RoomOptions } from "../types/Room";
+import type { RoomOptions, RankHTMLOptions, HTMLOptions } from "../types/Room";
 import type { MessageInput, UserMessageOptions, RoomMessageOptions } from "./../types/Message";
 
 const MAIN_HOST = "sim3.psim.us";
@@ -406,14 +406,18 @@ export class Client extends EventEmitter {
             if (!html && !content) throw new TypeError("Argument must be string or have 1 or more property.");
 
             if (html) {
-                const { id, content, edit, box, allowedDisplay } = html;
+                const { id, content, edit, box } = html;
                 if (edit && box) throw new TypeError("You cannot edit HTML box.");
-                if (!allowedDisplay) {
+                //eslint-disable-next-line no-inner-declarations
+                function hasAllowedDisplay(init: HTMLOptions): init is RankHTMLOptions {
+                    return Object.keys(init as RankHTMLOptions).includes("allowedDisplay");
+                }
+                if (hasAllowedDisplay(html)) {
+                    if (!box) str += `/${edit ? "change" : "add"}rankuhtml ${html.allowedDisplay},`;
+                    else str += `/addrankhtmlbox ${html.allowedDisplay},`;
+                } else {
                     if (!box) str += `/${edit ? "change" : "add"}uhtml ${id},`;
                     else str += "/addhtmlbox";
-                } else {
-                    if (!box) str += `/${edit ? "change" : "add"}rankuhtml ${allowedDisplay},`;
-                    else str += `/addrankhtmlbox ${allowedDisplay},`;
                 }
                 if (!box) str += `${id},`;
                 str += content;
@@ -463,21 +467,15 @@ export class Client extends EventEmitter {
 
         const room: Room | null =
             roomid === "defaultRoom"
-                ? this.connected
-                    ? await this.fetchRoom(roomid, false).catch(() => null)
-                    : new Room(
-                          {
-                              id: roomid,
-                              roomid: roomid,
-                              type: roomid.startsWith("battle-")
-                                  ? "battle"
-                                  : roomid.startsWith("view-")
-                                  ? "html"
-                                  : "chat",
-                          },
-                          this
-                      )
-                : null;
+                ? null
+                : new Room(
+                      {
+                          id: roomid,
+                          roomid: roomid,
+                          type: roomid.startsWith("battle-") ? "battle" : roomid.startsWith("view-") ? "html" : "chat",
+                      },
+                      this
+                  );
 
         for (let i = 0; i < lines.length; i++) {
             const line: string | undefined = lines[i]!.trim();
@@ -539,6 +537,7 @@ export class Client extends EventEmitter {
 
         switch (eventName) {
             case "raw": {
+                room = await this.fetchRoom(room!.id, false).catch(() => null);
                 const message = event.join("|").substring(4);
                 // prettier-ignore
                 if (message.startsWith("<div class=\"infobox infobox-roomintro\">")) {
@@ -554,7 +553,7 @@ export class Client extends EventEmitter {
                     const announce = message.slice(28, -6);
                     room!.announce = announce;
                 }
-                this.emit(Events.RAW_DATA, message!);
+                this.emit(Events.RAW_DATA, message!, room!);
                 break;
             }
             case "formats": {
@@ -618,7 +617,7 @@ export class Client extends EventEmitter {
                 break;
             }
             case "init": {
-                room = await this.fetchRoom((room as Room).id, true).catch((r) => r);
+                room = await this.fetchRoom((room as Room).id, true).catch(() => null);
                 if (!room || !room.roomid) break;
                 this.fetchUser((this.user as ClientUser)?.userid ?? this.status.id!, true);
                 if (room.id.startsWith("view-")) this.emit(Events.OPEN_HTML_PAGE, room);
@@ -714,6 +713,7 @@ export class Client extends EventEmitter {
             }
             case "chat":
             case "c": {
+                room = await this.fetchRoom(room!.id, false).catch(() => null);
                 const author = await this.fetchUser(event[0] as string, false),
                     content = event.slice(1).join("|") as string,
                     message = new Message<Room>({
@@ -737,6 +737,7 @@ export class Client extends EventEmitter {
             }
 
             case "c:": {
+                room = await this.fetchRoom(room!.id, true).catch(() => null);
                 const by = await this.fetchUser(event[1] as string, true),
                     value = event.slice(2).join("|"),
                     message = new Message<Room>({
@@ -849,6 +850,7 @@ export class Client extends EventEmitter {
             }
 
             case "tournament": {
+                room = await this.fetchRoom(room!.id, true).catch(() => null);
                 const tourEventName = event[0]!;
                 const tourEvent = event.slice(1);
                 switch (tourEventName) {

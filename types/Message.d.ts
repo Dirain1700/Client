@@ -2,8 +2,7 @@ import type { Client } from "../src/Client";
 import type { User } from "../src/User";
 import type { Room } from "../src/Room";
 import type { Message } from "../src/Message";
-import type { UhtmlOptions } from "./Room";
-import type { GroupSymbol } from "./UserGroups";
+import type { NormalHTMLOptions, RankHTMLOptions } from "./Room";
 
 export interface MessageInput<T extends User | Room | unknown> {
     author: User;
@@ -17,12 +16,12 @@ export interface MessageInput<T extends User | Room | unknown> {
 
 export interface UserMessageOptions {
     content?: string;
-    html?: UhtmlOptions | false;
+    html?: NormalHTMLOptions | null;
 }
 
 export interface RoomMessageOptions {
     content?: string;
-    html?: (UhtmlOptions & { allowedDisplay?: GroupSymbol }) | false;
+    html?: (NormalHTMLOptions | RankHTMLOptions) | null;
 }
 
 /* eslint-disable @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, no-unused-vars */

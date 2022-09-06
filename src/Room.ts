@@ -1,11 +1,11 @@
 import * as Tools from "./Tools";
 import { User as UserClass } from "./User";
 
-import type { RoomOptions, UhtmlOptions } from "../types/Room";
+import type { RoomOptions, NormalHTMLOptions, RankHTMLOptions } from "../types/Room";
 import type { Client } from "./Client";
 import type { User } from "./User";
 import type { Message } from "./Message";
-import type { MessageWaits, awaitMessageOptions } from "../types/Message";
+import type { MessageWaits, awaitMessageOptions, RoomMessageOptions } from "../types/Message";
 import type { GroupSymbol, AuthLevel } from "../types/UserGroups";
 
 export class Room {
@@ -54,12 +54,12 @@ export class Room {
         else this.send("/announcement end");
     }
 
-    sendHTML(options: UhtmlOptions & { allowedDisplay?: GroupSymbol }): void {
-        this.client.sendRoom(this.id, options);
+    sendHTML<T extends NormalHTMLOptions | RankHTMLOptions>(options: T): void {
+        this.client.sendRoom(this.id, { html: options } as RoomMessageOptions);
     }
 
-    changeHTML(options: UhtmlOptions & { allowedDisplay?: GroupSymbol }): void {
-        this.client.sendRoom(this.id, options);
+    changeHTML<T extends NormalHTMLOptions | RankHTMLOptions>(options: T): void {
+        this.client.sendRoom(this.id, { html: options } as RoomMessageOptions);
     }
 
     deleteMessages(user: string, lines?: number) {
