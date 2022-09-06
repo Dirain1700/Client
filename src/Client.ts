@@ -537,7 +537,7 @@ export class Client extends EventEmitter {
 
         switch (eventName) {
             case "raw": {
-                if (room) = await this.fetchRoom(room?.id, false).catch(() => null);
+                if (room) room = await this.fetchRoom(room?.id, false).catch(() => null);
                 const message = event.join("|").substring(4);
                 // prettier-ignore
                 if (room && message.startsWith("<div class=\"infobox infobox-roomintro\">")) {
