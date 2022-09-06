@@ -762,7 +762,17 @@ export class Client extends EventEmitter {
             }
 
             case "pm": {
-                if (!event[0] || !Tools.toId(event[0])) break;
+                if (!event[0] || !event[1] || !Tools.toId(event[0]) || !Tools.toId(event[1])) {
+                    const content = event.slice(2).join("|") as string;
+                    if (content.startsWith("/raw ") && this.status.loggedIn) {
+                        //prettier-ignore
+                        if (content.includes("<small style=\"color:gray\">(trusted)</small>")) this.trusted = true;
+                        else this.trusted = false;
+                        if (this.user) this.user.trusted = this.trusted;
+
+                        this.setMessageInterval();
+                    }
+                }
                 const author = await this.fetchUser(event[0] as string, true),
                     sendTo = await this.fetchUser(event[1] as string, true),
                     content = event.slice(2).join("|") as string;
@@ -779,24 +789,6 @@ export class Client extends EventEmitter {
                     time: Date.now(),
                 } as MessageInput<User>);
                 this.emit(Events.MESSAGE_CREATE, message);
-                if (!["~", "&"].includes(message.target.userid)) break;
-                if (content.startsWith("/raw ") && this.status.loggedIn) {
-                    //prettier-ignore
-                    if (content.includes("<small style=\"color:gray\">(trusted)</small>"))
-                        (this.user as ClientUser).trusted = true;
-                    else (this.user as ClientUser).trusted = false;
-                }
-
-                if (!["~", "&"].some((id) => [author.id, target.id].includes(id))) {
-                    //prettier-ignore
-                    if (content.includes("<small style=\"color:gray\">(trusted)</small>"))
-                        this.trusted = true;
-                    else this.trusted = false;
-
-                    if (this.user) this.user.trusted = this.trusted;
-
-                    this.setMessageInterval();
-                }
 
                 if (!this.user) break;
                 for (const element of this.PromisedPM) {
