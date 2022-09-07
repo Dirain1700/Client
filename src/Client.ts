@@ -764,7 +764,7 @@ export class Client extends EventEmitter {
             case "pm": {
                 if (!event[0] || !event[1] || !Tools.toId(event[0]) || !Tools.toId(event[1])) {
                     const content = event.slice(2).join("|") as string;
-                    if (content.startsWith("/raw ") && this.status.loggedIn) {
+                    if (!this.trusted && content.startsWith("/raw ") && this.status.loggedIn) {
                         //prettier-ignore
                         if (content.includes("<small style=\"color:gray\">(trusted)</small>")) this.trusted = true;
                         else this.trusted = false;
@@ -772,6 +772,7 @@ export class Client extends EventEmitter {
 
                         this.setMessageInterval();
                     }
+                    break;
                 }
                 const author = await this.fetchUser(event[0] as string, true),
                     sendTo = await this.fetchUser(event[1] as string, true),
