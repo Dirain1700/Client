@@ -507,6 +507,8 @@ export class Client extends EventEmitter {
                       this
                   );
 
+        if (room && room.type === "chat") this.fetchRoom(room.id, false).catch(() => this.rooms.get(room.id));
+
         for (let i = 0; i < lines.length; i++) {
             const line: string | undefined = lines[i]!.trim();
             if (!line) continue;
@@ -567,7 +569,7 @@ export class Client extends EventEmitter {
 
         switch (eventName) {
             case "raw": {
-                if (room) room = await this.fetchRoom(room?.id, false).catch(() => null);
+                //this.fetchRoom(room?.id, false).catch(() => this.rooms.get(room?.id));
                 const message = event.join("|").substring(4);
                 // prettier-ignore
                 if (room && message.startsWith("<div class=\"infobox infobox-roomintro\">")) {
@@ -647,7 +649,7 @@ export class Client extends EventEmitter {
                 break;
             }
             case "init": {
-                room = await this.fetchRoom((room as Room).id, true).catch(() => null);
+                //this.fetchRoom((room as Room).id, false).catch(() => this.rooms.get(room!.id));
                 if (!room || !room.roomid) break;
                 this.fetchUser((this.user as ClientUser)?.userid ?? this.status.id!, true);
                 if (room.id.startsWith("view-")) this.emit(Events.OPEN_HTML_PAGE, room);
@@ -743,15 +745,15 @@ export class Client extends EventEmitter {
             }
             case "chat":
             case "c": {
+                if (!room) return;
                 if (!event[0] || !Tools.toId(event[0])) break;
-                room = await this.fetchRoom(room!.id, false).catch(() => null);
                 const author = await this.fetchUser(event[0] as string, false),
                     content = event.slice(1).join("|") as string,
                     message = new Message<Room>({
                         author: author,
                         content: content,
                         type: "Room",
-                        target: room!,
+                        target: room,
                         raw: rawMessage,
                         time: Date.now(),
                         client: this,
@@ -768,7 +770,7 @@ export class Client extends EventEmitter {
             }
 
             case "c:": {
-                room = await this.fetchRoom(room!.id, true).catch(() => null);
+                //this.fetchRoom(room!.id, false).catch(() => this.rooms.get(room!.id));
                 const by = await this.fetchUser(event[1] as string, true),
                     value = event.slice(2).join("|"),
                     message = new Message<Room>({
@@ -834,7 +836,7 @@ export class Client extends EventEmitter {
             case "j":
             case "J":
             case "join": {
-                room = await this.fetchRoom((room as Room).id, true).catch((err) => err);
+                //this.fetchRoom((room as Room)?.id, false).catch(() => this.rooms.get((room as Room)?.id));
                 if (!room || !room.roomid) break;
                 const user = await this.fetchUser(Tools.toId(event.join("|")), true);
                 this.emit(Events.ROOM_USER_ADD, room!, user);
@@ -844,16 +846,16 @@ export class Client extends EventEmitter {
             case "l":
             case "L":
             case "leave": {
-                room = await this.fetchRoom((room as Room).id, true);
+                //this.fetchRoom((room as Room).id, false).catch(() => this.rooms.get((room as Room)?.id));
                 const user = await this.fetchUser(Tools.toId(event.join("|")), true);
-                this.emit(Events.ROOM_USER_REMOVE, room, user);
+                this.emit(Events.ROOM_USER_REMOVE, room as Room, user);
                 break;
             }
 
             case "n":
             case "N":
             case "name": {
-                this.fetchRoom((room as Room).id, true);
+                //this.fetchRoom((room as Room).id, false).catch(() => this.rooms.get((room as Room)?.id));
                 const Old = Tools.toId(event[1] as string),
                     New = await this.fetchUser(Tools.toId(event[0] as string), true);
                 if (!this.users.has(Old)) break;
@@ -867,15 +869,14 @@ export class Client extends EventEmitter {
             }
 
             case "error": {
-                if (!room) return;
-                room = await this.fetchRoom(room!.id, false).catch(() => null);
+                //this.fetchRoom((room as Room)?.id, false).catch(() => this.rooms.get((room as Room)?.id) ?? null);
                 const error = event.join("|");
-                this.emit(Events.CHAT_ERROR, error, room);
+                this.emit(Events.CHAT_ERROR, error, room ?? null);
                 break;
             }
 
             case "tournament": {
-                room = await this.fetchRoom(room!.id, true).catch(() => null);
+                //this.fetchRoom(room!.id, false).catch(() => this.rooms.get(room!.id));
                 const tourEventName = event[0]!;
                 const tourEvent = event.slice(1);
                 switch (tourEventName) {
