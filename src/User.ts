@@ -18,7 +18,7 @@ export class User {
     friended: boolean;
     online: boolean;
     waits: MessageWaits<User>[];
-    alts: User[];
+    alts: string[];
     readonly client: Client;
 
     constructor(init: UserOptions, client: Client) {

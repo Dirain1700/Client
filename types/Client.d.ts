@@ -1,6 +1,8 @@
 import type { Room } from "../src/Room";
 import type { User } from "../src/User";
+import type { Message } from "../src/Message";
 import type { RoomOptions } from "./Room";
+import type { TourUpdateData, PostTourData } from "./Tour";
 
 /* eslint-disable no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types */
 
@@ -19,7 +21,7 @@ export interface ClientOptions {
     autoReconnect?: number;
 }
 
-export interface ClientEvents {
+export interface ClientEventNames {
     READY: "ready";
     QUERY_RESPONSE: "queryResponse";
     RAW_DATA: "rawData";
@@ -28,7 +30,7 @@ export interface ClientEvents {
     ROOM_USER_ADD: "roomUserAdd";
     ROOM_USER_REMOVE: "roomUserRemove";
     USER_RENAME: "userRename";
-    CLIENT_ROOM_ADD: "clienRoomAdd";
+    CLIENT_ROOM_ADD: "clientRoomAdd";
     CLIENT_ROOM_REMOVE: "clientRoomRemove";
     TOUR_CREATE: "tourCreate";
     TOUR_UPDATE: "tourUpdate";
@@ -40,7 +42,26 @@ export interface ClientEvents {
     CLIENT_ERROR: "error";
 }
 
-export type EmitEvents = ClientEvents[keyof ClientEvents] | string;
+export interface ClientEvents {
+    ready: [client?: undefined];
+    queryResponse: [event: string];
+    rawData: [message: string, room: Room];
+    messageCreate: [message: Message<User | Room>];
+    messageDelete: [message: Message<User | Room>];
+    roomUserAdd: [room: Room, user: User];
+    roomUserRemove: [room: Room, user: User];
+    userRename: [newUser: User, oldUser: User];
+    clientRoomAdd: [room: Room];
+    clientRoomRemove: [room: Room];
+    tourCreate: [room: Room, format: string, type: string, playerCap: number | null];
+    tourUpdate: [room: Room, data: TourUpdateData];
+    tourStart: [room: Room, players: number];
+    tourEnd: [room: Room, data: PostTourData];
+    openHtmlPage: [room: Room];
+    closeHtmlPage: [room: Room];
+    chatError: [error: string, room: Room | null];
+    error: [error: string];
+}
 
 interface EventOptions {
     capture?: boolean;

@@ -8,6 +8,7 @@ export * as Tools from "./Tools";
 export type {
     ClientOptions,
     ClientEvents,
+    ClientEventNames,
     EventOptions,
     OpenListener,
     MessageListener,
@@ -35,6 +36,8 @@ export type {
     RankHTMLOptions,
     HTMLOptions,
     BattleRoom,
+    TourUpdateData,
+    PostTourData,
     UserOptions,
     GroupSymbol,
     AuthLevel,

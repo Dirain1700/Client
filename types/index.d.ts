@@ -1,6 +1,7 @@
 export type {
     ClientOptions,
     ClientEvents,
+    ClientEventNames,
     EventOptions,
     OpenListener,
     MessageListener,
@@ -38,5 +39,7 @@ export type {
 } from "./Room";
 
 export type { UserOptions } from "./User";
+
+export type { TourUpdateData, PostTourData } from "./Tour";
 
 export type { GroupSymbol, AuthLevel } from "./UserGroups";

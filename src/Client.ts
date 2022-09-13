@@ -15,7 +15,7 @@ import type { IncomingMessage } from "http";
 import type {
     ClientOptions,
     ClientEvents,
-    EmitEvents,
+    ClientEventNames,
     PromisedRoom,
     PromisedUser,
     StatusType,
@@ -25,10 +25,11 @@ import type {
 } from "../types/Client";
 import type { UserOptions } from "../types/User";
 import type { RoomOptions, RankHTMLOptions, HTMLOptions } from "../types/Room";
+import type { TourUpdateData, PostTourData } from "../types/Tour";
 import type { MessageInput, UserMessageOptions, RoomMessageOptions } from "./../types/Message";
 
 const MAIN_HOST = "sim3.psim.us";
-const Events: ClientEvents = {
+const Events: ClientEventNames = {
     READY: "ready",
     QUERY_RESPONSE: "queryResponse",
     RAW_DATA: "rawData",
@@ -37,7 +38,7 @@ const Events: ClientEvents = {
     ROOM_USER_ADD: "roomUserAdd",
     ROOM_USER_REMOVE: "roomUserRemove",
     USER_RENAME: "userRename",
-    CLIENT_ROOM_ADD: "clienRoomAdd",
+    CLIENT_ROOM_ADD: "clientRoomAdd",
     CLIENT_ROOM_REMOVE: "clientRoomRemove",
     TOUR_CREATE: "tourCreate",
     TOUR_UPDATE: "tourUpdate",
@@ -104,12 +105,41 @@ export class Client extends EventEmitter {
     }
 
     /* eslint-disable @typescript-eslint/no-explicit-any */
-    on(eventName: EmitEvents, listener: (...args: any[]) => void): this {
-        return super.on(eventName, listener);
+    public on<T extends keyof ClientEvents>(event: T, listener: (...args: ClientEvents[T]) => void): this;
+    public on<U extends string | symbol>(
+        event: Exclude<U, keyof ClientEvents>,
+        listener: (...args: any[]) => void
+    ): this;
+    public on<K extends keyof ClientEvents | string | symbol>(
+        event: K extends keyof ClientEvents ? K : Exclude<K, keyof ClientEvents>,
+        listener: (...args: any[]) => void
+    ): this {
+        return super.on(event, listener);
     }
 
-    emit(eventName: EmitEvents, ...args: any[]): boolean {
-        return super.emit(eventName, ...args);
+    public once<T extends keyof ClientEvents>(event: T, listener: (...args: ClientEvents[T]) => void): this;
+    public once<U extends string | symbol>(
+        event: Exclude<U, keyof ClientEvents>,
+        listener: (...args: any[]) => void
+    ): this;
+    public once<K extends keyof ClientEvents | string | symbol>(
+        event: K extends keyof ClientEvents ? K : Exclude<K, keyof ClientEvents>,
+        listener: (...args: any[]) => void
+    ): this {
+        return super.once(event, listener);
+    }
+
+    public emit<T extends keyof ClientEvents>(event: T, ...args: ClientEvents[T]): boolean;
+    // prettier-ignore
+    public emit<U extends string | symbol>(
+        event: Exclude<U, keyof ClientEvents>,
+        ...args: unknown[]
+    ): boolean;
+    public emit<K extends keyof ClientEvents | string | symbol>(
+        event: K extends keyof ClientEvents ? K : Exclude<K, keyof ClientEvents>,
+        ...args: K extends keyof ClientEvents ? ClientEvents[K] : unknown[]
+    ): boolean {
+        return super.emit(event, ...args);
     }
     /* eslint-enable */
 
@@ -621,12 +651,12 @@ export class Client extends EventEmitter {
                 if (!room || !room.roomid) break;
                 this.fetchUser((this.user as ClientUser)?.userid ?? this.status.id!, true);
                 if (room.id.startsWith("view-")) this.emit(Events.OPEN_HTML_PAGE, room);
-                else this.emit(Events.CLIENT_ROOM_ADD, room!);
+                else this.emit(Events.CLIENT_ROOM_ADD, room);
                 break;
             }
             case "deinit": {
                 this.fetchUser((this.user as ClientUser)?.userid ?? this.status.id!, false);
-                if ((room as Room).id.startsWith("view-")) this.emit(Events.CLOSE_HTML_PAGE, room);
+                if ((room as Room).id.startsWith("view-")) this.emit(Events.CLOSE_HTML_PAGE, room!);
                 else this.emit(Events.CLIENT_ROOM_REMOVE, room!);
 
                 if (this.rooms.has(room!.id)) this.rooms.delete(room!.id);
@@ -708,7 +738,7 @@ export class Client extends EventEmitter {
                         break;
                     }
                 }
-                this.emit(Events.QUERY_RESPONSE, room!, event);
+                this.emit(Events.QUERY_RESPONSE, event.slice(1).join("|"));
                 break;
             }
             case "chat":
@@ -806,7 +836,7 @@ export class Client extends EventEmitter {
             case "join": {
                 room = await this.fetchRoom((room as Room).id, true).catch((err) => err);
                 if (!room || !room.roomid) break;
-                const user = this.fetchUser(Tools.toId(event.join("|")), true);
+                const user = await this.fetchUser(Tools.toId(event.join("|")), true);
                 this.emit(Events.ROOM_USER_ADD, room!, user);
                 break;
             }
@@ -815,7 +845,7 @@ export class Client extends EventEmitter {
             case "L":
             case "leave": {
                 room = await this.fetchRoom((room as Room).id, true);
-                const user = this.fetchUser(Tools.toId(event.join("|")), true);
+                const user = await this.fetchUser(Tools.toId(event.join("|")), true);
                 this.emit(Events.ROOM_USER_REMOVE, room, user);
                 break;
             }
@@ -828,20 +858,19 @@ export class Client extends EventEmitter {
                     New = await this.fetchUser(Tools.toId(event[0] as string), true);
                 if (!this.users.has(Old)) break;
 
-                const user = this.users.get(Old)!;
-                user.alts.push(New);
-                New.alts.push(user);
+                const user = this.users.get(Old) ?? new User({ id: Old, userid: Old, name: Old, rooms: false }, this);
+                New.alts.push(Old);
                 this.users.set(New.userid, New);
-                this.emit(Events.USER_RENAME, New, user ?? Old);
+                this.emit(Events.USER_RENAME, New, user);
                 this.users.delete(Old);
                 break;
             }
 
             case "error": {
-                room = await this.fetchRoom(room!.id, true).catch((r) => r);
                 if (!room) return;
+                room = await this.fetchRoom(room!.id, false).catch(() => null);
                 const error = event.join("|");
-                this.emit(Events.CHAT_ERROR, room, error);
+                this.emit(Events.CHAT_ERROR, error, room);
                 break;
             }
 
@@ -852,50 +881,29 @@ export class Client extends EventEmitter {
                 switch (tourEventName) {
                     case "create": {
                         const format = tourEvent[0]!,
-                            type = tourEvent[1]!,
-                            playerCap = tourEvent[2];
+                            type = tourEvent[1]!;
+                        let playerCap: number | null = parseInt(tourEvent[2] ?? "");
+                        if (Number.isNaN(playerCap)) playerCap = null;
 
                         this.emit(Events.TOUR_CREATE, room!, format, type, playerCap);
                         break;
                     }
 
                     case "update": {
-                        interface UpdateData {
-                            format: string;
-                            teambuilderFormat: string;
-                            isStarted: boolean;
-                            isJoined: boolean;
-                            generator: string & ("Elimination" | "Round Robin");
-                            playerCap: number;
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            bracketData: any;
-                            challenges: string[];
-                            challengeBys: string[];
-                            challenged: string;
-
-                            challenging: string;
-                        }
-                        const data: UpdateData = JSON.parse(tourEvent[0]!);
+                        const data: TourUpdateData = JSON.parse(tourEvent[0]!);
 
                         this.emit(Events.TOUR_UPDATE, room!, data);
                         break;
                     }
 
                     case "start": {
-                        const numPlayers = tourEvent[0]!;
+                        const numPlayers = parseInt(tourEvent[0]!);
                         this.emit(Events.TOUR_START, room!, numPlayers);
                         break;
                     }
 
                     case "end": {
-                        interface tourData {
-                            results: string;
-                            format: string;
-                            generator: string;
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            bracketData: any;
-                        }
-                        const data: tourData = JSON.parse(tourEvent[0]!);
+                        const data: PostTourData = JSON.parse(tourEvent[0]!);
                         this.emit(Events.TOUR_END, room!, data);
                         break;
                     }
@@ -904,7 +912,7 @@ export class Client extends EventEmitter {
             }
 
             default:
-                this.emit(eventName, event);
+                this.emit(eventName as string, event);
         }
     }
 
@@ -948,7 +956,7 @@ export class Client extends EventEmitter {
         const Users: User[] = [...this.users.values()];
 
         for (const user of Users) {
-            if (user.alts.some((u: User) => u.id === id)) return user;
+            if (user.alts.some((u) => u === id)) return user;
         }
 
         return null;
