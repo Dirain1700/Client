@@ -487,6 +487,15 @@ export class Client extends EventEmitter {
         });
     }
 
+    leaveRoom(roomid: string): Room {
+        roomid = Tools.toRoomId(roomid);
+        if (!roomid) throw new Error("Room ID should not be empty.");
+        const room = this.rooms.get(roomid);
+        if (!room) throw new Error(`Room "${roomid}" does not exist.`);
+        this.send("|/l " + roomid);
+        return room;
+    }
+
     async onMessage(message: string): Promise<void> {
         const lines: string[] = message.trim().split("\n");
         let roomid: string;
@@ -974,7 +983,7 @@ export class Client extends EventEmitter {
         return user as User;
     }
 
-    fetchRoom(roomid: string, force: boolean): Promise<Room> {
+    fetchRoom(roomid: string, force?: boolean): Promise<Room> {
         roomid = Tools.toRoomId(roomid);
         const client = this;
         const time = Date.now().toString();

@@ -25,10 +25,11 @@ export interface UhtmlOptions {
     edit?: boolean;
     box?: undefined;
 }
+
 export interface HTMLBoxOptions {
     id?: undefined;
     content: string;
-    edit?: boolean;
+    edit?: undefined;
     box: true;
 }
 
