@@ -37,10 +37,18 @@
         "build": "npm run write && npm run lint-fix && npm run tsc"
     },
     "keywords": [],
-    "author": "",
+    "author": "Dirain1700",
     "license": "MIT",
-    "description": "",
+    "description": "A client for connect to Pokémon Showdown",
     "engines": {
         "node": ">= 16.9.0"
-    }
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Dirain1700/Client.git"
+    },
+    "bugs": {
+        "url": "https://github.com/Dirain1700/Client/issues"
+    },
+    "homepage": "https://github.com/Dirain1700/Client#readme"
 }
