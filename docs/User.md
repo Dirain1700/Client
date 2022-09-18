@@ -224,7 +224,7 @@ Send a HTML.
 changeHTML(input: NormalHTMLOptions): void;
 ```
 
-Send a HTML. same us `sendHTML()`.
+Send a HTML. same as `sendHTML()`.
 
 ### awaitMessages()
 

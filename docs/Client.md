@@ -396,7 +396,7 @@ once<T extends keyof ClientEvents>(event: T, listener: (...args: ClientEvents[T]
 once<U extends string | symbol>(event: Exclude<U, keyof ClientEvents>, listener: (...args: any[]) => void): this;
 ```
 
-Same us `Client.on()`, but it was deleted when the event emitted.
+Same as `Client.on()`, but it was deleted when the event emitted.
 
 ### emit()
 
@@ -572,7 +572,7 @@ You don't have to customize this function.
 parseMessage(rawMessage: string, room: Room | null): Promise<void>;
 ```
 
-Same us onMessage().
+Same as onMessage().
 
 ### fetchUser()
 

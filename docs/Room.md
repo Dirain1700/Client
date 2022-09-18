@@ -237,7 +237,7 @@ Send a HTML.
 changeHTML(options: HTMLOptions): void;
 ```
 
-Same us `sendHTML()`.
+Same as `sendHTML()`.
 
 ### deleteMessages()
 
