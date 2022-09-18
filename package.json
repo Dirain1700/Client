@@ -3,7 +3,7 @@
     "version": "0.0.8-0",
     "type": "commonjs",
     "dependencies": {
-        "@types/node": "^18.7.17",
+        "@types/node": "^18.7.18",
         "@types/ws": "^8.5.3",
         "ws": "^8.8.1"
     },
