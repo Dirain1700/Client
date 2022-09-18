@@ -20,8 +20,6 @@ export class Room {
         [key: string]: string[];
     } | null;
     users: string[] | null;
-    intro?: string | null = undefined;
-    announce: string | null = null;
     waits: MessageWaits<Room>[];
     readonly isExist: boolean;
     readonly client: Client;

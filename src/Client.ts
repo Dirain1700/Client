@@ -568,23 +568,7 @@ export class Client extends EventEmitter {
 
         switch (eventName) {
             case "raw": {
-                //this.fetchRoom(room?.id, false).catch(() => this.rooms.get(room?.id));
-                const message = event.join("|").substring(4);
-                // prettier-ignore
-                if (room && message.startsWith("<div class=\"infobox infobox-roomintro\">")) {
-                    const intro = message.slice(39, -6);
-                    // prettier-ignore
-                    const roomintro =
-                        intro.startsWith("<div class=\"infobox-limited\"") && intro.endsWith("</div>")
-                            ? intro.slice(29, -6)
-                            : intro;
-                    room!.intro = roomintro;
-                    // prettier-ignore
-                } else if (room && message.startsWith("<div class=\"broadcast-blue\">")) {
-                    const announce = message.slice(28, -6);
-                    room!.announce = announce;
-                }
-                this.emit(Events.RAW_DATA, message!, room!);
+                this.emit(Events.RAW_DATA, event.join("|")!, room!);
                 break;
             }
             case "formats": {
@@ -648,7 +632,6 @@ export class Client extends EventEmitter {
                 break;
             }
             case "init": {
-                //this.fetchRoom((room as Room).id, false).catch(() => this.rooms.get(room!.id));
                 if (!room || !room.roomid) break;
                 this.fetchUser((this.user as ClientUser)?.userid ?? this.status.id!, true);
                 if (room.id.startsWith("view-")) this.emit(Events.OPEN_HTML_PAGE, room);
@@ -769,7 +752,6 @@ export class Client extends EventEmitter {
             }
 
             case "c:": {
-                //this.fetchRoom(room!.id, false).catch(() => this.rooms.get(room!.id));
                 const by = await this.fetchUser(event[1] as string, true),
                     value = event.slice(2).join("|"),
                     message = new Message<Room>({
@@ -835,7 +817,6 @@ export class Client extends EventEmitter {
             case "j":
             case "J":
             case "join": {
-                //this.fetchRoom((room as Room)?.id, false).catch(() => this.rooms.get((room as Room)?.id));
                 if (!room || !room.roomid) break;
                 const user = await this.fetchUser(Tools.toId(event.join("|")), true);
                 this.emit(Events.ROOM_USER_ADD, room!, user);
@@ -845,7 +826,6 @@ export class Client extends EventEmitter {
             case "l":
             case "L":
             case "leave": {
-                //this.fetchRoom((room as Room).id, false).catch(() => this.rooms.get((room as Room)?.id));
                 const user = await this.fetchUser(Tools.toId(event.join("|")), true);
                 this.emit(Events.ROOM_USER_REMOVE, room as Room, user);
                 break;
@@ -854,7 +834,6 @@ export class Client extends EventEmitter {
             case "n":
             case "N":
             case "name": {
-                //this.fetchRoom((room as Room).id, false).catch(() => this.rooms.get((room as Room)?.id));
                 const Old = Tools.toId(event[1] as string),
                     New = await this.fetchUser(Tools.toId(event[0] as string), true);
                 if (!this.users.has(Old)) break;
@@ -868,14 +847,12 @@ export class Client extends EventEmitter {
             }
 
             case "error": {
-                //this.fetchRoom((room as Room)?.id, false).catch(() => this.rooms.get((room as Room)?.id) ?? null);
                 const error = event.join("|");
                 this.emit(Events.CHAT_ERROR, error, room ?? null);
                 break;
             }
 
             case "tournament": {
-                //this.fetchRoom(room!.id, false).catch(() => this.rooms.get(room!.id));
                 const tourEventName = event[0]!;
                 const tourEvent = event.slice(1);
                 switch (tourEventName) {
