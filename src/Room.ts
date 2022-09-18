@@ -1,7 +1,7 @@
 import * as Tools from "./Tools";
 import { User as UserClass } from "./User";
 
-import type { RoomOptions, NormalHTMLOptions, RankHTMLOptions } from "../types/Room";
+import type { RoomOptions, HTMLOptions } from "../types/Room";
 import type { Client } from "./Client";
 import type { User } from "./User";
 import type { Message } from "./Message";
@@ -41,7 +41,7 @@ export class Room {
         this.client = client;
     }
 
-    send(content: string): Promise<Message<Room>> | null {
+    send(content: RoomMessageOptions): Promise<Message<Room>> | void {
         return this.client.sendRoom(this.roomid!, content);
     }
 
@@ -54,16 +54,33 @@ export class Room {
         else this.send("/announcement end");
     }
 
-    sendHTML<T extends NormalHTMLOptions | RankHTMLOptions>(options: T): void {
-        this.client.sendRoom(this.id, { html: options } as RoomMessageOptions);
+    sendHTML(options: HTMLOptions): void {
+        this.client.sendRoom(this.id, options);
     }
 
-    changeHTML<T extends NormalHTMLOptions | RankHTMLOptions>(options: T): void {
-        this.client.sendRoom(this.id, { html: options } as RoomMessageOptions);
+    changeHTML(options: HTMLOptions): void {
+        this.client.sendRoom(this.id, options);
     }
 
-    deleteMessages(user: string, lines?: number) {
-        this.client.sendRoom(this.id, `/${lines ? "clearlines" : "cleartext"} ${user},${lines || ""}`);
+    deleteMessages(user: string, clear: boolean, reason: string, lines?: number): Promise<Message<Room> | null> {
+        const r = this;
+        return new Promise((resolve, reject) => {
+            r.client.sendRoom(
+                r.id,
+                `/${clear ? "clear" : "hide"}${lines ? "lines" : "text"} ${user},${lines ? lines + "," : ""}${
+                    reason || ""
+                }`
+            );
+            r.awaitMessages({
+                filter: (m: Message<Room>) =>
+                    m.author.id === "&" &&
+                    m.content.endsWith(`by ${r.client.status.name}.${reason ? " (" + reason + ")" : ""}`),
+                max: 1,
+                time: 10 * 1000,
+            })
+                .then((m: Message<Room>[] | null) => resolve((m as Message<Room>[])[0]!))
+                .catch(reject);
+        });
     }
 
     awaitMessages(options: awaitMessageOptions<Room>): Promise<Message<Room>[] | null> {

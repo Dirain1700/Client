@@ -81,11 +81,9 @@ export class Message<T extends Room | User | unknown> {
         }
     }
 
-    reply(option: string | UserMessageOptions | RoomMessageOptions): Promise<Message<Room | User>> | null {
-        if (this.target instanceof Room)
-            return this.client.sendRoom(this.target.id, option as RoomMessageOptions | string);
-        else if (this.target instanceof User)
-            return this.client.sendUser(this.target.id, option as UserMessageOptions | string);
+    reply(option: UserMessageOptions | RoomMessageOptions): Promise<Message<Room | User>> | void {
+        if (this.isRoomMessage()) return this.client.sendRoom(this.target.id, option as RoomMessageOptions);
+        else if (this.isUserMessage()) return this.client.sendUser(this.target.id, option as UserMessageOptions);
         else throw new Error("<Message<T>>.target is neither Room or User.");
     }
 

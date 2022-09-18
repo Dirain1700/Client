@@ -20,17 +20,17 @@ export interface RoomOptions {
 }
 
 export interface UhtmlOptions {
-    id: string;
-    content: string;
-    edit?: boolean;
-    box?: undefined;
+    id: string; // HTML ID (required when edit HTML)
+    content: string; // HTML body
+    edit?: boolean; // edit or not
+    box?: undefined; // PLEASE IGNORE THIS. box must be undefined.
 }
 
 export interface HTMLBoxOptions {
-    id?: undefined;
-    content: string;
-    edit?: undefined;
-    box: true;
+    id?: undefined; // PLEASE IGNORE THIS. id must be undefined.
+    content: string; // HTML body
+    edit?: undefined; // PLEASE IGNORE THIS. edit must be undefined.
+    box: true; // must be true
 }
 
 export interface RankuHTMLOptions extends UhtmlOptions {

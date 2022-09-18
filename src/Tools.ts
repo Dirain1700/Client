@@ -32,5 +32,5 @@ export const sortByRank = (arr: GroupSymbol[]): GroupSymbol[] => {
     return arr;
 };
 
-export const isHigherRank = (standard: GroupSymbol, comparePosition: GroupSymbol): boolean =>
+export const isHigherRank = (comparePosition: GroupSymbol, standard: GroupSymbol): boolean =>
     [comparePosition, standard].toString() === sortByRank([comparePosition, standard]).toString();

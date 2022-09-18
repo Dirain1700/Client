@@ -59,7 +59,7 @@ export declare class Client extends EventEmitter {
 }
 ```
 
-## properties
+## Properties
 
 ### options
 
@@ -208,7 +208,7 @@ export interface StatusType {
 connected: boolean;
 ```
 
-A variable to store whether is this client connected with server.
+Whether this client is connected with server or not.
 
 ### closed
 
@@ -482,7 +482,7 @@ Client.send("|/commandName");
 sendArray(contents: string[]): Promise<void>;
 ```
 
-Send an array without "your typing too fast" error. Example:
+Send an array with avoiding "your typing too fast" error. Example:
 
 ```ts
 Client.sendArray(["roomName|this", "roomName|is", "roomName|a", "roomName|special", "roomName|array"]);
@@ -497,10 +497,7 @@ sendUser(user: string, input: string | UserMessageOptions): Promise<Message<User
 Send a message to User. input is this object:
 
 ```ts
-export interface UserMessageOptions {
-    content?: string;
-    html?: NormalHTMLOptions | null;
-}
+export type UserMessageOptions = string | NormalHTMLOptions;
 
 export type NormalHTMLOptions = UhtmlOptions | HTMLBoxOptions;
 
@@ -528,10 +525,9 @@ sendRoom(room: string, input: string | RoomMessageOptions): Promise<Message<Room
 Send a message to Room. input is this object:
 
 ```ts
-export interface RoomMessageOptions {
-    content?: string;
-    html?: (NormalHTMLOptions | RankHTMLOptions) | null;
-}
+export type RoomMessageOptions = string | HTMLOptions;
+
+export type HTMLOptions = NormalHTMLOptions | RankHTMLOptions;
 
 export type RankHTMLOptions = RankuHTMLOptions | RankHTMLBoxOptions;
 

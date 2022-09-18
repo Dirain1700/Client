@@ -389,27 +389,22 @@ export class Client extends EventEmitter {
         });
     }
 
-    sendUser(user: string, input: string | UserMessageOptions): Promise<Message<User>> | null {
+    sendUser(user: string, input: string | UserMessageOptions): Promise<Message<User>> | void {
         let str: string = "";
         if (typeof input === "string") str += input!;
         else {
-            const { content, html } = input as UserMessageOptions;
-            if (!html && !content) throw new TypeError("Argument must be string or have 1 or more property.");
+            const { id, content, edit, box } = input;
+            if (edit && box) throw new TypeError("You cannot edit HTML box.");
+            if (!box) str += `/${edit ? "change" : "add"}uhtml ${id},`;
+            else str += "/addhtmlbox";
 
-            if (html) {
-                const { id, content, edit, box } = html;
-                if (edit && box) throw new TypeError("You cannot edit HTML box.");
-                if (!box) str += `/${edit ? "change" : "add"}uhtml ${id},`;
-                else str += "/addhtmlbox";
-
-                str += content;
-            } else str += content!;
+            str += content;
         }
 
         user = Tools.toId(user);
 
         this.send(`|/pm ${user},${str}`);
-        if (str.startsWith("/")) return null;
+        if (str.startsWith("/")) return;
         const client = this;
         return new Promise((resolve, reject) => {
             const PM: PendingMessage<Message<User>> = {
@@ -428,35 +423,30 @@ export class Client extends EventEmitter {
         });
     }
 
-    sendRoom(room: string, input: string | RoomMessageOptions): Promise<Message<Room>> | null {
+    sendRoom(room: string, input: RoomMessageOptions): Promise<Message<Room>> | void {
         let str: string = "";
         if (typeof input === "string") str += input!;
         else {
-            const { content, html } = input as RoomMessageOptions;
-            if (!html && !content) throw new TypeError("Argument must be string or have 1 or more property.");
-
-            if (html) {
-                const { id, content, edit, box } = html;
-                if (edit && box) throw new TypeError("You cannot edit HTML box.");
-                //eslint-disable-next-line no-inner-declarations
-                function hasAllowedDisplay(init: HTMLOptions): init is RankHTMLOptions {
-                    return Object.keys(init as RankHTMLOptions).includes("allowedDisplay");
-                }
-                if (hasAllowedDisplay(html)) {
-                    if (!box) str += `/${edit ? "change" : "add"}rankuhtml ${html.allowedDisplay},`;
-                    else str += `/addrankhtmlbox ${html.allowedDisplay},`;
-                } else {
-                    if (!box) str += `/${edit ? "change" : "add"}uhtml ${id},`;
-                    else str += "/addhtmlbox";
-                }
-                if (!box) str += `${id},`;
-                str += content;
-            } else str += content!;
+            const { id, content, edit, box } = input;
+            if (edit && box) throw new TypeError("You cannot edit HTML box.");
+            //eslint-disable-next-line no-inner-declarations
+            function hasAllowedDisplay(init: HTMLOptions): init is RankHTMLOptions {
+                return Object.keys(init as RankHTMLOptions).includes("allowedDisplay");
+            }
+            if (hasAllowedDisplay(input)) {
+                if (!box) str += `/${edit ? "change" : "add"}rankuhtml ${input.allowedDisplay},`;
+                else str += `/addrankhtmlbox ${input.allowedDisplay},`;
+            } else {
+                if (!box) str += `/${edit ? "change" : "add"}uhtml ${id},`;
+                else str += "/addhtmlbox";
+            }
+            if (!box) str += `${id},`;
+            str += content;
         }
 
         room = Tools.toRoomId(room);
         this.send(`${room}|${str}`);
-        if (str.startsWith("/")) return null;
+        if (str.startsWith("/")) return;
         const client = this;
         return new Promise((resolve, reject) => {
             const chat: PendingMessage<Message<Room>> = {

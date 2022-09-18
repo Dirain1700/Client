@@ -11,5 +11,17 @@ export interface UserSettings {
     hideLogins?: boolean;
     hiddenNextBattle?: boolean;
     inviteOnlyNextBattle?: boolean;
-    language?: string;
+    language?:
+        | "german"
+        | "english"
+        | "spanish"
+        | "french"
+        | "italian"
+        | "dutch"
+        | "portuguese"
+        | "turkish"
+        | "hindi"
+        | "japanese"
+        | "simplifiedchinese"
+        | "traditionalchinese";
 }

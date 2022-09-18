@@ -2,7 +2,7 @@ import type { Client } from "../src/Client";
 import type { User } from "../src/User";
 import type { Room } from "../src/Room";
 import type { Message } from "../src/Message";
-import type { NormalHTMLOptions, RankHTMLOptions } from "./Room";
+import type { NormalHTMLOptions, HTMLOptions } from "./Room";
 
 export interface MessageInput<T extends User | Room | unknown> {
     author: User;
@@ -14,15 +14,9 @@ export interface MessageInput<T extends User | Room | unknown> {
     client: Client;
 }
 
-export interface UserMessageOptions {
-    content?: string;
-    html?: NormalHTMLOptions | null;
-}
+export type UserMessageOptions = string | NormalHTMLOptions;
 
-export interface RoomMessageOptions {
-    content?: string;
-    html?: (NormalHTMLOptions | RankHTMLOptions) | null;
-}
+export type RoomMessageOptions = string | HTMLOptions;
 
 /* eslint-disable @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, no-unused-vars */
 export interface MessageWaits<T extends User | Room> {
