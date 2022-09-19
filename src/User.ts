@@ -119,6 +119,6 @@ export class User {
     }
 
     get isGlobalStaff(): boolean {
-        return this.isGlobalDriver || this.isGlobalMod || this.isGlobalBot || this.isGlobalAdmin;
+        return this.isGlobalDriver || this.isGlobalMod || this.isGlobalAdmin;
     }
 }
