@@ -174,7 +174,7 @@ export class Room {
 
     isRoomStaff(userid: string): boolean {
         if (this.auth && this.isExist)
-            return this.isDriver(userid) || this.isMod(userid) || this.isBot(userid) || this.isOwner(userid);
+            return this.isDriver(userid) || this.isMod(userid) || this.isOwner(userid);
         return false;
     }
 
