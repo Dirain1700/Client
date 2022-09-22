@@ -58,7 +58,7 @@ export class User {
                 !!(arg as awaitMessageOptions<User>)?.filter &&
                 !!(arg as awaitMessageOptions<User>)?.max &&
                 !!(arg as awaitMessageOptions<User>)?.time &&
-                Object.keys(arg as awaitMessageOptions<User>).length === 4
+                Object.keys(arg as awaitMessageOptions<User>).length === 3
             );
         };
         if (!isValidOption(options)) throw new Error("Input must be valid object with these keys: filter, max, time");
