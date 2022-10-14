@@ -43,7 +43,7 @@ require("fs").writeFile("./formats.json", JSON.stringify(formats, null, 4), (err
 ```js
 const { Client } = require("@dirain/client");
 
-const client = new Client({ name: "myAccountName", pass: "thisIsMyRealPassWord", autoJoin: "botdevelopment" });
+const client = new Client({ name: "myAccountName", pass: "thisIsMyRealPassWord", autoJoin: ["botdevelopment"] });
 
 client.connect();
 
@@ -60,7 +60,7 @@ With TypeScript:
 import { Client } from "@dirain/client";
 import type { ClientUser, Message } from "@dirain/client";
 
-const client = new Client({ name: "thisIsMyAc", "thisIsNotMyPassLOL", autoJoin: "bodevelopment" });
+const client = new Client({ name: "thisIsMyAc", "thisIsNotMyPassLOL", autoJoin: ["botdevelopment"] });
 
 client.connect();
 

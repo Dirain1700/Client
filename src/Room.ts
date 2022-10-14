@@ -88,7 +88,7 @@ export class Room {
                 !!(arg as awaitMessageOptions<Room>)?.filter &&
                 !!(arg as awaitMessageOptions<Room>)?.max &&
                 !!(arg as awaitMessageOptions<Room>)?.time &&
-                Object.keys(arg as awaitMessageOptions<Room>).length === 4
+                Object.keys(arg as awaitMessageOptions<Room>).length === 3
             );
         };
         if (!isValidOption(options)) throw new Error("Input must be valid object with these keys: filter, max, time");
