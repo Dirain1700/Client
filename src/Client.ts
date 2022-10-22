@@ -566,9 +566,14 @@ export class Client extends EventEmitter {
         const eventName: string = rawMessage.split("|")[1] as string;
         const event: string[] = rawMessage.split("|").slice(2)!;
 
+        function isRoomNotNull(r: Room | null): r is Room {
+            return r instanceof Room;
+        }
+
         switch (eventName) {
             case "raw": {
-                this.emit(Events.RAW_DATA, event.join("|")!, room!);
+                if (!isRoomNotNull(room)) return;
+                this.emit(Events.RAW_DATA, event.join("|")!, room);
                 break;
             }
             case "formats": {
@@ -632,18 +637,23 @@ export class Client extends EventEmitter {
                 break;
             }
             case "init": {
-                if (!room || !room.roomid) break;
+                if (!isRoomNotNull(room)) return;
                 this.fetchUser((this.user as ClientUser)?.userid ?? this.status.id!, true);
                 if (room.id.startsWith("view-")) this.emit(Events.OPEN_HTML_PAGE, room);
-                else this.emit(Events.CLIENT_ROOM_ADD, room);
+                else {
+                    room = await this.fetchRoom(room.id).catch(() => room);
+                    if (!isRoomNotNull(room)) return;
+                    this.emit(Events.CLIENT_ROOM_ADD, room);
+                }
                 break;
             }
             case "deinit": {
+                if (!isRoomNotNull(room)) return;
                 this.fetchUser((this.user as ClientUser)?.userid ?? this.status.id!, false);
-                if ((room as Room).id.startsWith("view-")) this.emit(Events.CLOSE_HTML_PAGE, room!);
+                if (room.id.startsWith("view-")) this.emit(Events.CLOSE_HTML_PAGE, room!);
                 else this.emit(Events.CLIENT_ROOM_REMOVE, room!);
 
-                if (this.rooms.has(room!.id)) this.rooms.delete(room!.id);
+                if (this.rooms.has(room.id)) this.rooms.delete(room!.id);
                 break;
             }
             case "html": {
@@ -727,8 +737,9 @@ export class Client extends EventEmitter {
             }
             case "chat":
             case "c": {
-                if (!room) return;
+                if (!isRoomNotNull(room)) return;
                 if (!event[0] || !Tools.toId(event[0])) break;
+                room = this.rooms.get(room.id) ?? room;
                 const author = await this.fetchUser(event[0] as string, false),
                     content = event.slice(1).join("|") as string,
                     message = new Message<Room>({
@@ -752,22 +763,25 @@ export class Client extends EventEmitter {
             }
 
             case "c:": {
+                if (!isRoomNotNull(room)) return;
+                room = await this.fetchRoom(room.id, false).catch(() => room);
                 const by = await this.fetchUser(event[1] as string, true),
                     value = event.slice(2).join("|"),
                     message = new Message<Room>({
                         author: by,
                         content: value,
                         type: "Room",
-                        target: room!,
+                        target: room,
                         raw: rawMessage,
                         client: this,
                         time: parseInt(event[0] as string),
                     } as MessageInput<Room>);
-                if (!this.user) return;
-                for (const element of this.PromisedChat) {
-                    if (element.id === message.target.roomid && this.user!.userid === message.author.userid) {
-                        element.resolve(message);
-                        break;
+                if (this.user) {
+                    for (const element of this.PromisedChat) {
+                        if (element.id === message.target.roomid && this.user!.userid === message.author.userid) {
+                            element.resolve(message);
+                            break;
+                        }
                     }
                 }
                 this.emit(Events.MESSAGE_CREATE, message);
@@ -817,17 +831,20 @@ export class Client extends EventEmitter {
             case "j":
             case "J":
             case "join": {
-                if (!room || !room.roomid) break;
+                if (!isRoomNotNull(room)) return;
                 const user = await this.fetchUser(Tools.toId(event.join("|")), true);
-                this.emit(Events.ROOM_USER_ADD, room!, user);
+                room = await this.fetchRoom(room.id, false).catch(() => room as Room);
+                this.emit(Events.ROOM_USER_ADD, room, user);
                 break;
             }
 
             case "l":
             case "L":
             case "leave": {
+                if (!isRoomNotNull(room)) return;
                 const user = await this.fetchUser(Tools.toId(event.join("|")), true);
-                this.emit(Events.ROOM_USER_REMOVE, room as Room, user);
+                room = await this.fetchRoom(room.id, false).catch(() => room as Room);
+                this.emit(Events.ROOM_USER_REMOVE, room, user);
                 break;
             }
 
@@ -853,8 +870,10 @@ export class Client extends EventEmitter {
             }
 
             case "tournament": {
+                if (!isRoomNotNull(room)) return;
                 const tourEventName = event[0]!;
                 const tourEvent = event.slice(1);
+                room = await this.fetchRoom(room.id, false).catch(() => room as Room);
                 switch (tourEventName) {
                     case "create": {
                         const format = tourEvent[0]!,
@@ -862,26 +881,26 @@ export class Client extends EventEmitter {
                         let playerCap: number | null = parseInt(tourEvent[2] ?? "");
                         if (Number.isNaN(playerCap)) playerCap = null;
 
-                        this.emit(Events.TOUR_CREATE, room!, format, type, playerCap);
+                        this.emit(Events.TOUR_CREATE, room, format, type, playerCap);
                         break;
                     }
 
                     case "update": {
                         const data: TourUpdateData = JSON.parse(tourEvent[0]!);
 
-                        this.emit(Events.TOUR_UPDATE, room!, data);
+                        this.emit(Events.TOUR_UPDATE, room, data);
                         break;
                     }
 
                     case "start": {
                         const numPlayers = parseInt(tourEvent[0]!);
-                        this.emit(Events.TOUR_START, room!, numPlayers);
+                        this.emit(Events.TOUR_START, room, numPlayers);
                         break;
                     }
 
                     case "end": {
                         const data: PostTourData = JSON.parse(tourEvent[0]!);
-                        this.emit(Events.TOUR_END, room!, data);
+                        this.emit(Events.TOUR_END, room, data);
                         break;
                     }
                 }
