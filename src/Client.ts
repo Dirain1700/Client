@@ -61,8 +61,14 @@ export class Client extends EventEmitter {
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     webSocket: any;
     events = Events;
-    rooms: Map<string, Room> = new Map();
-    users: Map<string, User> = new Map();
+    rooms: {
+        cache: Map<string, Room>;
+        fetch: (roomid: string, force?: boolean) => Promise<Room>;
+    };
+    users: {
+        cache: Map<string, User>;
+        fetch: (userid: string, useCache?: boolean) => Promise<User>;
+    };
     user: ClientUser | null;
     status: StatusType = {
         connected: false,
@@ -102,6 +108,8 @@ export class Client extends EventEmitter {
             autoReconnect: options.autoReconnect || 30 * 1000,
         };
         this.user = null;
+        this.rooms = { cache: new Map(), fetch: this.fetchRoom };
+        this.users = { cache: new Map(), fetch: this.fetchUser };
     }
 
     /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -480,7 +488,7 @@ export class Client extends EventEmitter {
     leaveRoom(roomid: string): Room {
         roomid = Tools.toRoomId(roomid);
         if (!roomid) throw new Error("Room ID should not be empty.");
-        const room = this.rooms.get(roomid);
+        const room = this.rooms.cache.get(roomid);
         if (!room) throw new Error(`Room "${roomid}" does not exist.`);
         this.send("|/l " + roomid);
         return room;
@@ -506,7 +514,7 @@ export class Client extends EventEmitter {
                       this
                   );
 
-        if (room && room.type === "chat") this.fetchRoom(room.id, false).catch(() => this.rooms.get(room.id));
+        if (room && room.type === "chat") this.fetchRoom(room.id, false).catch(() => this.rooms.cache.get(room.id));
 
         for (let i = 0; i < lines.length; i++) {
             const line: string | undefined = lines[i]!.trim();
@@ -617,7 +625,7 @@ export class Client extends EventEmitter {
                     value: event[1]!,
                 };
                 for (const id of ["~", "&"]) {
-                    this.users.set(
+                    this.users.cache.set(
                         id,
                         new User(
                             {
@@ -653,7 +661,7 @@ export class Client extends EventEmitter {
                 if (room.id.startsWith("view-")) this.emit(Events.CLOSE_HTML_PAGE, room!);
                 else this.emit(Events.CLIENT_ROOM_REMOVE, room!);
 
-                if (this.rooms.has(room.id)) this.rooms.delete(room!.id);
+                if (this.rooms.cache.has(room.id)) this.rooms.cache.delete(room!.id);
                 break;
             }
             case "html": {
@@ -678,11 +686,11 @@ export class Client extends EventEmitter {
                             console.error(`Error in parsing roominfo: ${(e as SyntaxError).message}`);
                         }
                         if (!roominfo || !roominfo.id) return;
-                        if (roominfo.users && !this.rooms.has(roominfo.id)) {
+                        if (roominfo.users && !this.rooms.cache.has(roominfo.id)) {
                             await Tools.sleep(this.messageInterval);
                             await this.sendArray(
                                 roominfo.users
-                                    .filter((u) => !client.users.has(Tools.toId(u)))
+                                    .filter((u) => !client.users.cache.has(Tools.toId(u)))
                                     .map((u) => `|/cmd userdetails ${Tools.toId(u)}`)
                             );
                         }
@@ -739,7 +747,7 @@ export class Client extends EventEmitter {
             case "c": {
                 if (!isRoomNotNull(room)) return;
                 if (!event[0] || !Tools.toId(event[0])) break;
-                room = this.rooms.get(room.id) ?? room;
+                room = this.rooms.cache.get(room.id) ?? room;
                 const author = await this.fetchUser(event[0] as string, false),
                     content = event.slice(1).join("|") as string,
                     message = new Message<Room>({
@@ -853,13 +861,14 @@ export class Client extends EventEmitter {
             case "name": {
                 const Old = Tools.toId(event[1] as string),
                     New = await this.fetchUser(Tools.toId(event[0] as string), true);
-                if (!this.users.has(Old)) break;
+                if (!this.users.cache.has(Old)) break;
 
-                const user = this.users.get(Old) ?? new User({ id: Old, userid: Old, name: Old, rooms: false }, this);
+                const user =
+                    this.users.cache.get(Old) ?? new User({ id: Old, userid: Old, name: Old, rooms: false }, this);
                 New.alts.push(Old);
-                this.users.set(New.userid, New);
+                this.users.cache.set(New.userid, New);
                 this.emit(Events.USER_RENAME, New, user);
-                this.users.delete(Old);
+                this.users.cache.delete(Old);
                 break;
             }
 
@@ -941,15 +950,15 @@ export class Client extends EventEmitter {
                     } as UserOptions,
                     client
                 );
-                setTimeout(user.resolve.bind(client), 20 * 1000, client.users.get(userid) ?? u);
+                setTimeout(user.resolve.bind(client), 20 * 1000, client.users.cache.get(userid) ?? u);
             }
         });
     }
 
     getUser(id: string): User | null {
         id = Tools.toId(id);
-        if (this.users.has(id)) return this.users.get(id) as User;
-        const Users: User[] = [...this.users.values()];
+        if (this.users.cache.has(id)) return this.users.cache.get(id) as User;
+        const Users: User[] = [...this.users.cache.values()];
 
         for (const user of Users) {
             if (user.alts.some((u) => u === id)) return user;
@@ -960,12 +969,12 @@ export class Client extends EventEmitter {
 
     addUser(input: UserOptions): User | null {
         if (typeof input !== "object" || !input.userid) return null;
-        let user: User | undefined = this.users.get(input.userid);
+        let user: User | undefined = this.users.cache.get(input.userid);
         if (!user) {
             user = new User(input, this);
             this.fetchUser(input.userid, false);
         } else Object.assign(user, input);
-        this.users.set(user!.userid, user!);
+        this.users.cache.set(user!.userid, user!);
         return user as User;
     }
 
@@ -982,7 +991,7 @@ export class Client extends EventEmitter {
                     client.roominfoQueue = client.roominfoQueue.filter((e) => e.id !== roomid && e.time !== time);
                 },
                 reject: (room: RoomOptions) => {
-                    if (!force && client.rooms.has(roomid)) resolve(client.rooms.get(roomid)!);
+                    if (!force && client.rooms.cache.has(roomid)) resolve(client.rooms.cache.get(roomid)!);
                     else if (force && room.error === "timeout")
                         setTimeout(client.fetchRoom.bind(client), 5 * 1000, roomid, true);
                     else reject(room);
@@ -1000,19 +1009,19 @@ export class Client extends EventEmitter {
 
     getRoom(roomid: string): Room | null {
         roomid = Tools.toRoomId(roomid);
-        return this.rooms.get(roomid) ?? null;
+        return this.rooms.cache.get(roomid) ?? null;
     }
 
     addRoom(input: RoomOptions): Room {
         if (typeof input !== "object" || !input.roomid)
             throw new Error("Input must be an object with roomid for new Room");
 
-        let room: Room | undefined = this.rooms.get(input.roomid);
+        let room: Room | undefined = this.rooms.cache.get(input.roomid);
         if (!room) {
             room = new Room(input, this) as Room;
             this.fetchRoom(input.roomid, true);
         } else Object.assign(room!, input);
-        this.rooms.set(room.roomid!, room);
+        this.rooms.cache.set(room.roomid!, room);
         return room as Room;
     }
 }
