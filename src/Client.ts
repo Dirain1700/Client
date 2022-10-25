@@ -57,7 +57,7 @@ export class Client extends EventEmitter {
     readonly serverId: string = "showdown";
     readonly actionURL = new url.URL("https://play.pokemonshowdown.com/~~showdown/action.php");
     readonly mainServer: string = "play.pokemonshowdown.com";
-    messageInterval: 100 | 300 = 300;
+    messageInterval: 25 | 100 | 600 = 600;
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     webSocket: any;
     events = Events;
@@ -258,8 +258,17 @@ export class Client extends EventEmitter {
     }
 
     private setMessageInterval(): void {
-        if (this.user) this.messageInterval = this.user.trusted ? 100 : 300;
-        this.messageInterval = this.trusted ? 100 : 300;
+        const isPublicBot: boolean = (() => {
+            if (!this.user) return false;
+            return this.user.group === "*" ? true : Object.keys(this.user.rooms ?? {}).some((r) => r.startsWith("*"));
+        })();
+
+        const isTrusted: boolean = (() => {
+            if (!this.user) return false;
+            return this.user?.trusted ?? false;
+        })();
+
+        this.messageInterval = isPublicBot ? 25 : isTrusted ? 100 : 600;
     }
 
     private login(name: string, password?: string): void {
@@ -376,18 +385,18 @@ export class Client extends EventEmitter {
 
         return new Promise((resolve) => {
             const length = contents.length;
-            if (length >= 5) {
+            if (length >= 3) {
                 contents.forEach((e) => client.send(e));
                 resolve();
             }
 
             let i = 0;
-            contents.slice(i, i + 5)?.forEach((e) => client.send(e));
+            contents.slice(i, i + 3)?.forEach((e) => client.send(e));
             i += 5;
             let loop: NodeJS.Timer;
             //eslint-disable-next-line prefer-const
             loop = setInterval(() => {
-                contents.slice(i, i + 5).forEach((e) => client.send(e));
+                contents.slice(i, i + 3).forEach((e) => client.send(e));
                 if (i >= length) {
                     clearInterval(loop);
                     resolve();
@@ -729,6 +738,7 @@ export class Client extends EventEmitter {
                         if (userdetails.id === this.status.id!) {
                             if (this.user) Object.assign(this.user, userdetails);
                             else this.user = new ClientUser(userdetails, client);
+                            this.setMessageInterval();
                         }
                         const user = this.addUser(userdetails);
                         if (!user) return;
