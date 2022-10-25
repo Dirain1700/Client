@@ -965,7 +965,7 @@ export class Client extends EventEmitter {
         });
     }
 
-    getUser(id: string): User | null {
+    getUser(id: string): User | undefined {
         id = Tools.toId(id);
         if (this.users.cache.has(id)) return this.users.cache.get(id) as User;
         const Users: User[] = [...this.users.cache.values()];
@@ -974,7 +974,7 @@ export class Client extends EventEmitter {
             if (user.alts.some((u) => u === id)) return user;
         }
 
-        return null;
+        return;
     }
 
     addUser(input: UserOptions): User | null {
@@ -1017,9 +1017,9 @@ export class Client extends EventEmitter {
         });
     }
 
-    getRoom(roomid: string): Room | null {
+    getRoom(roomid: string): Room | undefined {
         roomid = Tools.toRoomId(roomid);
-        return this.rooms.cache.get(roomid) ?? null;
+        return this.rooms.cache.get(roomid);
     }
 
     addRoom(input: RoomOptions): Room {
