@@ -960,7 +960,7 @@ export class Client extends EventEmitter {
                     } as UserOptions,
                     client
                 );
-                setTimeout(user.resolve.bind(client), 20 * 1000, client.users.cache.get(userid) ?? u);
+                setTimeout(user.resolve.bind(client), 8 * 1000, client.users.cache.get(userid) ?? u);
             }
         });
     }
@@ -1010,7 +1010,7 @@ export class Client extends EventEmitter {
             };
             client.roominfoQueue.push(r);
             client.send(`|/cmd roominfo ${roomid}`);
-            setTimeout(r.reject, 20 * 1000, {
+            setTimeout(r.reject, 5 * 1000, {
                 id: roomid,
                 error: "timeout",
             } as RoomOptions);
