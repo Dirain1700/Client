@@ -401,7 +401,7 @@ export class Client extends EventEmitter {
                     clearInterval(loop);
                     resolve();
                 }
-                i += 5;
+                i += 3;
             }, client.messageInterval);
         });
     }
