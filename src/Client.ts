@@ -580,7 +580,7 @@ export class Client extends EventEmitter {
         }
     }
 
-    async parseMessage(rawMessage: string, room: Room | null): Promise<void> {
+    async parseMessage(rawMessage: string, room: Room | null | undefined): Promise<void> {
         const eventName: string = rawMessage.split("|")[1] as string;
         const event: string[] = rawMessage.split("|").slice(2)!;
 
@@ -783,7 +783,8 @@ export class Client extends EventEmitter {
 
             case "c:": {
                 if (!isRoomNotEmp(room)) return;
-                room = await this.fetchRoom(room.id, false).catch(() => room);
+                room = this.rooms.cache.get(room.id);
+                if (!isRoomNotEmp(room)) return;
                 const by = await this.fetchUser(event[1] as string, true),
                     value = event.slice(2).join("|"),
                     message = new Message<Room>({
@@ -891,9 +892,10 @@ export class Client extends EventEmitter {
 
             case "tournament": {
                 if (!isRoomNotEmp(room)) return;
+                room = this.rooms.cache.get(room.id);
+                if (!isRoomNotEmp(room)) return;
                 const tourEventName = event[0]!;
                 const tourEvent = event.slice(1);
-                room = await this.fetchRoom(room.id, false).catch(() => room as Room);
                 switch (tourEventName) {
                     case "create": {
                         const format = tourEvent[0]!,
