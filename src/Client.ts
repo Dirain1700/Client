@@ -57,7 +57,8 @@ export class Client extends EventEmitter {
     readonly serverId: string = "showdown";
     readonly actionURL = new url.URL("https://play.pokemonshowdown.com/~~showdown/action.php");
     readonly mainServer: string = "play.pokemonshowdown.com";
-    messageInterval: 25 | 100 | 600 = 600;
+    messageThrottle = 3;
+    throttleInterval: 25 | 100 | 600 = 600;
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     webSocket: any;
     events = Events;
@@ -268,7 +269,7 @@ export class Client extends EventEmitter {
             return this.user?.trusted ?? false;
         })();
 
-        this.messageInterval = isPublicBot ? 25 : isTrusted ? 100 : 600;
+        this.throttleInterval = isPublicBot ? 25 : isTrusted ? 100 : 600;
     }
 
     private login(name: string, password?: string): void {
@@ -385,24 +386,24 @@ export class Client extends EventEmitter {
 
         return new Promise((resolve) => {
             const length = contents.length;
-            if (length >= 3) {
+            if (length >= client.messageThrottle) {
                 contents.forEach((e) => client.send(e));
                 resolve();
             }
 
             let i = 0;
-            contents.slice(i, i + 3)?.forEach((e) => client.send(e));
+            contents.slice(i, i + client.messageThrottle)?.forEach((e) => client.send(e));
             i += 5;
             let loop: NodeJS.Timer;
             //eslint-disable-next-line prefer-const
             loop = setInterval(() => {
-                contents.slice(i, i + 3).forEach((e) => client.send(e));
+                contents.slice(i, i + client.messageThrottle).forEach((e) => client.send(e));
                 if (i >= length) {
                     clearInterval(loop);
                     resolve();
                 }
-                i += 3;
-            }, client.messageInterval);
+                i += client.messageThrottle;
+            }, client.throttleInterval);
         });
     }
 
@@ -489,7 +490,7 @@ export class Client extends EventEmitter {
         const client = this;
         //eslint-disable-next-line no-async-promise-executor
         return new Promise(async (resolve, reject) => {
-            await Tools.sleep(client.messageInterval);
+            await Tools.sleep(client.throttleInterval);
             client.fetchRoom.bind(client)(roomid, true).then(resolve).catch(reject);
         });
     }
@@ -583,13 +584,13 @@ export class Client extends EventEmitter {
         const eventName: string = rawMessage.split("|")[1] as string;
         const event: string[] = rawMessage.split("|").slice(2)!;
 
-        function isRoomNotNull(r: Room | null): r is Room {
+        function isRoomNotEmp(r: Room | null | undefined): r is Room {
             return r instanceof Room;
         }
 
         switch (eventName) {
             case "raw": {
-                if (!isRoomNotNull(room)) return;
+                if (!isRoomNotEmp(room)) return;
                 this.emit(Events.RAW_DATA, event.join("|")!, room);
                 break;
             }
@@ -621,7 +622,7 @@ export class Client extends EventEmitter {
                     if (this.options.avatar) sendQueue.push(`|/avatar ${this.options.avatar as string | number}`);
                     if (this.options.status) sendQueue.push(`|/status ${this.options.status as string}`);
                     await this.sendArray(sendQueue);
-                    await Tools.sleep(this.messageInterval);
+                    await Tools.sleep(this.throttleInterval);
                     await this.fetchUser(this.status.id, true);
                     if (this.user) this.user.settings = JSON.parse(event[3] as string);
                     this.emit(Events.READY);
@@ -654,18 +655,18 @@ export class Client extends EventEmitter {
                 break;
             }
             case "init": {
-                if (!isRoomNotNull(room)) return;
+                if (!isRoomNotEmp(room)) return;
                 this.fetchUser((this.user as ClientUser)?.userid ?? this.status.id!, true);
                 if (room.id.startsWith("view-")) this.emit(Events.OPEN_HTML_PAGE, room);
                 else {
                     room = await this.fetchRoom(room.id).catch(() => room);
-                    if (!isRoomNotNull(room)) return;
+                    if (!isRoomNotEmp(room)) return;
                     this.emit(Events.CLIENT_ROOM_ADD, room);
                 }
                 break;
             }
             case "deinit": {
-                if (!isRoomNotNull(room)) return;
+                if (!isRoomNotEmp(room)) return;
                 this.fetchUser((this.user as ClientUser)?.userid ?? this.status.id!, false);
                 if (room.id.startsWith("view-")) this.emit(Events.CLOSE_HTML_PAGE, room!);
                 else this.emit(Events.CLIENT_ROOM_REMOVE, room!);
@@ -696,7 +697,7 @@ export class Client extends EventEmitter {
                         }
                         if (!roominfo || !roominfo.id) return;
                         if (roominfo.users && !this.rooms.cache.has(roominfo.id)) {
-                            await Tools.sleep(this.messageInterval);
+                            await Tools.sleep(this.throttleInterval);
                             await this.sendArray(
                                 roominfo.users
                                     .filter((u) => !client.users.cache.has(Tools.toId(u)))
@@ -755,7 +756,7 @@ export class Client extends EventEmitter {
             }
             case "chat":
             case "c": {
-                if (!isRoomNotNull(room)) return;
+                if (!isRoomNotEmp(room)) return;
                 if (!event[0] || !Tools.toId(event[0])) break;
                 room = this.rooms.cache.get(room.id) ?? room;
                 const author = await this.fetchUser(event[0] as string, false),
@@ -781,9 +782,8 @@ export class Client extends EventEmitter {
             }
 
             case "c:": {
-                if (!isRoomNotNull(room)) return;
-                room = this.rooms.cache.get(room.id);
-                if (!isRoomNotNull(room)) return;
+                if (!isRoomNotEmp(room)) return;
+                room = await this.fetchRoom(room.id, false).catch(() => room);
                 const by = await this.fetchUser(event[1] as string, true),
                     value = event.slice(2).join("|"),
                     message = new Message<Room>({
@@ -850,7 +850,7 @@ export class Client extends EventEmitter {
             case "j":
             case "J":
             case "join": {
-                if (!isRoomNotNull(room)) return;
+                if (!isRoomNotEmp(room)) return;
                 const user = await this.fetchUser(Tools.toId(event.join("|")), true);
                 room = await this.fetchRoom(room.id, false).catch(() => room as Room);
                 this.emit(Events.ROOM_USER_ADD, room, user);
@@ -860,7 +860,7 @@ export class Client extends EventEmitter {
             case "l":
             case "L":
             case "leave": {
-                if (!isRoomNotNull(room)) return;
+                if (!isRoomNotEmp(room)) return;
                 const user = await this.fetchUser(Tools.toId(event.join("|")), true);
                 room = await this.fetchRoom(room.id, false).catch(() => room as Room);
                 this.emit(Events.ROOM_USER_REMOVE, room, user);
@@ -890,11 +890,10 @@ export class Client extends EventEmitter {
             }
 
             case "tournament": {
-                if (!isRoomNotNull(room)) return;
+                if (!isRoomNotEmp(room)) return;
                 const tourEventName = event[0]!;
                 const tourEvent = event.slice(1);
-                room = this.rooms.cache.get(room.id);
-                if (!isRoomNotNull(room)) return;
+                room = await this.fetchRoom(room.id, false).catch(() => room as Room);
                 switch (tourEventName) {
                     case "create": {
                         const format = tourEvent[0]!,
