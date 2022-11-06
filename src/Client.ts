@@ -782,7 +782,8 @@ export class Client extends EventEmitter {
 
             case "c:": {
                 if (!isRoomNotNull(room)) return;
-                room = await this.fetchRoom(room.id, false).catch(() => room);
+                room = this.rooms.cache.get(room.id);
+                if (!isRoomNotNull(room)) return;
                 const by = await this.fetchUser(event[1] as string, true),
                     value = event.slice(2).join("|"),
                     message = new Message<Room>({
@@ -892,7 +893,8 @@ export class Client extends EventEmitter {
                 if (!isRoomNotNull(room)) return;
                 const tourEventName = event[0]!;
                 const tourEvent = event.slice(1);
-                room = await this.fetchRoom(room.id, false).catch(() => room as Room);
+                room = this.rooms.cache.get(room.id);
+                if (!isRoomNotNull(room)) return;
                 switch (tourEventName) {
                     case "create": {
                         const format = tourEvent[0]!,
