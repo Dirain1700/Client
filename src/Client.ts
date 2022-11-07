@@ -393,7 +393,7 @@ export class Client extends EventEmitter {
 
             let i = 0;
             contents.slice(i, i + client.messageThrottle)?.forEach((e) => client.send(e));
-            i += 5;
+            i += client.messageThrottle;
             let loop: NodeJS.Timer;
             //eslint-disable-next-line prefer-const
             loop = setInterval(() => {
