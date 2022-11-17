@@ -386,7 +386,7 @@ export class Client extends EventEmitter {
 
         return new Promise((resolve) => {
             const length = contents.length;
-            if (length >= client.messageThrottle) {
+            if (length <= client.messageThrottle) {
                 contents.forEach((e) => client.send(e));
                 resolve();
             }
