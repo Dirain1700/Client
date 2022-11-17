@@ -167,7 +167,7 @@ export class Client extends EventEmitter {
             },
         };
 
-        console.info("Trying to connect to the server " + this.serverURL + "...");
+        console.log("Trying to connect to the server " + this.serverURL + "...");
         https
             .get(httpsOptions, (response: IncomingMessage) => {
                 response.setEncoding("utf8");
@@ -323,7 +323,7 @@ export class Client extends EventEmitter {
                     return;
                 }
                 if (data.includes("heavy load")) {
-                    console.info("The login server is under heavy load.");
+                    console.log("The login server is under heavy load.");
                     if (client.options.retryLogin) {
                         console.log(`Retrying login in ${client.options.retryLogin / 1000}s.`);
                         setTimeout(client.login.bind(client), client.options.retryLogin, name, password);
