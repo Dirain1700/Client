@@ -389,6 +389,7 @@ export class Client extends EventEmitter {
             if (length <= client.messageThrottle) {
                 contents.forEach((e) => client.send(e));
                 resolve();
+                return;
             }
 
             let i = 0;
