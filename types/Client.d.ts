@@ -3,6 +3,7 @@ import type { User } from "../src/User";
 import type { Message } from "../src/Message";
 import type { RoomOptions } from "./Room";
 import type { TourUpdateData, PostTourData } from "./Tour";
+import type { TimeoutError } from "../src/Error";
 
 /* eslint-disable no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types */
 
@@ -97,7 +98,7 @@ export interface PromisedRoom {
     id: string;
     time: string;
     resolve: (room: Room) => void;
-    reject: (room: RoomOptions) => void;
+    reject: (room: TimeoutError | RoomOptions) => void;
 }
 
 export interface PromisedUser {
@@ -131,5 +132,5 @@ export interface PostLoginOptions {
 export interface PendingMessage<T> {
     id: string;
     resolve: (message: T) => void;
-    reject: (reason: string) => void;
+    reject: (reason: TimeoutError) => void;
 }

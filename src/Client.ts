@@ -9,6 +9,7 @@ import { ClientUser } from "./ClientUser";
 import { Message } from "./Message";
 import { Room } from "./Room";
 import { User } from "./User";
+import { TimeoutError } from "./Error";
 
 import type { ClientOptions as wsClientOptions } from "ws";
 import type { IncomingMessage } from "http";
@@ -432,13 +433,13 @@ export class Client extends EventEmitter {
                     resolve(message);
                     client.PromisedPM = client.PromisedPM.filter((e) => e.id !== user);
                 },
-                reject: (reason: string) => {
+                reject: (reason: TimeoutError) => {
                     reject(reason);
                     client.PromisedPM = client.PromisedPM.filter((e) => e.id !== user);
                 },
             };
             client.PromisedPM.push(PM);
-            setTimeout(PM.reject, 3 * 1000, "Timeout");
+            setTimeout(PM.reject, 3 * 1000, new TimeoutError(`sendUser: ${user}, content: ${str})`));
         });
     }
 
@@ -474,13 +475,13 @@ export class Client extends EventEmitter {
                     resolve(message);
                     client.PromisedChat = client.PromisedChat.filter((e) => e.id !== room);
                 },
-                reject: (reason: string) => {
+                reject: (reason: TimeoutError) => {
                     reject(reason);
                     client.PromisedChat = client.PromisedChat.filter((e) => e.id !== room);
                 },
             };
             client.PromisedChat.push(chat);
-            setTimeout(chat.reject, 3 * 1000, "Timeout");
+            setTimeout(chat.reject, 3 * 1000, new TimeoutError(`sendRoom(roomid: ${room}, content: ${str})`));
         });
     }
 
@@ -1004,8 +1005,9 @@ export class Client extends EventEmitter {
                     resolve(room);
                     client.roominfoQueue = client.roominfoQueue.filter((e) => e.id !== roomid && e.time !== time);
                 },
-                reject: (room: RoomOptions) => {
-                    if (!force && client.rooms.cache.has(roomid)) resolve(client.rooms.cache.get(roomid)!);
+                reject: (room: TimeoutError | RoomOptions) => {
+                    if (room instanceof TimeoutError) reject(room);
+                    else if (!force && client.rooms.cache.has(roomid)) resolve(client.rooms.cache.get(roomid)!);
                     else if (force && room.error === "timeout")
                         setTimeout(client.fetchRoom.bind(client), 5 * 1000, roomid, true);
                     else reject(room);
@@ -1014,10 +1016,7 @@ export class Client extends EventEmitter {
             };
             client.roominfoQueue.push(r);
             client.send(`|/cmd roominfo ${roomid}`);
-            setTimeout(r.reject, 5 * 1000, {
-                id: roomid,
-                error: "timeout",
-            } as RoomOptions);
+            setTimeout(r.reject, 5 * 1000, new TimeoutError(`fetchRoom(roomid: ${roomid})`));
         });
     }
 
