@@ -2,7 +2,7 @@ import type { Client } from "../src/Client";
 import type { User } from "../src/User";
 import type { Room } from "../src/Room";
 import type { Message } from "../src/Message";
-import type { NormalHTMLOptions, HTMLOptions } from "./Room";
+import type { HTMLOptions } from "./Room";
 
 export interface MessageInput<T extends User | Room | unknown> {
     author: User;
@@ -14,7 +14,7 @@ export interface MessageInput<T extends User | Room | unknown> {
     client: Client;
 }
 
-export type UserMessageOptions = string | NormalHTMLOptions;
+export type UserMessageOptions = string | { content: string };
 
 export type RoomMessageOptions = string | HTMLOptions;
 

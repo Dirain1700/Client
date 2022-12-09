@@ -411,15 +411,8 @@ export class Client extends EventEmitter {
 
     sendUser(user: string, input: string | UserMessageOptions): Promise<Message<User>> | void {
         let str: string = "";
-        if (typeof input === "string") str += input!;
-        else {
-            const { id, content, edit, box } = input;
-            if (edit && box) throw new TypeError("You cannot edit HTML box.");
-            if (!box) str += `/${edit ? "change" : "add"}uhtml ${id},`;
-            else str += "/addhtmlbox";
-
-            str += content;
-        }
+        if (typeof input === "string") str += input;
+        else str += input.content;
 
         user = Tools.toId(user);
 
@@ -433,7 +426,7 @@ export class Client extends EventEmitter {
                     resolve(message);
                     client.PromisedPM = client.PromisedPM.filter((e) => e.id !== user);
                 },
-                reject: function(reason: TimeoutError) {
+                reject: function (reason: TimeoutError) {
                     if (!client.PromisedPM.includes(this)) return;
                     reject(reason);
                     client.PromisedPM = client.PromisedPM.filter((e) => e.id !== user);
@@ -476,7 +469,7 @@ export class Client extends EventEmitter {
                     resolve(message);
                     client.PromisedChat = client.PromisedChat.filter((e) => e.id !== room);
                 },
-                reject: function(reason: TimeoutError) {
+                reject: function (reason: TimeoutError) {
                     if (!client.PromisedChat.includes(this)) return;
                     reject(reason);
                     client.PromisedChat = client.PromisedChat.filter((e) => e.id !== room);
