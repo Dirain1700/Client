@@ -20,7 +20,7 @@ export class Message<T extends Room | User | unknown> {
 
     constructor(init: MessageInput<T>) {
         this.author = init.author;
-        this.content = init.content;
+        this.content = init.content.replace("/botmsg ", "");
         this.target = init.target;
         this.id = (init.time ?? Date.now()).toString();
         this.raw = init.raw;
