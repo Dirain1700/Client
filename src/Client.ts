@@ -62,6 +62,7 @@ export class Client extends EventEmitter {
     throttleInterval: 25 | 100 | 600 = 600;
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     webSocket: any;
+    private _autoReconnect: NodeJS.Timeout = setTimeout(() => null, 0);
     events = Events;
     rooms: {
         cache: Map<string, Room>;
@@ -207,6 +208,10 @@ export class Client extends EventEmitter {
                             this.webSocket.on("message", (message: Buffer) => {
                                 this.onMessage(message.toString());
                             });
+
+                            this.webSocket.on("close", () => {
+                                if (!this.closed) this._autoReconnect = setInterval(() => this.connect(), 1000 * 30);
+                            });
                         }
                     } else console.log("Error: failed to get data for server " + this.serverURL);
                 });
@@ -346,7 +351,7 @@ export class Client extends EventEmitter {
                 } catch (e) {}
                 console.log("Sending login trn...");
                 client.send(`|/trn ${name},0,${data}`);
-                setInterval(client.upkeep.bind(client), 5000);
+                setInterval(client.upkeep.bind(client), 1000 * 60 * 3000);
             });
         });
         request.on("error", function (err) {
@@ -367,12 +372,26 @@ export class Client extends EventEmitter {
             response.setEncoding("utf8");
 
             let data: string = "";
+            let ended: boolean = false;
             response.on("data", (chunk: string) => {
                 data += chunk;
             });
 
             response.on("end", () => {
-                if (response.statusCode !== 200) console.error(data.substring(1));
+                ended = true;
+                if ((response.statusCode ?? 200) >= 400) {
+                    this.emit(Events.CLIENT_ERROR, data);
+                    this.disconnect();
+                    this.connect();
+                    this._autoReconnect = setInterval(() => this.connect(), 1000 * 30);
+                }
+            });
+
+            setTimeout(() => {
+                if (ended) return;
+                this.disconnect();
+                this.connect();
+                this._autoReconnect = setInterval(() => this.connect(), 1000 * 30);
             });
         });
     }
@@ -454,7 +473,7 @@ export class Client extends EventEmitter {
                 if (!box) str += `/${edit ? "change" : "add"}uhtml ${id},`;
                 else str += "/addhtmlbox";
             }
-            if (!box) str += `${id},`;
+            if (!box) str += `${id}`;
             str += content;
         }
 
@@ -611,6 +630,7 @@ export class Client extends EventEmitter {
                 this.status.name = event[0]!.substring(1) as string;
                 this.status.id = Tools.toId(this.status.name);
                 if (!event[0]!.startsWith(" Guest")) {
+                    clearTimeout(this._autoReconnect);
                     this.status.loggedIn = true;
                     await this.send("|/ip");
                     const sendQueue: string[] = [];
