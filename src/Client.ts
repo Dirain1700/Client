@@ -433,7 +433,8 @@ export class Client extends EventEmitter {
                     resolve(message);
                     client.PromisedPM = client.PromisedPM.filter((e) => e.id !== user);
                 },
-                reject: (reason: TimeoutError) => {
+                reject: function(reason: TimeoutError) {
+                    if (!client.PromisedPM.includes(this)) return;
                     reject(reason);
                     client.PromisedPM = client.PromisedPM.filter((e) => e.id !== user);
                 },
@@ -475,7 +476,8 @@ export class Client extends EventEmitter {
                     resolve(message);
                     client.PromisedChat = client.PromisedChat.filter((e) => e.id !== room);
                 },
-                reject: (reason: TimeoutError) => {
+                reject: function(reason: TimeoutError) {
+                    if (!client.PromisedChat.includes(this)) return;
                     reject(reason);
                     client.PromisedChat = client.PromisedChat.filter((e) => e.id !== room);
                 },
@@ -1006,7 +1008,7 @@ export class Client extends EventEmitter {
                     client.roominfoQueue = client.roominfoQueue.filter((e) => e.id !== roomid && e.time !== time);
                 },
                 reject: function (room: TimeoutError | RoomOptions) {
-                    if (client.roominfoQueue.includes(this)) return;
+                    if (!client.roominfoQueue.includes(this)) return;
                     if (room instanceof TimeoutError) reject(room);
                     else if (room.error) {
                         if (room.error === "timeout") {
