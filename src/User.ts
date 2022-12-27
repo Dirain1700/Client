@@ -5,7 +5,6 @@ import * as Tools from "./Tools";
 import type { Client } from "./Client";
 import type { UserOptions } from "../types/User";
 import type { MessageWaits, awaitMessageOptions, UserMessageOptions } from "../types/Message";
-import type { NormalHTMLOptions } from "../types/Room";
 import type { AuthLevel, GroupSymbol } from "../types/UserGroups";
 import type { Message } from "./Message";
 
@@ -45,14 +44,6 @@ export class User {
 
     send(content: UserMessageOptions): Promise<Message<User>> | void {
         return this.client.sendUser(this.userid, content);
-    }
-
-    sendHTML(input: NormalHTMLOptions): void {
-        return void this.client.sendUser(this.userid, input);
-    }
-
-    changeHTML(input: NormalHTMLOptions): void {
-        return void this.client.sendUser(this.userid, input);
     }
 
     awaitMessages(options: awaitMessageOptions<User>): Promise<Message<User>[] | null> {
