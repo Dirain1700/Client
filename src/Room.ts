@@ -142,6 +142,45 @@ export class Room {
         return rank;
     }
 
+    can(permission: string, user: User): boolean {
+        permission = Tools.toId(permission);
+        let auth: GroupSymbol = " ";
+        switch (permission) {
+            case "broadcast":
+                auth = "+";
+                break;
+            case "show":
+            case "warn":
+            case "tour":
+            case "mute":
+            case "announce":
+            case "announcement":
+                auth = "%";
+                break;
+            case "ban":
+            case "roomban":
+            case "rfaq":
+                auth = "@";
+                break;
+            case "html":
+            case "declare":
+                auth = "*";
+                break;
+            case "intro":
+                auth = "#";
+                break;
+        }
+        if (auth === " ") return false;
+        function isInRankList(rank: GroupSymbol | AuthLevel | null): rank is GroupSymbol {
+            if (!rank) return false;
+            return Tools.rankList.includes(rank as string);
+        }
+        if (!isInRankList(user.group)) return false;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const userAuth = Tools.sortByRank([this.getRank(user.id), user.group])[0]!;
+        return Tools.isHigherRank(userAuth, auth);
+    }
+
     isVoice(userid: string): boolean {
         userid = Tools.toId(userid);
         if (this.auth && this.isExist) return this.auth["+"]?.includes(userid) ?? false;

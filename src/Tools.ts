@@ -10,7 +10,7 @@ export const toRoomId = (id: string): string => {
 
 export const sleep = (t: number) => new Promise((r) => setTimeout(r, t));
 
-export const rankList: GroupSymbol[] = [
+export const rankList = [
     "~", //OldAdmin
     "&", //NewAdmin
     "#", //RoomOwner
