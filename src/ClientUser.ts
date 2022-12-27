@@ -1,3 +1,5 @@
+"use strict";
+
 import { User } from "./User";
 
 import type { Client } from "./Client";

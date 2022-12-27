@@ -1,8 +1,12 @@
+"use strict";
+
+import * as Tools from "./Tools";
+
 import type { Client } from "./Client";
 import type { UserOptions } from "../types/User";
 import type { MessageWaits, awaitMessageOptions, UserMessageOptions } from "../types/Message";
 import type { NormalHTMLOptions } from "../types/Room";
-import type { AuthLevel } from "../types/UserGroups";
+import type { AuthLevel, GroupSymbol } from "../types/UserGroups";
 import type { Message } from "./Message";
 
 export class User {
@@ -96,6 +100,42 @@ export class User {
             const { messages, reject: rejectMessages } = CollectorOptions;
             setTimeout(rejectMessages, CollectorOptions.time, messages.length ? messages : null);
         });
+    }
+
+    can(permission: string): boolean {
+        permission = Tools.toId(permission);
+        let auth: GroupSymbol = " ";
+        switch (permission) {
+            case "broadcast":
+                auth = "§";
+                break;
+            case "warn":
+            case "lock":
+            case "alts":
+            case "forcerename":
+                auth = "%";
+                break;
+            case "globalban":
+            case "ip":
+                auth = "@";
+                break;
+            case "forcewin":
+            case "forcetie":
+            case "promote":
+            case "demote":
+            case "banip":
+            case "hotpatch":
+            case "eval":
+                auth = "&";
+                break;
+        }
+        if (auth === " ") return false;
+        function isInRankList(rank: GroupSymbol | AuthLevel | null): rank is GroupSymbol {
+            if (!rank) return false;
+            return Tools.rankList.includes(rank as string);
+        }
+        if (!isInRankList(this.group)) return false;
+        return Tools.isHigherRank(this.group, auth);
     }
 
     get isGlobalVoice(): boolean {

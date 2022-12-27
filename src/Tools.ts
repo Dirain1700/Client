@@ -1,3 +1,5 @@
+"use strict";
+
 import type { GroupSymbol } from "../types/UserGroups";
 
 export const toId = (id: string): string => {

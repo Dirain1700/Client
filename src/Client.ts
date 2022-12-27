@@ -1,3 +1,5 @@
+"use strict";
+
 import * as https from "https";
 import { EventEmitter } from "node:events";
 import * as url from "url";

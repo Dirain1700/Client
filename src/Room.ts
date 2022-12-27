@@ -1,3 +1,5 @@
+"use strict";
+
 import * as Tools from "./Tools";
 import { User as UserClass } from "./User";
 

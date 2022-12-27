@@ -1,3 +1,5 @@
+"use strict";
+
 import type { Client } from "./Client";
 import { User } from "./User";
 import { Room } from "./Room";

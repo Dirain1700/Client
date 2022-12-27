@@ -1,3 +1,5 @@
+"use strict";
+
 export { Client } from "./Client";
 export { ClientUser } from "./ClientUser";
 export { Message } from "./Message";
