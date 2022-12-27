@@ -11,6 +11,7 @@
         "importsNotUsedAsValues": "error",
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
+        "incremental": true,
 
         // type checks
         "strict": true,
