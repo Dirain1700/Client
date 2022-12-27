@@ -52,7 +52,7 @@ const Events: ClientEventNames = {
 };
 
 export class Client extends EventEmitter {
-    readonly options: ClientOptions;
+    private readonly options: ClientOptions = {};
     private loggedIn: boolean = false;
     readonly serverURL: string = "play.pokemonshowdown.com";
     readonly serverId: string = "showdown";
@@ -96,20 +96,11 @@ export class Client extends EventEmitter {
 
     constructor(options: ClientOptions) {
         super();
-        this.options = {
-            openListener: options.openListener,
-            messageListener: options.messageListener,
-            closeListener: options.closeListener,
-            errorListener: options.errorListener,
-            customListener: options.customListener,
-            name: options.name,
-            pass: () => (options.pass as string) ?? "",
-            status: options.status,
-            avatar: options.avatar,
-            autoJoin: options.autoJoin,
-            retryLogin: options.retryLogin || 10 * 1000,
-            autoReconnect: options.autoReconnect || 30 * 1000,
-        };
+        options.retryLogin ||= 10 * 1000;
+        options.autoReconnect ||= 30 * 1000;
+        Object.defineProperty(this, "options", {
+            value: options,
+        });
         this.user = null;
         this.rooms = { cache: new Map(), fetch: this.fetchRoom };
         this.users = { cache: new Map(), fetch: this.fetchUser };
@@ -351,7 +342,7 @@ export class Client extends EventEmitter {
                 } catch (e) {}
                 console.log("Sending login trn...");
                 client.send(`|/trn ${name},0,${data}`);
-                setInterval(client.upkeep.bind(client), 1000 * 60 * 3000);
+                setInterval(client.upkeep.bind(client), 10 * 60 * 1000);
             });
         });
         request.on("error", function (err) {
@@ -377,22 +368,24 @@ export class Client extends EventEmitter {
                 data += chunk;
             });
 
-            response.on("end", () => {
+            response.on("end", async () => {
                 ended = true;
                 if ((response.statusCode ?? 200) >= 400) {
                     this.emit(Events.CLIENT_ERROR, data);
                     this.disconnect();
+                    await Tools.sleep(5000);
                     this.connect();
                     this._autoReconnect = setInterval(() => this.connect(), 1000 * 30);
                 }
             });
 
-            setTimeout(() => {
+            setTimeout(async () => {
                 if (ended) return;
                 this.disconnect();
+                await Tools.sleep(5000);
                 this.connect();
                 this._autoReconnect = setInterval(() => this.connect(), 1000 * 30);
-            });
+            }, 15 * 1000);
         });
     }
 
