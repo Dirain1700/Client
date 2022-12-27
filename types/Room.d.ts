@@ -41,11 +41,21 @@ export interface RankHTMLBoxOptions extends HTMLBoxOptions {
     allowedDisplay: GroupSymbol;
 }
 
+export interface PrivateuHTMLOptions extends UhtmlOptions {
+    private: string;
+}
+
+export interface PrivateHTMLBoxOptions extends HTMLBoxOptions {
+    private: string;
+}
+
 export type RankHTMLOptions = RankuHTMLOptions | RankHTMLBoxOptions;
+
+export type PrivateHTMLOptions = PrivateuHTMLOptions | PrivateHTMLBoxOptions;
 
 export type NormalHTMLOptions = UhtmlOptions | HTMLBoxOptions;
 
-export type HTMLOptions = NormalHTMLOptions | RankHTMLOptions;
+export type HTMLOptions = NormalHTMLOptions | RankHTMLOptions | PrivateHTMLOptions;
 
 export interface BattleRoom {
     p1?: string;

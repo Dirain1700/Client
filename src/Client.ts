@@ -27,7 +27,7 @@ import type {
     PendingMessage,
 } from "../types/Client";
 import type { UserOptions } from "../types/User";
-import type { RoomOptions, RankHTMLOptions, HTMLOptions } from "../types/Room";
+import type { RoomOptions, RankHTMLOptions, PrivateHTMLOptions, HTMLOptions } from "../types/Room";
 import type { TourUpdateData, PostTourData } from "../types/Tour";
 import type { MessageInput, UserMessageOptions, RoomMessageOptions } from "./../types/Message";
 
@@ -457,18 +457,28 @@ export class Client extends EventEmitter {
         else {
             const { id, content, edit, box } = input;
             if (edit && box) throw new TypeError("You cannot edit HTML box.");
+
             //eslint-disable-next-line no-inner-declarations
             function hasAllowedDisplay(init: HTMLOptions): init is RankHTMLOptions {
                 return Object.keys(init as RankHTMLOptions).includes("allowedDisplay");
             }
+            //eslint-disable-next-line no-inner-declarations
+            function isPrivate(init: HTMLOptions): init is PrivateHTMLOptions {
+                return Object.keys(init as PrivateHTMLOptions).includes("Private");
+            }
             if (hasAllowedDisplay(input)) {
-                if (!box) str += `/${edit ? "change" : "add"}rankuhtml ${input.allowedDisplay},`;
-                else str += `/addrankhtmlbox ${input.allowedDisplay},`;
+                const { allowedDisplay } = input;
+                if (!box) str += `/${edit ? "change" : "add"}rankuhtml ${allowedDisplay},`;
+                else str += `/addrankhtmlbox ${allowedDisplay},`;
+            } else if (isPrivate(input)) {
+                const { private: name } = input;
+                if (!box) str += `/${edit ? "change" : "send"}privateuhtml ${name},`;
+                else str += `/sendprivatehtmlbox ${name},`;
             } else {
                 if (!box) str += `/${edit ? "change" : "add"}uhtml ${id},`;
                 else str += "/addhtmlbox";
             }
-            if (!box) str += `${id}`;
+            if (!box) str += `${id},`;
             str += content;
         }
 
