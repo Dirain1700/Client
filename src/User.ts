@@ -93,7 +93,9 @@ export class User {
         });
     }
 
-    can(permission: GlobalPermissions): boolean {
+    can(permission: GlobalPermissions): boolean;
+    can(permission: string): boolean;
+    can(permission: string | GlobalPermissions): boolean {
         permission = Tools.toId(permission);
         let auth: GroupSymbol = " ";
         switch (permission) {

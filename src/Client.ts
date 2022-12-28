@@ -68,10 +68,12 @@ export class Client extends EventEmitter {
     events = Events;
     rooms: {
         cache: Map<string, Room>;
+        raw: Map<string, RoomOptions>;
         fetch: (roomid: string, force?: boolean) => Promise<Room>;
     };
     users: {
         cache: Map<string, User>;
+        raw: Map<string, UserOptions>;
         fetch: (userid: string, useCache?: boolean) => Promise<User>;
     };
     user: ClientUser | null;
@@ -104,8 +106,8 @@ export class Client extends EventEmitter {
             value: options,
         });
         this.user = null;
-        this.rooms = { cache: new Map(), fetch: this.fetchRoom };
-        this.users = { cache: new Map(), fetch: this.fetchUser };
+        this.rooms = { cache: new Map(), raw: new Map(), fetch: this.fetchRoom };
+        this.users = { cache: new Map(), raw: new Map(), fetch: this.fetchUser };
     }
 
     /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -718,6 +720,7 @@ export class Client extends EventEmitter {
                             console.error(`Error in parsing roominfo: ${(e as SyntaxError).message}`);
                         }
                         if (!roominfo || !roominfo.id) return;
+                        this.rooms.raw.set(roominfo.id, roominfo);
                         if (roominfo.users && !this.rooms.cache.has(roominfo.id)) {
                             await Tools.sleep(this.throttleInterval);
                             await this.sendArray(
@@ -758,6 +761,7 @@ export class Client extends EventEmitter {
                             console.error(`Error in parsing userdetails: ${(e as SyntaxError).message}`);
                         }
                         if (!userdetails || !userdetails.userid) return;
+                        this.users.raw.set(userdetails.id, userdetails);
                         if (userdetails.id === this.status.id!) {
                             if (this.user) Object.assign(this.user, userdetails);
                             else this.user = new ClientUser(userdetails, client);

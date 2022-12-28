@@ -63,17 +63,19 @@ export interface BattleRoom {
     isPrivate?: boolean | "hidden" | "voice";
 }
 
-export type RoomPermissions =
-    | "broadcast"
-    | "show"
-    | "warn"
-    | "tour"
-    | "mute"
-    | "announce"
-    | "announcement"
-    | "ban"
-    | "roomban"
-    | "rfaq"
-    | "html"
-    | "declare"
-    | "intro";
+export type RoomPermissions = string &
+    (
+        | "broadcast"
+        | "show"
+        | "warn"
+        | "tour"
+        | "mute"
+        | "announce"
+        | "announcement"
+        | "ban"
+        | "roomban"
+        | "rfaq"
+        | "html"
+        | "declare"
+        | "intro"
+    );

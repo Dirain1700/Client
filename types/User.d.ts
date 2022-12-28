@@ -19,17 +19,19 @@ export interface UserOptions {
     client?: Client;
 }
 
-export type GlobalPermissions =
-    | "warn"
-    | "lock"
-    | "alts"
-    | "forcerename"
-    | "globalban"
-    | "ip"
-    | "forcewin"
-    | "forcetie"
-    | "promote"
-    | "demote"
-    | "banip"
-    | "hotpatch"
-    | "eval";
+export type GlobalPermissions = string &
+    (
+        | "warn"
+        | "lock"
+        | "alts"
+        | "forcerename"
+        | "globalban"
+        | "ip"
+        | "forcewin"
+        | "forcetie"
+        | "promote"
+        | "demote"
+        | "banip"
+        | "hotpatch"
+        | "eval"
+    );

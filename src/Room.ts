@@ -144,7 +144,9 @@ export class Room {
         return rank;
     }
 
-    can(permission: RoomPermissions, user: User): boolean {
+    can(permission: RoomPermissions, user: User): boolean;
+    can(permission: string, user: User): boolean;
+    can(permission: string | RoomPermissions, user: User): boolean {
         permission = Tools.toId(permission);
         let auth: GroupSymbol = " ";
         switch (permission) {
