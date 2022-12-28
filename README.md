@@ -31,12 +31,10 @@ let formats = {};
 client.connect();
 
 client.on("ready", () => {
-    formats = client.formats;
-});
-
-require("fs").writeFile("./formats.json", JSON.stringify(formats, null, 4), (err) => {
-    if (err) throw err;
-    console.log("Successfuly got a formats data!");
+    require("fs").writeFile("./formats.json", JSON.stringify(client.formats, null, 4), (err) => {
+        if (err) throw err;
+        console.log("Successfuly got a formats data!");
+    });
 });
 ```
 
