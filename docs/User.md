@@ -25,6 +25,7 @@ export declare class User {
     sendHTML(input: NormalHTMLOptions): void;
     changeHTML(input: NormalHTMLOptions): void;
     awaitMessages(options: awaitMessageOptions<User>): Promise<Message<User>[] | null>;
+    can(permission: GlobalPermission): boolean;
     get isGlobalVoice(): boolean;
     get isGlobalDriver(): boolean;
     get isGlobalMod(): boolean;
@@ -241,6 +242,31 @@ export interface awaitMessageOptions<T extends User | Room> {
     max: number;
     time: number;
 }
+```
+
+### can()
+
+```ts
+can(permission: GlobalPermission): boolean;
+```
+
+Returns boolean.
+
+```ts
+export type GlobalPermissions =
+    | "warn"
+    | "lock"
+    | "alts"
+    | "forcerename"
+    | "globalban"
+    | "ip"
+    | "forcewin"
+    | "forcetie"
+    | "promote"
+    | "demote"
+    | "banip"
+    | "hotpatch"
+    | "eval";
 ```
 
 ### isGlobalVoice

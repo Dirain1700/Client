@@ -27,6 +27,7 @@ export declare class Room {
     deleteMessages(user: string, clear: booleam, lines?: number): Promise<void>;
     awaitMessages(options: awaitMessageOptions<Room>): Promise<Message<Room>[] | null>;
     getRank(userid: string): GroupSymbol;
+    can(permission: RoomPermission): boolean;
     isVoice(userid: string): boolean;
     isDriver(userid: string): boolean;
     isMod(userid: string): boolean;
@@ -61,7 +62,7 @@ An id of room.
 title: string | null;
 ```
 
-A title of room. exmple: `日本語 Japanese` `Game Corner`
+A title of room. exmple: `日本語 Japanese`, `Game Corner`
 
 ### type
 
@@ -272,6 +273,31 @@ Returns GroupSymbol. GroupSymbol is here:
 
 ```ts
 export type GroupSymbol = string & ("~" | "&" | "#" | "★" | "*" | "@" | "%" | "☆" | "§" | "+" | "^" | " " | "‽" | "!");
+```
+
+### can()
+
+```ts
+can(permission: RoomPermissions): boolean;
+```
+
+Returns boolean.
+
+```ts
+export type RoomPermissions =
+    | "broadcast"
+    | "show"
+    | "warn"
+    | "tour"
+    | "mute"
+    | "announce"
+    | "announcement"
+    | "ban"
+    | "roomban"
+    | "rfaq"
+    | "html"
+    | "declare"
+    | "intro";
 ```
 
 ### isVoice()

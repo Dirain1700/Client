@@ -62,3 +62,18 @@ export interface BattleRoom {
     p2?: string;
     isPrivate?: boolean | "hidden" | "voice";
 }
+
+export type RoomPermissions =
+    | "broadcast"
+    | "show"
+    | "warn"
+    | "tour"
+    | "mute"
+    | "announce"
+    | "announcement"
+    | "ban"
+    | "roomban"
+    | "rfaq"
+    | "html"
+    | "declare"
+    | "intro";

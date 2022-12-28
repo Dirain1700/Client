@@ -3,7 +3,7 @@
 import * as Tools from "./Tools";
 import { User as UserClass } from "./User";
 
-import type { RoomOptions, HTMLOptions } from "../types/Room";
+import type { RoomOptions, HTMLOptions, RoomPermissions } from "../types/Room";
 import type { Client } from "./Client";
 import type { User } from "./User";
 import type { Message } from "./Message";
@@ -144,7 +144,7 @@ export class Room {
         return rank;
     }
 
-    can(permission: string, user: User): boolean {
+    can(permission: RoomPermissions, user: User): boolean {
         permission = Tools.toId(permission);
         let auth: GroupSymbol = " ";
         switch (permission) {

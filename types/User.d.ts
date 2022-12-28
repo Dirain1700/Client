@@ -18,3 +18,18 @@ export interface UserOptions {
     waits?: MessageWaits<User>[];
     client?: Client;
 }
+
+export type GlobalPermissions =
+    | "warn"
+    | "lock"
+    | "alts"
+    | "forcerename"
+    | "globalban"
+    | "ip"
+    | "forcewin"
+    | "forcetie"
+    | "promote"
+    | "demote"
+    | "banip"
+    | "hotpatch"
+    | "eval";

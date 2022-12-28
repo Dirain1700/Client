@@ -8,11 +8,19 @@ export declare class Client extends EventEmitter {
     readonly serverId: string;
     readonly actionURL: url.URL;
     readonly mainServer: string;
-    messageInterval: 100 | 300;
+    messageInterval: 25 | 100 | 600;
     webSocket: any;
     events: ClientEventNames;
-    rooms: Map<string, Room>;
-    users: Map<string, User>;
+    rooms: {
+        cache: Map<string, Room>;
+        raw: Map<string, RoomOptions>;
+        fetch: (roomid: string, force?: boolean) => Promise<Room>;
+    };
+    users: {
+        cache: Map<string, User>;
+        raw: Map<string, UserOptions>;
+        fetch: (userid: string, useCache?: boolean) => Promise<User>;
+    };
     user: ClientUser | null;
     status: StatusType;
     connected: boolean;
@@ -112,11 +120,11 @@ This property is readonly.
 ### messageInterval
 
 ```ts
-messageInterval: 100 | 300;
+messageInterval: 25 | 100 | 600;
 ```
 
 A variable for customize interval to sending whether is this client trusted.
-100ms for Trusted users, 300ms for untrusted users.
+25ms for public room bots, 100ms for Trusted users, 600ms for untrusted users.
 
 ### webSocket
 
@@ -160,20 +168,32 @@ export interface ClientEventNames {
 ### rooms
 
 ```ts
-rooms: Map<string, Room>;
+rooms: {
+    cache: Map<string, Room>;
+    raw: Map<string, RoomOptions>;
+    fetch: (roomid: string, force?: boolean) => Promise<Room>;
+}
 ```
 
 A Map object to store Room object.
 Key is Room's ID.
+raw is A Map object to store RoomOptions(returned value of `/cmd roominfo`)
+fetch is an alias of `Client.fetchRoom()`
 
 ### users
 
 ```ts
-users: Map<string, User>;
+users: {
+    cache: Map<string, User>;
+    raw: Map<string, UserOptions>;
+    fetch: (userid: string, useCache?: boolean) => Promise<User>;
+}
 ```
 
-A Map object to store User object.
+cache is A Map object to store User object.
 Key is User's ID.
+raw is A Map object to store UserOptions(returned value of `/cmd userdetails`)
+fetch is an alias of `Client.fetchUser()`
 
 ### user
 
