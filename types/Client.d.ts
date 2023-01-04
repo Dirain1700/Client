@@ -17,6 +17,7 @@ export interface ClientOptions {
     pass?: string;
     status?: string;
     avatar?: string | number;
+    prefix?: string;
     autoJoin?: string[];
     retryLogin?: number;
     autoReconnect?: number;
@@ -27,6 +28,7 @@ export interface ClientEventNames {
     QUERY_RESPONSE: "queryResponse";
     RAW_DATA: "rawData";
     MESSAGE_CREATE: "messageCreate";
+    COMMAND_EMIT: "commandEmit";
     MESSAGE_DELETE: "messageDelete";
     ROOM_USER_ADD: "roomUserAdd";
     ROOM_USER_REMOVE: "roomUserRemove";

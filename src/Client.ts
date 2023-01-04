@@ -37,6 +37,7 @@ const Events: ClientEventNames = {
     QUERY_RESPONSE: "queryResponse",
     RAW_DATA: "rawData",
     MESSAGE_CREATE: "messageCreate",
+    COMMAND_EMIT: "commandEmit",
     MESSAGE_DELETE: "messageDelete",
     ROOM_USER_ADD: "roomUserAdd",
     ROOM_USER_REMOVE: "roomUserRemove",
@@ -836,15 +837,16 @@ export class Client extends EventEmitter {
                     }
                 }
                 this.emit(Events.MESSAGE_CREATE, message);
+                if (this.options.prefix && value.startsWith(this.options.prefix)) this.emit(Events.COMMAND_EMIT);
                 break;
             }
 
             case "pm": {
                 if (!event[0] || !event[1] || !Tools.toId(event[0]) || !Tools.toId(event[1])) {
-                    const content = event.slice(2).join("|") as string;
-                    if (!this.trusted && content.startsWith("/raw ") && this.status.loggedIn) {
+                    const value = event.slice(2).join("|") as string;
+                    if (!this.trusted && value.startsWith("/raw ") && this.status.loggedIn) {
                         //prettier-ignore
-                        if (content.includes("<small style=\"color:gray\">(trusted)</small>")) this.trusted = true;
+                        if (value.includes("<small style=\"color:gray\">(trusted)</small>")) this.trusted = true;
                         else this.trusted = false;
                         if (this.user) this.user.trusted = this.trusted;
 
@@ -854,13 +856,13 @@ export class Client extends EventEmitter {
                 }
                 const author = await this.fetchUser(event[0] as string, true),
                     sendTo = await this.fetchUser(event[1] as string, true),
-                    content = event.slice(2).join("|") as string;
+                    value = event.slice(2).join("|") as string;
                 let target: User;
                 if (author.id === this.status.id) target = sendTo;
                 else target = author;
                 const message = new Message<User>({
                     author: author,
-                    content: content,
+                    content: value,
                     type: "PM",
                     target: target,
                     raw: rawMessage,
@@ -868,6 +870,7 @@ export class Client extends EventEmitter {
                     time: Date.now(),
                 } as MessageInput<User>);
                 this.emit(Events.MESSAGE_CREATE, message);
+                if (this.options.prefix && value.startsWith(this.options.prefix)) this.emit(Events.COMMAND_EMIT);
 
                 if (!this.user) break;
                 for (const element of this.PromisedPM) {
