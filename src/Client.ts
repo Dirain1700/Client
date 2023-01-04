@@ -102,8 +102,9 @@ export class Client extends EventEmitter {
         super();
         options.retryLogin ||= 10 * 1000;
         options.autoReconnect ||= 30 * 1000;
+        this.options = options;
         Object.defineProperty(this, "options", {
-            value: options,
+            enumerable: false,
         });
         this.user = null;
         this.rooms = { cache: new Map(), raw: new Map(), fetch: this.fetchRoom };
@@ -314,9 +315,10 @@ export class Client extends EventEmitter {
             let data: any = "" as string;
             response.on("data", (chunk: string) => (data += chunk));
             response.on("end", function () {
-                if (data === ";") console.error("Failed to login.");
                 if (data.length < 50) {
-                    console.error("Failed to login: " + data);
+                    if (data === ";")
+                        console.log("Failed to login. Specified account is registered or wrong password.");
+                    else console.error("Failed to login: " + data);
                     if (client.options.retryLogin) {
                         console.log(`Retrying login in ${client.options.retryLogin / 1000}s.`);
                         setTimeout(client.login.bind(client), client.options.retryLogin, name, password);
@@ -658,6 +660,9 @@ export class Client extends EventEmitter {
                     key: event[0]!,
                     value: event[1]!,
                 };
+                Object.defineProperty(this, "challstr", {
+                    enumerable: false,
+                });
                 for (const id of ["~", "&"]) {
                     this.users.cache.set(
                         id,
@@ -674,7 +679,7 @@ export class Client extends EventEmitter {
                 }
 
                 if (!this.options.name) break;
-                if (typeof this.options.pass === "function") this.login(this.options.name!, this.options.pass());
+                if (this.options.pass) this.login(this.options.name, this.options.pass);
                 else this.login(this.options.name);
                 break;
             }

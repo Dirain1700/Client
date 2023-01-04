@@ -14,7 +14,7 @@ export interface ClientOptions {
     errorListener?: ErrorListener;
     customListener?: CustomListener[];
     name?: string;
-    pass?: string | (() => string);
+    pass?: string;
     status?: string;
     avatar?: string | number;
     autoJoin?: string[];
