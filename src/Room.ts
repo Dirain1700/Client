@@ -7,17 +7,19 @@ import type { RoomOptions, HTMLOptions, RoomPermissions } from "../types/Room";
 import type { Client } from "./Client";
 import type { User } from "./User";
 import type { Message } from "./Message";
+import type { Tournament } from "./Tour";
 import type { MessageWaits, awaitMessageOptions, RoomMessageOptions } from "../types/Message";
 import type { GroupSymbol, AuthLevel } from "../types/UserGroups";
 
 export class Room {
     id: string;
-    roomid: string | null;
+    roomid: string;
     title: string | null;
     type: "chat" | "battle" | "html";
-    visibility: "public" | "hidden" | "secret" | null;
+    visibility: "public" | "hidden" | "secret";
     modchat: AuthLevel | null;
     modjoin: AuthLevel | null;
+    tour: Tournament | null = null;
     auth: {
         [key: string]: string[];
     } | null;
@@ -28,10 +30,10 @@ export class Room {
 
     constructor(init: RoomOptions, client: Client) {
         this.id = init.id;
-        this.roomid = init.roomid || null;
+        this.roomid = init.roomid ?? init.id;
         this.title = init.title || null;
         this.type = init.id?.startsWith("view-") ? "html" : init.type;
-        this.visibility = init.visibility || null;
+        this.visibility = init.visibility || "secret";
         this.modchat = init.modchat || null;
         this.modjoin = init.modjoin || null;
         this.auth = init.auth || null;
@@ -43,6 +45,13 @@ export class Room {
 
     send(content: RoomMessageOptions): Promise<Message<Room>> | void {
         return this.client.sendRoom(this.roomid!, content);
+    }
+
+    update(): this {
+        const room = this.client.rooms.cache.get(this.id);
+        if (!room) return this;
+        Object.assign(this, room);
+        return this;
     }
 
     setRoomIntro(html: string): void {
@@ -130,7 +139,21 @@ export class Room {
         });
     }
 
-    getRank(userid: string): GroupSymbol {
+    getRank(user: User | string): GroupSymbol {
+        let GlobalRank: GroupSymbol = " ";
+        if (typeof user === "string") {
+            user = Tools.toId(user);
+            GlobalRank = this.client.users.cache.get(user)?.group ?? " ";
+        } else {
+            GlobalRank = user.group ?? " ";
+            user = user.id;
+        }
+        if (this.visibility === "secret") return this.getRoomRank(user);
+        const RoomRank: GroupSymbol = this.getRoomRank(user);
+        return Tools.sortByRank([RoomRank, GlobalRank])[0] as GroupSymbol;
+    }
+
+    getRoomRank(userid: string): GroupSymbol {
         userid = Tools.toId(userid);
         let rank: GroupSymbol = " ";
         if (!this.auth) return rank;
@@ -175,13 +198,7 @@ export class Room {
                 break;
         }
         if (auth === " ") return false;
-        function isInRankList(rank: GroupSymbol | AuthLevel | null): rank is GroupSymbol {
-            if (!rank) return false;
-            return Tools.rankList.includes(rank as string);
-        }
-        if (!isInRankList(user.group)) return false;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const userAuth = Tools.sortByRank([this.getRank(user.id), user.group])[0]!;
+        const userAuth = this.getRank(user.id);
         return Tools.isHigherRank(userAuth, auth);
     }
 

@@ -1,4 +1,4 @@
-import type { AuthLevel } from "./UserGroups";
+import type { GroupSymbol } from "./UserGroups";
 import type { MessageWaits } from "./Message";
 import type { Client } from "../src/Client";
 import type { User } from "../src/User";
@@ -8,7 +8,7 @@ export interface UserOptions {
     userid: string;
     name: string;
     avatar?: string | number;
-    group?: AuthLevel;
+    group?: GroupSymbol;
     customgroup?: "Section Leader" | null;
     autoconfirmed?: boolean;
     status?: string | null;

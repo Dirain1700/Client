@@ -11,6 +11,7 @@ import { ClientUser } from "./ClientUser";
 import { Message } from "./Message";
 import { Room } from "./Room";
 import { User } from "./User";
+import { Tournament } from "./Tour";
 import { TimeoutError, AccessError } from "./Error";
 
 import type { ClientOptions as wsClientOptions } from "ws";
@@ -28,7 +29,7 @@ import type {
 } from "../types/Client";
 import type { UserOptions } from "../types/User";
 import type { RoomOptions, RankHTMLOptions, PrivateHTMLOptions, HTMLOptions } from "../types/Room";
-import type { TourUpdateData, PostTourData } from "../types/Tour";
+import type { TourUpdateData, EliminationBracket, RoundRobinBracket, TourEndData } from "../types/Tour";
 import type { MessageInput, UserMessageOptions, RoomMessageOptions } from "./../types/Message";
 
 const MAIN_HOST = "sim3.psim.us";
@@ -46,6 +47,12 @@ const Events: ClientEventNames = {
     CLIENT_ROOM_REMOVE: "clientRoomRemove",
     TOUR_CREATE: "tourCreate",
     TOUR_UPDATE: "tourUpdate",
+    TOUR_UPDATE_END: "tourUpdateEnd",
+    TOUR_JOIN: "tourJoin",
+    TOUR_LEAVE: "tourLeave",
+    TOUR_REPLACE: "tourReplace",
+    TOUR_BATTLE_START: "tourBattleStart",
+    TOUR_BATTLE_END: "tourBattleEnd",
     TOUR_START: "tourStart",
     TOUR_END: "tourEnd",
     OPEN_HTML_PAGE: "openHtmlPage",
@@ -936,28 +943,106 @@ export class Client extends EventEmitter {
                             type = tourEvent[1]!;
                         let playerCap: number | null = parseInt(tourEvent[2] ?? "");
                         if (Number.isNaN(playerCap)) playerCap = null;
+                        const isElim = type.endsWith("Elimination");
+                        let tour: Tournament<EliminationBracket | RoundRobinBracket>;
+                        if (isElim) tour = new Tournament<EliminationBracket>(format, type, playerCap ?? 0, room);
+                        else tour = new Tournament<RoundRobinBracket>(format, type, playerCap ?? 0, room);
+                        room.tour = tour;
+                        this.rooms.cache.set(room.id, room);
 
-                        this.emit(Events.TOUR_CREATE, room, format, type, playerCap);
+                        this.emit(Events.TOUR_CREATE, room, format, type, playerCap ?? 0);
                         break;
                     }
 
                     case "update": {
                         const data: TourUpdateData = JSON.parse(tourEvent[0]!);
+                        if (room.tour) room.tour.update(data);
 
                         this.emit(Events.TOUR_UPDATE, room, data);
                         break;
                     }
 
+                    case "updateEnd": {
+                        this.emit(Events.TOUR_UPDATE_END, room);
+                        break;
+                    }
+
                     case "start": {
                         const numPlayers = parseInt(tourEvent[0]!);
+                        if (room.tour) room.tour.onStart();
                         this.emit(Events.TOUR_START, room, numPlayers);
                         break;
                     }
 
-                    case "end": {
-                        const data: PostTourData = JSON.parse(tourEvent[0]!);
-                        this.emit(Events.TOUR_END, room, data);
+                    case "join": {
+                        const user: string = tourEvent.join("|");
+                        if (room.tour) room.tour.addPlayer(user);
+                        this.emit(Events.TOUR_JOIN, room, this.getUser(user)!);
                         break;
+                    }
+
+                    case "leave":
+                    case "disqualify": {
+                        const user: string = tourEvent.join("|");
+                        if (room.tour) room.tour.removePlayer(user);
+                        this.emit(Events.TOUR_LEAVE, room, this.getUser(user)!);
+                        break;
+                    }
+
+                    case "replace": {
+                        const user1 = tourEvent[0]!,
+                            user2 = tourEvent[1]!;
+                        if (room.tour) {
+                            room.tour.removePlayer(user1);
+                            room.tour.addPlayer(user2);
+                        }
+                        this.emit(Events.TOUR_REPLACE, room, this.getUser(user1), this.getUser(user2));
+                        break;
+                    }
+
+                    case "battlestart": {
+                        const user1 = tourEvent[0]!,
+                            user2 = tourEvent[1]!,
+                            battleRoom = tourEvent[2]!;
+                        this.emit(Events.TOUR_BATTLE_START, room, this.getUser(user1), this.getUser(user2), battleRoom);
+                        break;
+                    }
+
+                    case "battleend": {
+                        const user1 = tourEvent[0]!,
+                            user2 = tourEvent[1]!,
+                            result = tourEvent[2] as "win" | "loss" | "draw",
+                            rawScore = tourEvent[3] as string,
+                            recorded = tourEvent[4] as "success" | "fail",
+                            battleRoom = tourEvent[2]!;
+                        const score = rawScore.split(",").map((e) => parseInt(Tools.toId(e))) as [number, number];
+
+                        this.emit(
+                            Events.TOUR_BATTLE_END,
+                            room,
+                            this.getUser(user1)!,
+                            this.getUser(user2)!,
+                            result,
+                            score,
+                            recorded,
+                            battleRoom
+                        );
+                        break;
+                    }
+
+                    case "end": {
+                        const data: TourEndData = JSON.parse(tourEvent[0]!);
+                        if (room.tour) {
+                            room.tour.update(data);
+                            room.tour.onEnd(false);
+                        }
+                        this.emit(Events.TOUR_END, room, data, false);
+                        break;
+                    }
+
+                    case "forceend": {
+                        if (room.tour) room.tour.onEnd(true);
+                        this.emit(Events.TOUR_END, room, null, true);
                     }
                 }
                 break;

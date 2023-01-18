@@ -13,7 +13,7 @@ export class User {
     userid: string;
     name: string;
     avatar: string | number | null;
-    group: AuthLevel | null;
+    group: GroupSymbol;
     customgroup: "Section Leader" | null;
     autoconfirmed: boolean;
     status?: string | null;
@@ -30,7 +30,7 @@ export class User {
         this.userid = init.userid;
         this.name = init.name;
         this.avatar = init.avatar || null;
-        this.group = init.group ?? null;
+        this.group = init.group ?? " ";
         this.customgroup = init.customgroup ?? null;
         this.autoconfirmed = init.autoconfirmed ?? false;
         this.status = init.status ?? null;
@@ -44,6 +44,13 @@ export class User {
 
     send(content: UserMessageOptions): Promise<Message<User>> | void {
         return this.client.sendUser(this.userid, content);
+    }
+
+    update(): this {
+        const user = this.client.users.cache.get(this.id);
+        if (!user) return this;
+        Object.assign(this, user);
+        return this;
     }
 
     awaitMessages(options: awaitMessageOptions<User>): Promise<Message<User>[] | null> {

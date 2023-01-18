@@ -1,8 +1,9 @@
 import type { Room } from "../src/Room";
 import type { User } from "../src/User";
 import type { Message } from "../src/Message";
+import type { Tournament } from "../src/Tour";
 import type { RoomOptions } from "./Room";
-import type { TourUpdateData, PostTourData } from "./Tour";
+import type { TourUpdateData, TourEndData } from "./Tour";
 import type { TimeoutError } from "../src/Error";
 
 /* eslint-disable no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types */
@@ -18,9 +19,14 @@ export interface ClientOptions {
     status?: string;
     avatar?: string | number;
     prefix?: string;
+    classes?: CustomClass;
     autoJoin?: string[];
     retryLogin?: number;
     autoReconnect?: number;
+}
+
+export interface CustomClass {
+    Tournament?: Tournament;
 }
 
 export interface ClientEventNames {
@@ -37,6 +43,12 @@ export interface ClientEventNames {
     CLIENT_ROOM_REMOVE: "clientRoomRemove";
     TOUR_CREATE: "tourCreate";
     TOUR_UPDATE: "tourUpdate";
+    TOUR_UPDATE_END: "tourUpdateEnd";
+    TOUR_JOIN: "tourJoin";
+    TOUR_LEAVE: "tourLeave";
+    TOUR_REPLACE: "tourReplace";
+    TOUR_BATTLE_START: "tourBattleStart";
+    TOUR_BATTLE_END: "tourBattleEnd";
     TOUR_START: "tourStart";
     TOUR_END: "tourEnd";
     OPEN_HTML_PAGE: "openHtmlPage";
@@ -58,8 +70,22 @@ export interface ClientEvents {
     clientRoomRemove: [room: Room];
     tourCreate: [room: Room, format: string, type: string, playerCap: number | null];
     tourUpdate: [room: Room, data: TourUpdateData];
+    TOUR_UPDATE_END: [room: Room];
+    TOUR_JOIN: [room: Room, user: User];
+    TOUR_LEAVE: [room: Room, user: User | undefined];
+    TOUR_REPLACE: [room: Room, user1: User | undefined, user2: User | undefined];
+    TOUR_BATTLE_START: [room: Room, user1: User, user2: User, battle: string];
+    TOUR_BATTLE_END: [
+        room: Room,
+        user1: User,
+        user2: User,
+        result: "win" | "loss" | "draw",
+        score: [number, number],
+        recorded: "success" | "fail",
+        battle: string
+    ];
     tourStart: [room: Room, players: number];
-    tourEnd: [room: Room, data: PostTourData];
+    tourEnd: [room: Room, data: TourEndData | null, force: boolean];
     openHtmlPage: [room: Room];
     closeHtmlPage: [room: Room];
     chatError: [error: string, room: Room | null];
@@ -82,7 +108,7 @@ export interface MessageListener {
     options?: EventOptions;
 }
 export interface CloseListener {
-    function: (code: number, reason: Buffer) => any;
+    function: (code: number, reason?: Buffer) => any;
     options?: EventOptions;
 }
 export interface ErrorListener {
@@ -135,4 +161,9 @@ export interface PendingMessage<T> {
     id: string;
     resolve: (message: T) => void;
     reject: (reason: TimeoutError) => void;
+}
+
+export interface IOutGoingMessage {
+    id: string;
+    content: string;
 }

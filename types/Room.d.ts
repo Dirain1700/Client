@@ -49,13 +49,29 @@ export interface PrivateHTMLBoxOptions extends HTMLBoxOptions {
     private: string;
 }
 
+export interface PMuHTMLOptions extends UhtmlOptions {
+    pm: string;
+}
+
+export interface PmHTMLBoxOptions extends HTMLBoxOptions {
+    pm: string;
+}
+
 export type RankHTMLOptions = RankuHTMLOptions | RankHTMLBoxOptions;
 
 export type PrivateHTMLOptions = PrivateuHTMLOptions | PrivateHTMLBoxOptions;
 
+export type PMHTMLOptions = PMuHTMLOptions | PmHTMLBoxOptions;
+
 export type NormalHTMLOptions = UhtmlOptions | HTMLBoxOptions;
 
-export type HTMLOptions = NormalHTMLOptions | RankHTMLOptions | PrivateHTMLOptions;
+export type HTMLOptions = NormalHTMLOptions | RankHTMLOptions | PrivateHTMLOptions | PMHTMLOptions;
+
+export interface IHtmlPageData {
+    id: string;
+    content: string;
+    userid: string;
+}
 
 export interface BattleRoom {
     p1?: string;
