@@ -941,8 +941,8 @@ export class Client extends EventEmitter {
                     case "create": {
                         const format = tourEvent[0]!,
                             type = tourEvent[1]!;
-                        let playerCap: number | null = parseInt(tourEvent[2] ?? "");
-                        if (Number.isNaN(playerCap)) playerCap = null;
+                        let playerCap: number = parseInt(tourEvent[2] ?? "");
+                        if (!playerCap || Number.isNaN(playerCap)) playerCap = 0;
                         const isElim = type.endsWith("Elimination");
                         let tour: Tournament<EliminationBracket | RoundRobinBracket>;
                         if (isElim) tour = new Tournament<EliminationBracket>(format, type, playerCap ?? 0, room);
@@ -950,7 +950,7 @@ export class Client extends EventEmitter {
                         room.tour = tour;
                         this.rooms.cache.set(room.id, room);
 
-                        this.emit(Events.TOUR_CREATE, room, format, type, playerCap ?? 0);
+                        this.emit(Events.TOUR_CREATE, room, format, type, playerCap);
                         break;
                     }
 

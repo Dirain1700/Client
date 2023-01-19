@@ -22,8 +22,8 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
     isSingleElimination: boolean;
     type: T extends EliminationBracket ? "Elimination" : "Round Robin";
     round: {
-        name: keyof typeof Generators;
-        number: typeof Generators[keyof typeof Generators];
+        name: keyof typeof Generators | string;
+        number: number;
     };
     playerCap: number;
     forceEnded: boolean = false;
@@ -49,12 +49,12 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
             results: [],
             teambuilderFormat: "",
         };
-        const gen = (generator.replace(this.type, "").trim() || "Single") as typeof this["round"]["name"];
-        if (!Object.keys(Generators).includes(gen)) throw new Error("Generator Type did not match");
+        let gen = (generator.replace(this.type, "").trim() || "Single") as typeof this["round"]["name"];
+        if (!Object.keys(Generators).includes(gen)) gen = generator.replace(this.type, ""); // like 20-tuple
         this.data.generator = generator;
         this.round = {
             name: gen,
-            number: Generators[gen],
+            number: Generators[gen as keyof typeof Generators] ?? parseInt(gen.replace("-tuple", "")),
         };
         this.data.format = format;
         this.data.playerCap = playerCap;
@@ -67,11 +67,13 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
         this.type = (
             this.data.generator.endsWith("Elimination") ? "Elimination" : "Round Robin"
         ) as typeof this["type"];
-        const gen = (this.data.generator.replace(this.type, "").trim() || "Single") as typeof this["round"]["name"];
-        if (!Object.keys(Generators).includes(gen)) throw new Error("Generator Type did not match");
+        let gen = (this.data.generator.replace(this.type, "").trim() || "Single") as
+            | typeof this["round"]["name"]
+            | string;
+        if (!Object.keys(Generators).includes(gen)) gen = this.data.generator.replace(this.type, ""); // like 20-tuple
         this.round = {
             name: gen,
-            number: Generators[gen],
+            number: Generators[gen as keyof typeof Generators] ?? parseInt(gen.replace("-tuple", "")),
         };
         this.started = !!this.data.bracketData;
         this.playerCap = this.data.playerCap;
