@@ -98,6 +98,7 @@ export class Client extends EventEmitter {
         [key: string]: string[];
     } = {};
 
+    private sendTimer: NodeJS.Timer | null = null;
     private userdetailsQueue: PromisedUser[] = [];
     private roominfoQueue: PromisedRoom[] = [];
     resolvedRoom: string[] = [];
@@ -111,8 +112,20 @@ export class Client extends EventEmitter {
         options.retryLogin ||= 10 * 1000;
         options.autoReconnect ||= 30 * 1000;
         this.options = options;
-        Object.defineProperty(this, "options", {
+        const defineOptions = {
             enumerable: false,
+            writable: false,
+        };
+        Object.defineProperties(this, {
+            options: defineOptions,
+            sendTimer: defineOptions,
+            userdetailsQueue: defineOptions,
+            roominfoQueue: defineOptions,
+            resolvedRoom: defineOptions,
+            resolvedUser: defineOptions,
+            PromisedPM: defineOptions,
+            PromisedChat: defineOptions,
+            challstr: defineOptions,
         });
         this.user = null;
         this.rooms = { cache: new Map(), raw: new Map(), fetch: this.fetchRoom };
@@ -668,9 +681,6 @@ export class Client extends EventEmitter {
                     key: event[0]!,
                     value: event[1]!,
                 };
-                Object.defineProperty(this, "challstr", {
-                    enumerable: false,
-                });
                 for (const id of ["~", "&"]) {
                     this.users.cache.set(
                         id,

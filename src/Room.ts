@@ -41,6 +41,10 @@ export class Room {
         this.waits = init.waits ?? [];
         this.isExist = init.error ? false : true;
         this.client = client;
+        Object.defineProperty(this, "waits", {
+            enumerable: false,
+            writable: true,
+        });
     }
 
     send(content: RoomMessageOptions): Promise<Message<Room>> | void {

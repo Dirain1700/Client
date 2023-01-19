@@ -40,6 +40,10 @@ export class User {
         this.waits = [];
         this.alts = [];
         this.client = init?.client ?? client;
+        Object.defineProperty(this, "waits", {
+            enumerable: false,
+            writable: true,
+        });
     }
 
     send(content: UserMessageOptions): Promise<Message<User>> | void {
