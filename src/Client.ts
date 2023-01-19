@@ -68,7 +68,7 @@ export class Client extends EventEmitter {
     readonly serverId: string = "showdown";
     readonly actionURL = new url.URL("https://play.pokemonshowdown.com/~~showdown/action.php");
     readonly mainServer: string = "play.pokemonshowdown.com";
-    messageThrottle = 3;
+    readonly messageThrottle = 3;
     throttleInterval: 25 | 100 | 600 = 600;
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     webSocket: any;
@@ -98,7 +98,8 @@ export class Client extends EventEmitter {
         [key: string]: string[];
     } = {};
 
-    private sendTimer: NodeJS.Timer | null = null;
+    private sendTimer: NodeJS.Timeout | undefined = undefined;
+    outGoingMessage: string[] = [];
     private userdetailsQueue: PromisedUser[] = [];
     private roominfoQueue: PromisedRoom[] = [];
     resolvedRoom: string[] = [];
@@ -118,9 +119,13 @@ export class Client extends EventEmitter {
         };
         Object.defineProperties(this, {
             options: defineOptions,
-            sendTimer: defineOptions,
+            sendTimer: {
+                enumerable: false,
+                writable: true,
+            },
             userdetailsQueue: defineOptions,
             roominfoQueue: defineOptions,
+            outGoingMessage: defineOptions,
             resolvedRoom: defineOptions,
             resolvedUser: defineOptions,
             PromisedPM: defineOptions,
@@ -416,36 +421,23 @@ export class Client extends EventEmitter {
         });
     }
 
-    send(content: string): void {
-        if ((content.match(/\\n/g)?.length ?? 0) <= 5) this.webSocket.send(content);
-        else this.sendArray(content.split("\n"));
+    private runOutGoingMessage(): void {
+        if (!this.outGoingMessage.length) {
+            clearTimeout(this.sendTimer);
+            this.sendTimer = undefined;
+        }
+        const arr = this.outGoingMessage.splice(
+            0,
+            this.outGoingMessage.length <= this.messageThrottle ? this.outGoingMessage.length : this.messageThrottle
+        );
+        arr.forEach((e) => this.webSocket.send(e));
     }
 
-    sendArray(contents: string[]): Promise<void> {
-        const client = this;
-
-        return new Promise((resolve) => {
-            const length = contents.length;
-            if (length <= client.messageThrottle) {
-                contents.forEach((e) => client.send(e));
-                resolve();
-                return;
-            }
-
-            let i = 0;
-            contents.slice(i, i + client.messageThrottle)?.forEach((e) => client.send(e));
-            i += client.messageThrottle;
-            let loop: NodeJS.Timer;
-            //eslint-disable-next-line prefer-const
-            loop = setInterval(() => {
-                contents.slice(i, i + client.messageThrottle).forEach((e) => client.send(e));
-                if (i >= length) {
-                    clearInterval(loop);
-                    resolve();
-                }
-                i += client.messageThrottle;
-            }, client.throttleInterval);
-        });
+    send(content: string | string[], code?: boolean): void {
+        if (Array.isArray(content)) return void content.forEach((e) => this.send(e, code));
+        if (!code && content.match(/\\n/g)) content.split("\n").forEach((e) => this.outGoingMessage.push(e));
+        else this.outGoingMessage.push(content);
+        if (!this.sendTimer) this.sendTimer = setInterval(() => this.runOutGoingMessage(), this.throttleInterval);
     }
 
     sendUser(user: string, input: string | UserMessageOptions): Promise<Message<User>> | void {
@@ -662,13 +654,11 @@ export class Client extends EventEmitter {
                 if (!event[0]!.startsWith(" Guest")) {
                     clearTimeout(this._autoReconnect);
                     this.status.loggedIn = true;
-                    await this.send("|/ip");
-                    const sendQueue: string[] = [];
+                    this.send("|/ip");
                     if (this.options.autoJoin)
-                        await this.sendArray(this.options.autoJoin.map((r: string) => "|/j " + Tools.toRoomId(r)));
-                    if (this.options.avatar) sendQueue.push(`|/avatar ${this.options.avatar as string | number}`);
-                    if (this.options.status) sendQueue.push(`|/status ${this.options.status as string}`);
-                    await this.sendArray(sendQueue);
+                        this.send(this.options.autoJoin.map((r: string) => "|/j " + Tools.toRoomId(r)));
+                    if (this.options.avatar) this.send(`|/avatar ${this.options.avatar as string | number}`);
+                    if (this.options.status) this.send(`|/status ${this.options.status as string}`);
                     await Tools.sleep(this.throttleInterval);
                     await this.fetchUser(this.status.id, true);
                     if (this.user) this.user.settings = JSON.parse(event[3] as string);
@@ -746,17 +736,15 @@ export class Client extends EventEmitter {
                         this.rooms.raw.set(roominfo.id, roominfo);
                         if (roominfo.users && !this.rooms.cache.has(roominfo.id)) {
                             await Tools.sleep(this.throttleInterval);
-                            await this.sendArray(
+                            await this.send(
                                 roominfo.users
                                     .filter((u) => !client.users.cache.has(Tools.toId(u)))
                                     .map((u) => `|/cmd userdetails ${Tools.toId(u)}`)
                             );
                         }
 
-                        const PendingRoom: PromisedRoom | undefined = this.roominfoQueue.find(
-                            (r) => r.id === roominfo!.id
-                        );
-                        if (!PendingRoom) return;
+                        const PendingRoom: PromisedRoom[] = this.roominfoQueue.filter((r) => r.id === roominfo!.id);
+                        if (!PendingRoom.length) return;
                         if (roominfo.error) {
                             if (roominfo.id.startsWith("view-")) {
                                 delete roominfo.error;
@@ -767,13 +755,13 @@ export class Client extends EventEmitter {
                                 };
                             } else {
                                 roominfo.type = "chat";
-                                PendingRoom.reject(roominfo);
+                                PendingRoom.forEach((e) => e.reject(roominfo!));
                             }
 
                             break;
                         }
 
-                        PendingRoom.resolve(this.addRoom(roominfo));
+                        PendingRoom.forEach((e) => e.resolve(this.addRoom(roominfo!)));
                         break;
                     }
                     case "userdetails": {
@@ -792,11 +780,11 @@ export class Client extends EventEmitter {
                         }
                         const user = this.addUser(userdetails);
                         if (!user) return;
-                        const PendingUser: PromisedUser | undefined = this.userdetailsQueue.find(
+                        const PendingUser: PromisedUser[] = this.userdetailsQueue.filter(
                             (u) => u.id === userdetails!.id
                         );
-                        if (!PendingUser) break;
-                        PendingUser.resolve(user);
+                        if (!PendingUser.length) break;
+                        PendingUser.forEach((e) => e.resolve(user));
                         break;
                     }
                 }
