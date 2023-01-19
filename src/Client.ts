@@ -1066,7 +1066,7 @@ export class Client extends EventEmitter {
     fetchUser(userid: string, useCache?: boolean): Promise<User> {
         const client = this;
         return new Promise((resolve) => {
-            if (["&", "~"].includes(userid)) return resolve(client.getUser("&")!);
+            if (userid.length === 1 && ["&", "~"].includes(userid)) return resolve(client.getUser("&")!);
 
             userid = Tools.toId(userid);
 
@@ -1112,10 +1112,32 @@ export class Client extends EventEmitter {
     addUser(input: UserOptions): User | null {
         if (typeof input !== "object" || !input.userid) return null;
         let user: User | undefined = this.users.cache.get(input.userid);
+        if (user && input.id !== input.userid) {
+            if (!user || !user.alts.includes(input.userid)) input.alts = [input.userid];
+            if (!this.users.cache.has(input.userid)) {
+                this.users.cache.set(
+                    input.userid,
+                    new User(
+                        { id: input.userid, userid: input.userid, name: input.name, rooms: false, alts: [input.id] },
+                        this
+                    )
+                );
+                this.users.fetch(input.userid);
+            } else {
+                const altUser = this.users.cache.get(input.userid)!;
+                if (!altUser.alts.includes(input.id)) altUser.alts.push(input.id);
+                this.users.cache.set(altUser.id, altUser);
+            }
+        }
         if (!user) {
             user = new User(input, this);
             this.fetchUser(input.userid, false);
-        } else Object.assign(user, input);
+        } else {
+            if (user.alts.length && input.alts?.length)
+                for (const id of input.alts!) if (!user.alts.includes(id)) user.alts.push(id);
+            delete input.alts;
+            Object.assign(user, input);
+        }
         this.users.cache.set(user!.userid, user!);
         return user as User;
     }

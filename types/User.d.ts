@@ -16,6 +16,7 @@ export interface UserOptions {
     rooms: { [key: string]: any } | false;
     friended?: boolean;
     waits?: MessageWaits<User>[];
+    alts?: string[];
     client?: Client;
 }
 
