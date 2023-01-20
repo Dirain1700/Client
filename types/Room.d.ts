@@ -1,7 +1,6 @@
-import type { AuthLevel } from "./UserGroups";
+import type { AuthLevel, GroupSymbol } from "./UserGroups";
 import type { Room } from "../src/Room";
 import type { MessageWaits } from "./Message";
-import type { GroupSymbol } from "./UserGroups";
 
 export interface RoomOptions {
     id: string;
