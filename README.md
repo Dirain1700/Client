@@ -56,7 +56,7 @@ With TypeScript:
 
 ```ts
 import { Client } from "@dirain/client";
-import type { ClientUser, Message } from "@dirain/client";
+import type { ClientUser } from "@dirain/client";
 
 const client = new Client({ name: "thisIsMyAc", "thisIsNotMyPassLOL", autoJoin: ["botdevelopment"] });
 
@@ -64,8 +64,8 @@ client.connect();
 
 client.on("ready", () => console.log("Logged in as", (client.user as ClientUser)?.name);
 
-client.on("messageCreate", (message: Message<unknown>) => {
-    if (!message.isNotUnknown() || message.author.id === client.status.id) return;
+client.on("messageCreate", (message) => {
+    if (message.author.id === client.status.id) return;
 
     if (message.content === ping) message.reply("Bang!");
 });
