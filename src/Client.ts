@@ -130,7 +130,10 @@ export class Client extends EventEmitter {
             resolvedUser: defineOptions,
             PromisedPM: defineOptions,
             PromisedChat: defineOptions,
-            challstr: defineOptions,
+            challstr: {
+                enumerable: false,
+                writable: true,
+            },
         });
         this.user = null;
         this.rooms = { cache: new Map(), raw: new Map(), fetch: this.fetchRoom };
