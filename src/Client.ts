@@ -6,7 +6,7 @@ import * as url from "url";
 import * as util from "util";
 import { WebSocket } from "ws";
 import * as querystring from "querystring";
-import * as Tools from "./Tools";
+import { Tools } from "./Tools";
 import { ClientUser } from "./ClientUser";
 import { Message } from "./Message";
 import { Room } from "./Room";
@@ -657,7 +657,7 @@ export class Client extends EventEmitter {
                     if (this.options.avatar) this.send(`|/avatar ${this.options.avatar as string | number}`);
                     if (this.options.status) this.send(`|/status ${this.options.status as string}`);
                     await Tools.sleep(this.throttleInterval);
-                    await this.fetchUser(this.status.id, true);
+                    if (this.status.id) await this.fetchUser(this.status.id, true);
                     if (this.user) this.user.settings = JSON.parse(event[3] as string);
                     this.emit(Events.READY);
                 }

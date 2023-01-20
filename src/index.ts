@@ -8,7 +8,7 @@ export { User } from "./User";
 export { Activity, Player } from "./Activity";
 export { Tournament } from "./Tour";
 export { TimeoutError, AccessError } from "./Error";
-export * as Tools from "./Tools";
+export { Tools } from "./Tools";
 
 export type {
     ActivityErrorType,

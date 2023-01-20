@@ -1,6 +1,6 @@
 "use strict";
 
-import * as Tools from "./Tools";
+import { Tools } from "./Tools";
 
 import type { Client } from "./Client";
 import type { UserOptions, GlobalPermissions } from "../types/User";

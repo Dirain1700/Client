@@ -2,37 +2,42 @@
 
 import type { GroupSymbol } from "../types/UserGroups";
 
-export const toId = (id: string): string => {
-    return id.toLowerCase().replace(/[^a-z0-9]/g, "");
-};
+export class Tools {
+    static readonly rankList = [
+        "~", //OldAdmin
+        "&", //NewAdmin
+        "#", //RoomOwner
+        "*", //Bot
+        "@", //Mod
+        "★", //Host
+        "%", //Driver
+        "§", //SectionLeader
+        "☆", //Player
+        "+", //Voice
+        "^", //Prize Winner
+        " ", //Nomal
+        "!", //Muted
+        "‽", //Locked
+    ];
 
-export const toRoomId = (id: string): string => {
-    return id.toLowerCase().replace(/[^a-z0-9-]/g, "");
-};
+    static toId(id: string): string {
+        return id.toLowerCase().replace(/[^a-z0-9]/g, "");
+    }
 
-export const sleep = (t: number) => new Promise((r) => setTimeout(r, t));
+    static toRoomId(id: string): string {
+        return id.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    }
 
-export const rankList = [
-    "~", //OldAdmin
-    "&", //NewAdmin
-    "#", //RoomOwner
-    "*", //Bot
-    "@", //Mod
-    "★", //Host
-    "%", //Driver
-    "§", //SectionLeader
-    "☆", //Player
-    "+", //Voice
-    "^", //Prize Winner
-    " ", //Nomal
-    "!", //Muted
-    "‽", //Locked
-];
+    static sleep(t: number): Promise<void> {
+        return new Promise((r) => setTimeout(r, t));
+    }
 
-export const sortByRank = (arr: GroupSymbol[]): GroupSymbol[] => {
-    arr.sort((a, b) => rankList.indexOf(a) - rankList.indexOf(b));
-    return arr;
-};
+    static sortByRank(arr: GroupSymbol[]): GroupSymbol[] {
+        arr.sort((a, b) => this.rankList.indexOf(a) - this.rankList.indexOf(b));
+        return arr;
+    }
 
-export const isHigherRank = (comparePosition: GroupSymbol, standard: GroupSymbol): boolean =>
-    [comparePosition, standard].toString() === sortByRank([comparePosition, standard]).toString();
+    static isHigherRank(comparePosition: GroupSymbol, standard: GroupSymbol): boolean {
+        return [comparePosition, standard].toString() === this.sortByRank([comparePosition, standard]).toString();
+    }
+}

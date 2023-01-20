@@ -1,6 +1,6 @@
 "use strict";
 
-import * as Tools from "./Tools";
+import { Tools } from "./Tools";
 import { User as UserClass } from "./User";
 
 import type { RoomOptions, HTMLOptions, RoomPermissions } from "../types/Room";
