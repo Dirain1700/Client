@@ -115,14 +115,11 @@ export class Client extends EventEmitter {
         this.options = options;
         const defineOptions = {
             enumerable: false,
-            writable: false,
+            writable: true,
         };
         Object.defineProperties(this, {
-            options: defineOptions,
-            sendTimer: {
-                enumerable: false,
-                writable: true,
-            },
+            options: defineOtions,
+            sendTimer: defineOptions,
             userdetailsQueue: defineOptions,
             roominfoQueue: defineOptions,
             outGoingMessage: defineOptions,
@@ -130,10 +127,7 @@ export class Client extends EventEmitter {
             resolvedUser: defineOptions,
             PromisedPM: defineOptions,
             PromisedChat: defineOptions,
-            challstr: {
-                enumerable: false,
-                writable: true,
-            },
+            challstr: defineOptions,
         });
         this.user = null;
         this.rooms = { cache: new Map(), raw: new Map(), fetch: this.fetchRoom };
