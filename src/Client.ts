@@ -118,7 +118,7 @@ export class Client extends EventEmitter {
             writable: true,
         };
         Object.defineProperties(this, {
-            options: defineOtions,
+            options: defineOptions,
             sendTimer: defineOptions,
             userdetailsQueue: defineOptions,
             roominfoQueue: defineOptions,

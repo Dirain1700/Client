@@ -34,7 +34,7 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
         this.name = "Tournament-" + format;
         this.id = Tools.toRoomId(this.name);
         this.htmlPageBase = "";
-        this.type = (generator.endsWith("Elimination") ? "Elimination" : "Round Robin") as typeof this["type"];
+        this.type = (generator.endsWith("Elimination") ? "Elimination" : "Round Robin") as (typeof this)["type"];
         this.data = {
             bracketData: {} as T,
             challengeBys: [],
@@ -49,7 +49,7 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
             results: [],
             teambuilderFormat: "",
         };
-        let gen = (generator.replace(this.type, "").trim() || "Single") as typeof this["round"]["name"];
+        let gen = (generator.replace(this.type, "").trim() || "Single") as (typeof this)["round"]["name"];
         if (!Object.keys(Generators).includes(gen)) gen = generator.replace(this.type, ""); // like 20-tuple
         this.data.generator = generator;
         this.round = {
@@ -66,9 +66,9 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
         if (data) Object.assign(this.data, data);
         this.type = (
             this.data.generator.endsWith("Elimination") ? "Elimination" : "Round Robin"
-        ) as typeof this["type"];
+        ) as (typeof this)["type"];
         let gen = (this.data.generator.replace(this.type, "").trim() || "Single") as
-            | typeof this["round"]["name"]
+            | (typeof this)["round"]["name"]
             | string;
         if (!Object.keys(Generators).includes(gen)) gen = this.data.generator.replace(this.type, ""); // like 20-tuple
         this.round = {
