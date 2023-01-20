@@ -7,7 +7,7 @@ import type { MessageInput, MessageWaits, UserMessageOptions, RoomMessageOptions
 import type { RoomOptions } from "../types/Room";
 import type { UserOptions } from "../types/User";
 
-export class Message<T extends Room | User | unknown> {
+export class Message<T extends Room | User = Room | User> {
     author: User;
     content: string;
     target: T;
@@ -95,9 +95,5 @@ export class Message<T extends Room | User | unknown> {
 
     isRoomMessage(): this is Message<Room> {
         return this.target instanceof Room;
-    }
-
-    isNotUnknown(): this is Message<Room> | Message<User> {
-        return this.isUserMessage() || this.isRoomMessage();
     }
 }
