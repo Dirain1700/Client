@@ -1,5 +1,6 @@
 # Test files
 foo.*
+foo/*
 
 # Logs
 config/chatlog.json
