@@ -1,6 +1,6 @@
 {
     "name": "@dirain/client",
-    "version": "0.0.13",
+    "version": "0.0.14",
     "type": "commonjs",
     "dependencies": {
         "@types/node": "^18.11.18",
