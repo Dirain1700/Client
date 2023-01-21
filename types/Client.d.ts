@@ -138,8 +138,8 @@ export interface PromisedUser {
 export interface StatusType {
     connected: boolean;
     loggedIn: boolean;
-    name: string | null;
-    id: string | null;
+    name: string;
+    id: string;
 }
 
 export interface ServerConfig {

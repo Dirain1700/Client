@@ -88,8 +88,8 @@ export class Client extends EventEmitter {
     status: StatusType = {
         connected: false,
         loggedIn: false,
-        name: null,
-        id: null,
+        name: "",
+        id: "",
     };
     connected: boolean = false;
     closed: boolean = true;

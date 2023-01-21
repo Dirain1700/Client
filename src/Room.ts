@@ -1,11 +1,11 @@
 "use strict";
 
 import { Tools } from "./Tools";
-import { User as UserClass } from "./User";
+import { User } from "./User";
+import { PSAPIError } from "./Error";
 
-import type { RoomOptions, HTMLOptions, RoomPermissions } from "../types/Room";
+import type { RoomOptions, RoomPermissions } from "../types/Room";
 import type { Client } from "./Client";
-import type { User } from "./User";
 import type { Message } from "./Message";
 import type { Tournament } from "./Tour";
 import type { MessageWaits, awaitMessageOptions, RoomMessageOptions } from "../types/Message";
@@ -21,7 +21,7 @@ export class Room {
     modjoin: AuthLevel | null;
     tour: Tournament | null = null;
     auth: {
-        [key: string]: string[];
+        [key: GroupSymbol | string]: string[];
     } | null;
     users: string[] | null;
     waits: MessageWaits<Room>[];
@@ -51,6 +51,10 @@ export class Room {
         return this.client.sendRoom(this.roomid!, content);
     }
 
+    useCommand(command: string): void {
+        this.client.send(this.roomid + "|" + command);
+    }
+
     update(): this {
         const room = this.client.rooms.cache.get(this.id);
         if (!room) return this;
@@ -59,23 +63,133 @@ export class Room {
     }
 
     setRoomIntro(html: string): void {
-        this.send("/roomintro " + html);
+        this.checkCan("roomintro", this.client.status.id, true);
+        this.useCommand("/roomintro " + html);
     }
 
     setAnnounce(content?: string | null): void {
+        this.checkCan("announcement", this.client.status.id, true);
         if (content) this.send("/announcement create " + content);
-        else this.send("/announcement end");
+        else this.useCommand("/announcement end");
     }
 
-    sendHTML(options: HTMLOptions): void {
-        this.client.sendRoom(this.id, options);
+    sendUhtml(id: string, html: string, change?: boolean): void {
+        this.checkCan("html", this.client.status.id, true);
+        if (change) this.changeUhtml(id, html);
+        if (!id || !html) throw new PSAPIError("EMPTY", !id ? "ID" : "HTML");
+        this.useCommand(`/adduhtml ${id},${html}`);
     }
 
-    changeHTML(options: HTMLOptions): void {
-        this.client.sendRoom(this.id, options);
+    changeUhtml(id: string, html: string): void {
+        this.checkCan("html", this.client.status.id, true);
+        if (!id || !html) throw new PSAPIError("EMPTY", !id ? "ID" : "HTML");
+        this.useCommand(`/changeuhtml ${id},${html}`);
+    }
+
+    clearUhtml(id: string): void {
+        this.checkCan("html", this.client.status.id, true);
+        if (!id) throw new PSAPIError("EMPTY", "ID");
+        this.useCommand(`/changeuhtml ${id},<div></div>`);
+    }
+
+    sendHtmlBox(html: string): void {
+        this.checkCan("html", this.client.status.id, true);
+        if (!html) throw new PSAPIError("EMPTY", "HTML");
+        this.useCommand(`/addhtmlbox ${html}`);
+    }
+
+    sendAuthUhtml(rank: GroupSymbol, id: string, html: string, change?: boolean): void {
+        this.checkCan("html", this.client.status.id, true);
+        if (change) this.changeAuthUhtml(rank, id, html);
+        if (!id || !html) throw new PSAPIError("EMPTY", !id ? "ID" : "HTML");
+        this.useCommand(`/addrankuhtml ${rank},${id},${html}`);
+    }
+
+    changeAuthUhtml(rank: GroupSymbol, id: string, html: string): void {
+        this.checkCan("html", this.client.status.id, true);
+        if (!id || !html) throw new PSAPIError("EMPTY", !id ? "ID" : "HTML");
+        this.useCommand(`/changerankuhtml ${rank},${id},${html}`);
+    }
+
+    clearAuthUhtml(rank: GroupSymbol, id: string): void {
+        this.checkCan("html", this.client.status.id, true);
+        if (!id) throw new PSAPIError("EMPTY", "ID");
+        this.useCommand(`/changeuhtml ${rank},${id},<div></div>`);
+    }
+
+    sendAuthHtmlBox(rank: GroupSymbol, html: string): void {
+        this.checkCan("html", this.client.status.id, true);
+        if (!html) throw new PSAPIError("EMPTY", "HTML");
+        this.useCommand(`/addrankhtmlbox ${rank},${html}`);
+    }
+
+    sendPrivateUhtml(user: string, id: string, html: string, change?: boolean): void {
+        this.checkCan("html", this.client.status.id, true);
+        if (change) return this.changePrivateUhtml(user, id, html);
+        user = Tools.toId(user);
+        if (!user || !id || !html) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "ID" : "HTML");
+        this.useCommand(`/sendprivateuhtml ${user},${id},${html}}`);
+    }
+
+    changePrivateUhtml(user: string, id: string, html: string): void {
+        this.checkCan("html", this.client.status.id, true);
+        user = Tools.toId(user);
+        if (!user || !html || !id) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "uhtml ID" : "HTML");
+        this.useCommand(`/changeprivateuhtml ${user},${id},${html}`);
+    }
+
+    clearPrivateUhtml(user: string, id: string): void {
+        this.checkCan("html", this.client.status.id, true);
+        user = Tools.toId(user);
+        if (!user || !id) throw new PSAPIError("EMPTY", !user ? "User" : "ID");
+        this.useCommand(`/changeprivateuhtml ${user},${id},<div></div>`);
+    }
+
+    sendPrivateHtmlBox(user: string, html: string): void {
+        this.checkCan("html", this.client.status.id, true);
+        user = Tools.toId(user);
+        if (!user || !html) throw new PSAPIError("EMPTY", !user ? "User" : "HTML");
+        this.useCommand(`/sendprivatehtmlbox ${user},${html}`);
+    }
+
+    sendPmUhtml(user: string, id: string, html: string, change?: boolean): void {
+        this.checkCan("html", this.client.status.id, true);
+        if (change) return this.changePmUhtml(user, id, html);
+        user = Tools.toId(user);
+        if (!user || !id || !html) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "ID" : "HTML");
+        this.useCommand(`/pmuhtml ${user},${id},${html}`);
+    }
+
+    changePmUhtml(user: string, id: string, html: string): void {
+        this.checkCan("html", this.client.status.id, true);
+        user = Tools.toId(user);
+        if (!user || !id || !html) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "ID" : "HTML");
+        this.useCommand(`/pmuhtmlchange ${user},${id},${html}`);
+    }
+
+    clearPmUhtml(user: string, id: string): void {
+        this.checkCan("html", this.client.status.id, true);
+        user = Tools.toId(user);
+        if (!user || !id) throw new PSAPIError("EMPTY", !user ? "User" : "ID");
+        this.useCommand(`/pmuhtmlchange ${user},${id},<div></div>`);
+    }
+
+    sendPmHtmlBox(user: string, html: string): void {
+        this.checkCan("html", this.client.status.id, true);
+        user = Tools.toId(user);
+        if (!user || !html) throw new PSAPIError("EMPTY", !user ? "User" : "ID");
+        this.useCommand(`/pminfobox ${user},${html}`);
+    }
+
+    sendHtmlPage(user: string, id: string, html: string): void {
+        this.checkCan("html", this.client.status.id, true);
+        user = Tools.toId(user);
+        if (!user || !id || !html) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "ID" : "HTML");
+        this.useCommand(`/sendhtmlpage ${user},${id},${html}`);
     }
 
     deleteMessages(user: string, clear: boolean, reason: string, lines?: number): Promise<Message<Room> | null> {
+        this.checkCan("hidetext", this.client.status.id);
         const r = this;
         return new Promise((resolve, reject) => {
             r.client.sendRoom(
@@ -171,9 +285,17 @@ export class Room {
         return rank;
     }
 
-    can(permission: RoomPermissions, user: User): boolean;
-    can(permission: string, user: User): boolean;
-    can(permission: string | RoomPermissions, user: User): boolean {
+    checkCan(permission: RoomPermissions, user: User | string, strict?: boolean): boolean;
+    checkCan(permission: string, user: User | string, strict?: boolean): boolean;
+    checkCan(permission: string | RoomPermissions, user: User | string, strict?: boolean): boolean {
+        if (!this.isExist || !this.auth) {
+            if (strict) throw new PSAPIError("EMPTY", "Room");
+            else return false;
+        }
+        if (!this.client.status.loggedIn) {
+            if (strict) throw new PSAPIError("NOT_LOGGED_IN");
+            else return false;
+        }
         permission = Tools.toId(permission);
         let auth: GroupSymbol = " ";
         switch (permission) {
@@ -181,6 +303,7 @@ export class Room {
                 auth = "+";
                 break;
             case "show":
+            case "hidetext":
             case "warn":
             case "tour":
             case "mute":
@@ -201,9 +324,14 @@ export class Room {
                 auth = "#";
                 break;
         }
-        if (auth === " ") return false;
-        const userAuth = this.getRank(user.id);
-        return Tools.isHigherRank(userAuth, auth);
+        if (auth === " ") {
+            if (strict) throw new PSAPIError("PERMISSION_NOT_FOUND", permission);
+            else return false;
+        }
+        const userAuth = this.getRank(user instanceof User ? user.id : user);
+        const can = Tools.isHigherRank(userAuth, auth);
+        if (strict && !can) throw new PSAPIError("PERMISSION_DENIED", auth, userAuth);
+        else return can;
     }
 
     isVoice(userid: string): boolean {
@@ -236,14 +364,20 @@ export class Room {
         return false;
     }
 
+    hasRank(user: string | User, auth: GroupSymbol): boolean {
+        if (!this.auth || !this.isExist) return false;
+        const rank = this.getRank(user);
+        return Tools.isHigherRank(rank, auth);
+    }
+
     isRoomStaff(userid: string): boolean {
         if (this.auth && this.isExist) return this.isDriver(userid) || this.isMod(userid) || this.isOwner(userid);
         return false;
     }
 
     isStaff(user: User): boolean {
-        if (user instanceof UserClass && this.auth && this.isExist) {
-            if (user.online) return (user as User).isGlobalStaff || this.isRoomStaff(user.userid);
+        if (user instanceof User && this.auth && this.isExist) {
+            if (user.online) return user.isGlobalStaff || this.isRoomStaff(user.userid);
             else return this.isRoomStaff(user.userid);
         }
         return false;

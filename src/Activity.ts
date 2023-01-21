@@ -6,13 +6,6 @@ import { Tools } from "./Tools";
 import type { Client } from "./Client";
 import type { Room } from "./Room";
 import type { ActivityErrorType } from "../types/Activity";
-import type {
-    PrivateuHTMLOptions,
-    PMuHTMLOptions,
-    PrivateHTMLBoxOptions,
-    PmHTMLBoxOptions,
-    IHtmlPageData,
-} from "../types/Room";
 import type { UserOptions } from "../types/User";
 import type { Dict } from "../types/utils";
 
@@ -84,62 +77,55 @@ export abstract class Activity {
         this.client.send(message);
     }
 
-    PMPlayer<T extends PMuHTMLOptions | PmHTMLBoxOptions | string = PMuHTMLOptions | PmHTMLBoxOptions | string>(
-        userid: string,
-        type: T extends string ? "text" : T extends PMuHTMLOptions ? "uhtml" : "box",
-        data: T
-    ): void {
-        let message = "";
-        switch (type) {
-            case "text": {
-                message += `/msg ${userid},${data}`;
-                break;
-            }
-            case "uhtml": {
-                const { id, content, edit } = data as unknown as PMuHTMLOptions;
-                if (edit) message += "/pmuhtmlchange ";
-                else message += "/pmuhtml ";
-                message += `${userid},${id},${content}`;
-                break;
-            }
-            case "box": {
-                const { content } = data as PmHTMLBoxOptions;
-                message += `/pminfobox ${userid},${content}`;
-                break;
-            }
-        }
-        if (!message) return;
-        message = this.room.roomid! + "|" + message;
-        this.client.send(message);
+    sendUhtml(id: string, html: string, change?: boolean): void {
+        if (change) this.room.changeUhtml(id, html);
+        else this.room.sendUhtml(id, html, change);
     }
 
-    sendPrivatePlayer<
-        T extends PrivateuHTMLOptions | PrivateHTMLBoxOptions = PrivateuHTMLOptions | PrivateHTMLBoxOptions
-    >(userid: string, type: T extends PrivateuHTMLOptions ? "uhtml" : "box", data: T): void {
-        let message = "";
-        switch (type) {
-            case "uhtml": {
-                const { id, content, edit } = data as PrivateuHTMLOptions;
-                if (edit) message += "/changeprivateuhtml ";
-                else message += "/sendprivateuhtml ";
-                message += `${userid},${id},${content}`;
-                break;
-            }
-            case "box": {
-                const { content } = data as PrivateHTMLBoxOptions;
-                message += `/sendprivatehtmlbox ${userid},${content}`;
-                break;
-            }
-        }
-        if (!message) return;
-        message = this.room.roomid! + "|" + message;
-        this.client.send(message);
+    changeUhtml(id: string, html: string): void {
+        this.room.changeUhtml(id, html);
     }
 
-    sendHtmlPage(userid: string, data: IHtmlPageData): void {
-        const { id, content } = data;
-        const message = `${this.room.roomid}|/sendhtmlpage ${userid},${id},${content}`;
-        this.client.send(message);
+    clearUhtml(id: string): void {
+        this.room.clearUhtml(id);
+    }
+
+    sendPrivateUhtml(user: string, id: string, html: string, change?: boolean): void {
+        if (change) this.room.changePrivateUhtml(user, id, html);
+        else this.room.sendPrivateUhtml(user, id, html, change);
+    }
+
+    changePrivateUhtml(user: string, id: string, html: string): void {
+        this.room.changePrivateUhtml(user, id, html);
+    }
+
+    clearPrivateUhtml(user: string, id: string): void {
+        this.room.clearPrivateUhtml(user, id);
+    }
+
+    sendPrivateHtmlBox(user: string, html: string): void {
+        this.room.sendPrivateHtmlBox(user, html);
+    }
+
+    sendPmUhtml(user: string, id: string, html: string, change?: boolean): void {
+        if (change) this.room.changePmUhtml(user, id, html);
+        else this.room.sendPmUhtml(user, id, html, change);
+    }
+
+    changePmUhtml(user: string, id: string, html: string): void {
+        this.room.changePmUhtml(user, id, html);
+    }
+
+    clearPmUhtml(user: string, id: string): void {
+        this.room.clearPmUhtml(user, id);
+    }
+
+    sendPmHtmlBox(user: string, html: string): void {
+        this.room.sendPmHtmlBox(user, html);
+    }
+
+    sendHtmlPage(userid: string, id: string, html: string): void {
+        this.room.sendHtmlPage(userid, id, html);
     }
 }
 
@@ -156,52 +142,42 @@ export class Player extends User {
         this.activity = activity;
     }
 
-    override send(content: string): void {
-        this.sendText(content);
+    sendPrivateUhtml(id: string, html: string, change?: boolean): void {
+        if (change) this.changePrivateUhtml(id, html);
+        else this.activity.sendPrivateUhtml(this.userid, id, html);
     }
 
-    sendText(content: string): void {
-        this.activity.PMPlayer<string>(this.id, "text", content);
-    }
-
-    sendPmUhtml(data: PMuHTMLOptions): void {
-        this.activity.PMPlayer<PMuHTMLOptions>(this.id, "uhtml", data);
-    }
-
-    changePmUhtml(data: PMuHTMLOptions): void {
-        this.activity.PMPlayer<PMuHTMLOptions>(this.id, "uhtml", data);
-    }
-
-    clearPmUhtml(id: string): void {
-        this.activity.PMPlayer<PMuHTMLOptions>(this.id, "uhtml", { id, content: "<div></div>", pm: this.id });
-    }
-
-    sendPmInfobox(data: PmHTMLBoxOptions): void {
-        this.activity.PMPlayer<PmHTMLBoxOptions>(this.id, "box", data);
-    }
-
-    sendPrivateUhtml(data: PrivateuHTMLOptions): void {
-        this.activity.sendPrivatePlayer<PrivateuHTMLOptions>(this.id, "uhtml", data);
-    }
-
-    changePrivateUhtml(data: PrivateuHTMLOptions): void {
-        this.activity.sendPrivatePlayer<PrivateuHTMLOptions>(this.id, "uhtml", data);
+    changePrivateUhtml(id: string, html: string): void {
+        this.activity.changePrivateUhtml(this.userid, id, html);
     }
 
     clearPrivateUhtml(id: string): void {
-        this.activity.sendPrivatePlayer<PrivateuHTMLOptions>(this.id, "uhtml", {
-            id,
-            content: "<div></div>",
-            private: this.id,
-        });
+        this.activity.clearPrivateUhtml(this.userid, id);
     }
 
-    sendPrivateBox(data: PrivateHTMLBoxOptions): void {
-        this.activity.sendPrivatePlayer<PrivateHTMLBoxOptions>(this.id, "box", data);
+    sendPrivateHtmlBox(html: string): void {
+        this.activity.sendPrivateHtmlBox(this.userid, html);
     }
 
-    sendHtmlPage(data: IHtmlPageData): void {
-        this.activity.sendHtmlPage(this.id, data);
+    sendPmUhtml(id: string, html: string, change?: boolean): void {
+        if (change) this.changePmUhtml(id, html);
+        else this.activity.sendPmUhtml(this.userid, id, html);
+    }
+
+    changePmUhtml(id: string, html: string): void {
+        this.activity.changePmUhtml(this.userid, id, html);
+    }
+
+    clearPmUhtml(user: string, id: string): void {
+        this.activity.clearPmUhtml(this.userid, id);
+    }
+
+    sendPmHtmlBox(html: string): void {
+        this.activity.sendPmHtmlBox(this.userid, html);
+    }
+
+    sendHtmlPage(id: string, html: string): void {
+        this.activity.sendHtmlPage(this.id, id, html);
     }
 
     addPoints(points: number): this {
