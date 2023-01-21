@@ -15,7 +15,6 @@ import type {
 } from "../types/Room";
 import type { UserOptions } from "../types/User";
 import type { Dict } from "../types/utils";
-// import type { IOutGoingMessage } from "../types/Client";
 
 export abstract class Activity {
     started: boolean = false;
