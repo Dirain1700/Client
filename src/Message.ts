@@ -1,8 +1,9 @@
 "use strict";
 
-import type { Client } from "./Client";
-import { User } from "./User";
 import { Room } from "./Room";
+import { User } from "./User";
+
+import type { Client } from "./Client";
 import type { MessageInput, MessageWaits, UserMessageOptions, RoomMessageOptions } from "../types/Message";
 import type { RoomOptions } from "../types/Room";
 import type { UserOptions } from "../types/User";

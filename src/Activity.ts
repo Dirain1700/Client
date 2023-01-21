@@ -1,7 +1,7 @@
 "use strict";
 
-import { User } from "./User";
 import { Tools } from "./Tools";
+import { User } from "./User";
 
 import type { Client } from "./Client";
 import type { Room } from "./Room";

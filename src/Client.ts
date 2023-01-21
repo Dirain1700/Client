@@ -2,20 +2,21 @@
 
 import * as https from "https";
 import { EventEmitter } from "node:events";
+import * as querystring from "querystring";
 import * as url from "url";
 import * as util from "util";
+
 import { WebSocket } from "ws";
-import * as querystring from "querystring";
-import { Tools } from "./Tools";
+
 import { ClientUser } from "./ClientUser";
+import { TimeoutError, AccessError } from "./Error";
 import { Message } from "./Message";
 import { Room } from "./Room";
-import { User } from "./User";
+import { Tools } from "./Tools";
 import { Tournament } from "./Tour";
-import { TimeoutError, AccessError } from "./Error";
+import { User } from "./User";
 
-import type { ClientOptions as wsClientOptions } from "ws";
-import type { IncomingMessage } from "http";
+import type { MessageInput, UserMessageOptions, RoomMessageOptions } from "./../types/Message";
 import type {
     ClientOptions,
     ClientEvents,
@@ -27,10 +28,11 @@ import type {
     PostLoginOptions,
     PendingMessage,
 } from "../types/Client";
-import type { UserOptions } from "../types/User";
 import type { RoomOptions, RankHTMLOptions, PrivateHTMLOptions, HTMLOptions } from "../types/Room";
 import type { TourUpdateData, EliminationBracket, RoundRobinBracket, TourEndData } from "../types/Tour";
-import type { MessageInput, UserMessageOptions, RoomMessageOptions } from "./../types/Message";
+import type { UserOptions } from "../types/User";
+import type { IncomingMessage } from "http";
+import type { ClientOptions as wsClientOptions } from "ws";
 
 const MAIN_HOST = "sim3.psim.us";
 const Events: ClientEventNames = {

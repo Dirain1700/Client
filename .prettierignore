@@ -1,5 +1,6 @@
 package.json
 package-lock.json
+.eslintrc.json
 .upm/*
 .cache/*
 dist/*

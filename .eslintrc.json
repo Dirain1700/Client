@@ -18,16 +18,42 @@
     },
     "overrides": [
         {
-            "files": ["*.ts"],
+            "files": ["*/**/*.ts"],
             "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
             "parser": "@typescript-eslint/parser",
-            "plugins": ["@typescript-eslint"],
+            "plugins": ["@typescript-eslint", "import"],
             "rules": {
                 "no-unused-vars": "off",
                 "@typescript-eslint/no-inferrable-types": "off",
                 "@typescript-eslint/no-this-alias": "off",
                 "@typescript-eslint/no-non-null-assertion": "off",
-                "@typescript-eslint/no-unused-vars": "error"
+                "@typescript-eslint/no-unused-vars": "error",
+                "import/order": [
+                    "error",
+                    {
+                        "groups": [
+                            "builtin",
+                            "external",
+                            "internal",
+                            "object",
+                            ["parent", "sibling"],
+                            "index",
+                            "type"
+                        ],
+                        "pathGroups": [
+                            {
+                                "pattern": "../src/*",
+                                "group": "type",
+                                "position": "before"
+                            }
+                        ],
+                        "distinctGroup": false,
+                        "alphabetize": {
+                            "order": "asc"
+                        },
+                        "newlines-between": "always-and-inside-groups"
+                    }
+                ]
             }
         }
     ]

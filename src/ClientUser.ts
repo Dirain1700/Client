@@ -3,8 +3,8 @@
 import { User } from "./User";
 
 import type { Client } from "./Client";
-import type { UserOptions } from "../types/User";
 import type { UserSettings } from "../types/ClientUser";
+import type { UserOptions } from "../types/User";
 
 export class ClientUser extends User {
     trusted: boolean;

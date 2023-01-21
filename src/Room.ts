@@ -1,14 +1,14 @@
 "use strict";
 
+import { PSAPIError } from "./Error";
 import { Tools } from "./Tools";
 import { User } from "./User";
-import { PSAPIError } from "./Error";
 
-import type { RoomOptions, RoomPermissions } from "../types/Room";
 import type { Client } from "./Client";
 import type { Message } from "./Message";
 import type { Tournament } from "./Tour";
 import type { MessageWaits, awaitMessageOptions, RoomMessageOptions } from "../types/Message";
+import type { RoomOptions, RoomPermissions } from "../types/Room";
 import type { GroupSymbol, AuthLevel } from "../types/UserGroups";
 
 export class Room {

@@ -1,10 +1,11 @@
-import type { Room } from "../src/Room";
-import type { User } from "../src/User";
+import type { TimeoutError } from "../src/Error";
 import type { Message } from "../src/Message";
+import type { Room } from "../src/Room";
 import type { Tournament } from "../src/Tour";
+import type { User } from "../src/User";
+
 import type { RoomOptions } from "./Room";
 import type { TourUpdateData, TourEndData } from "./Tour";
-import type { TimeoutError } from "../src/Error";
 
 /* eslint-disable no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types */
 

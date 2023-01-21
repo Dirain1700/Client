@@ -1,7 +1,8 @@
-import type { GroupSymbol } from "./UserGroups";
-import type { MessageWaits } from "./Message";
 import type { Client } from "../src/Client";
 import type { User } from "../src/User";
+
+import type { MessageWaits } from "./Message";
+import type { GroupSymbol } from "./UserGroups";
 
 export interface UserOptions {
     id: string;
