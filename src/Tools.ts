@@ -38,6 +38,7 @@ export class Tools {
     }
 
     static isHigherRank(comparePosition: GroupSymbol, standard: GroupSymbol): boolean {
+        if (comparePosition === standard) return true;
         return [comparePosition, standard].toString() === this.sortByRank([comparePosition, standard]).toString();
     }
 }
