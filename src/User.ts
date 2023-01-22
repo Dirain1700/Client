@@ -16,9 +16,9 @@ export class User {
     avatar: string | number | null;
     group: GroupSymbol;
     locked: boolean;
-    customgroup: "Section Leader" | null;
+    sectionLeader: boolean;
     autoconfirmed: boolean;
-    status?: string | null;
+    status: string;
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     rooms: { [key: string]: { [key: string]: any } } | null;
     friended: boolean;
@@ -34,9 +34,9 @@ export class User {
         this.avatar = init.avatar || null;
         this.group = init.group ?? " ";
         this.locked = this.group === "‽";
-        this.customgroup = init.customgroup ?? null;
+        this.sectionLeader = init.customgroup === "Section Leader";
         this.autoconfirmed = init.autoconfirmed ?? false;
-        this.status = init.status ?? null;
+        this.status = init.status ?? "";
         this.rooms = init.rooms || null;
         this.friended = init.friended ?? false;
         this.online = init.rooms ? true : false;
