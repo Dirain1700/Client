@@ -1,12 +1,13 @@
 "use strict";
 
+import { PSAPIError } from "./Error";
 import { Tools } from "./Tools";
 
 import type { Client } from "./Client";
 import type { Message } from "./Message";
 import type { MessageWaits, awaitMessageOptions, UserMessageOptions } from "../types/Message";
 import type { UserOptions, GlobalPermissions } from "../types/User";
-import type { AuthLevel, GroupSymbol } from "../types/UserGroups";
+import type { GroupSymbol } from "../types/UserGroups";
 
 export class User {
     id: string;
@@ -14,6 +15,7 @@ export class User {
     name: string;
     avatar: string | number | null;
     group: GroupSymbol;
+    locked: boolean;
     customgroup: "Section Leader" | null;
     autoconfirmed: boolean;
     status?: string | null;
@@ -31,6 +33,7 @@ export class User {
         this.name = init.name;
         this.avatar = init.avatar || null;
         this.group = init.group ?? " ";
+        this.locked = this.group === "‽";
         this.customgroup = init.customgroup ?? null;
         this.autoconfirmed = init.autoconfirmed ?? false;
         this.status = init.status ?? null;
@@ -104,13 +107,20 @@ export class User {
         });
     }
 
-    can(permission: GlobalPermissions): boolean;
-    can(permission: string): boolean;
-    can(permission: string | GlobalPermissions): boolean {
+    checkCan(permission: GlobalPermissions, strict?: boolean): boolean;
+    checkCan(permission: string, strict?: boolean): boolean;
+    checkCan(permission: string | GlobalPermissions, strict?: boolean): boolean {
+        if (this.locked) {
+            if (strict) throw new PSAPIError("PERMISSION_DENIED", " ", "‽");
+            else return false;
+        }
         permission = Tools.toId(permission);
         let auth: GroupSymbol = " ";
         switch (permission) {
             case "broadcast":
+                auth = " ";
+                break;
+            case "groupchat":
                 auth = "+";
                 break;
             case "warn":
@@ -133,13 +143,13 @@ export class User {
                 auth = "&";
                 break;
         }
-        if (auth === " ") return false;
-        function isInRankList(rank: GroupSymbol | AuthLevel | null): rank is GroupSymbol {
-            if (!rank) return false;
-            return Tools.rankList.includes(rank as string);
+        if (auth === " " && permission !== "broadcast") {
+            if (strict) throw new PSAPIError("PERMISSION_NOT_FOUND", permission);
+            else return false;
         }
-        if (!isInRankList(this.group)) return false;
-        return Tools.isHigherRank(this.group, auth);
+        const can = Tools.isHigherRank(this.group, auth);
+        if (strict && !can) throw new PSAPIError("PERMISSION_DENIED", auth, this.group);
+        else return can;
     }
 
     get isGlobalVoice(): boolean {
