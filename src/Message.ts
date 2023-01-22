@@ -41,8 +41,8 @@ export class Message<T extends Room | User = Room | User> {
         } else this.deletable = false;
         if (this.command && this.command.startsWith("/")) this.deletable = false;
 
-        if (this.target instanceof Room) {
-            const message = this as Message<Room>;
+        if (this.inRoom()) {
+            const message = this;
             this.target.waits.forEach((wait: MessageWaits<Room>) => {
                 if (message.type === "Room" && wait.filter(message) && wait.roomid! === message.target.id) {
                     message.awaited = true;
@@ -61,8 +61,8 @@ export class Message<T extends Room | User = Room | User> {
                 );
             });
             this.awaited = message.awaited;
-        } else if (this.target instanceof User) {
-            const message = this as Message<User>;
+        } else if (this.inPm()) {
+            const message = this;
             this.target.waits.forEach((wait: MessageWaits<User>) => {
                 if (message.type === "PM" && wait.filter(message) && wait.userid! === message.author.userid) {
                     message.awaited = true;
@@ -85,16 +85,16 @@ export class Message<T extends Room | User = Room | User> {
     }
 
     reply(option: UserMessageOptions | RoomMessageOptions): Promise<Message<Room | User>> | void {
-        if (this.isRoomMessage()) return this.client.sendRoom(this.target.id, option as RoomMessageOptions);
-        else if (this.isUserMessage()) return this.client.sendUser(this.target.id, option as UserMessageOptions);
-        else throw new Error("<Message<T>>.target is neither Room or User.");
+        if (this.inRoom()) return this.client.sendRoom(this.target.id, option as RoomMessageOptions);
+        else if (this.inPm()) return this.client.sendUser(this.target.id, option as UserMessageOptions);
+        else throw new Error("Message<T>.target is neither Room or User.");
     }
 
-    isUserMessage(): this is Message<User> {
+    inPm(): this is Message<User> {
         return this.target instanceof User;
     }
 
-    isRoomMessage(): this is Message<Room> {
+    inRoom(): this is Message<Room> {
         return this.target instanceof Room;
     }
 }
