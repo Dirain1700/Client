@@ -1,14 +1,14 @@
 "use strict";
 
-export { Client } from "./Client";
-export { ClientUser } from "./ClientUser";
-export { Message } from "./Message";
-export { Room } from "./Room";
-export { User } from "./User";
-export { Activity, Player } from "./Activity";
-export { Tournament } from "./Tour";
-export { TimeoutError, AccessError } from "./Error";
-export { Tools } from "./Tools";
+export * from "./Client";
+export * from "./ClientUser";
+export * from "./Message";
+export * from "./Room";
+export * from "./User";
+export * from "./Activity";
+export * from "./Tour";
+export * from "./Error";
+export * from "./Tools";
 
 export type {
     ActivityErrorType,
