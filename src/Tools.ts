@@ -20,6 +20,22 @@ export class Tools {
         "‽", //Locked
     ];
 
+    static readonly ranks = {
+        admin: "&",
+        owner: "#",
+        bot: "*",
+        mod: "@",
+        host: "★",
+        driver: "%",
+        sectionleader: "§",
+        player: "☆",
+        voice: "+",
+        prizewinner: "^",
+        normal: " ",
+        muted: "!",
+        locked: "‽",
+    };
+
     static toId(id: string): string {
         return id.toLowerCase().replace(/[^a-z0-9]/g, "");
     }
