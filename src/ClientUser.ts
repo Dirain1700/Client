@@ -3,6 +3,7 @@
 import { User } from "./User";
 
 import type { Client } from "./Client";
+
 import type { UserSettings } from "../types/ClientUser";
 import type { UserOptions } from "../types/User";
 

@@ -5,6 +5,7 @@ import { Tools } from "./Tools";
 
 import type { Client } from "./Client";
 import type { Message } from "./Message";
+
 import type { MessageWaits, awaitMessageOptions, UserMessageOptions } from "../types/Message";
 import type { UserOptions, GlobalPermissions } from "../types/User";
 import type { GroupSymbol } from "../types/UserGroups";

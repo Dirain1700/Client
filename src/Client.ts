@@ -1,10 +1,10 @@
 "use strict";
 
-import * as https from "https";
 import { EventEmitter } from "node:events";
-import * as querystring from "querystring";
-import * as url from "url";
-import * as util from "util";
+import * as https from "node:https";
+import * as querystring from "node:querystring";
+import * as url from "node:url";
+import * as util from "node:util";
 
 import { WebSocket } from "ws";
 
@@ -16,7 +16,9 @@ import { Tools } from "./Tools";
 import { Tournament } from "./Tour";
 import { User } from "./User";
 
-import type { MessageInput, UserMessageOptions, RoomMessageOptions } from "./../types/Message";
+import type { IncomingMessage } from "http";
+import type { ClientOptions as wsClientOptions } from "ws";
+
 import type {
     ClientOptions,
     ClientEvents,
@@ -28,11 +30,10 @@ import type {
     PostLoginOptions,
     PendingMessage,
 } from "../types/Client";
+import type { MessageInput, UserMessageOptions, RoomMessageOptions } from "../types/Message";
 import type { RoomOptions, RankHTMLOptions, PrivateHTMLOptions, HTMLOptions } from "../types/Room";
 import type { TourUpdateData, EliminationBracket, RoundRobinBracket, TourEndData } from "../types/Tour";
 import type { UserOptions } from "../types/User";
-import type { IncomingMessage } from "http";
-import type { ClientOptions as wsClientOptions } from "ws";
 
 const MAIN_HOST = "sim3.psim.us";
 const Events: ClientEventNames = {

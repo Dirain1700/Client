@@ -4,6 +4,7 @@ import { Activity, Player } from "./Activity";
 import { Tools } from "./Tools";
 
 import type { Room } from "./Room";
+
 import type { TourUpdateData, TourEndData, EliminationBracket, RoundRobinBracket } from "../types/Tour";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

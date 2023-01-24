@@ -2,7 +2,6 @@ import type { Client } from "../src/Client";
 import type { Message } from "../src/Message";
 import type { Room } from "../src/Room";
 import type { User } from "../src/User";
-
 import type { HTMLOptions } from "./Room";
 
 export interface MessageInput<T extends User | Room | unknown> {

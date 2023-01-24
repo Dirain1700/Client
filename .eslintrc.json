@@ -42,9 +42,19 @@
                         ],
                         "pathGroups": [
                             {
+                                "pattern": "[!/]",
+                                "group": "type",
+                                "position": "before"
+                            },
+                            {
                                 "pattern": "../src/*",
                                 "group": "type",
                                 "position": "before"
+                            },
+                            {
+                                "pattern": "../types/*",
+                                "group": "type",
+                                "position": "after"
                             }
                         ],
                         "distinctGroup": false,

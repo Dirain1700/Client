@@ -7,6 +7,7 @@ import { User } from "./User";
 import type { Client } from "./Client";
 import type { Message } from "./Message";
 import type { Tournament } from "./Tour";
+
 import type { MessageWaits, awaitMessageOptions, RoomMessageOptions } from "../types/Message";
 import type { RoomOptions, RoomPermissions } from "../types/Room";
 import type { GroupSymbol, AuthLevel } from "../types/UserGroups";

@@ -3,7 +3,6 @@ import type { Message } from "../src/Message";
 import type { Room } from "../src/Room";
 import type { Tournament } from "../src/Tour";
 import type { User } from "../src/User";
-
 import type { RoomOptions } from "./Room";
 import type { TourUpdateData, TourEndData } from "./Tour";
 

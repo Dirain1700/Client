@@ -5,6 +5,7 @@ import { User } from "./User";
 
 import type { Client } from "./Client";
 import type { Room } from "./Room";
+
 import type { ActivityErrorType } from "../types/Activity";
 import type { UserOptions } from "../types/User";
 import type { Dict } from "../types/utils";
