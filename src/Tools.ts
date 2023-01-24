@@ -97,7 +97,7 @@ export class Tools {
     static toGroupName(rank: string): GroupNames;
     static toGroupName(rank: string): GroupNames {
         if (rank === "~") rank = "&";
-        else if (this.rankSymbols.includes(rank as GroupSymbol)) rank = " ";
+        else if (!this.rankSymbols.includes(rank as GroupSymbol)) rank = " ";
         return this.rankNames[this.rankSymbols.indexOf(rank as GroupSymbol) - 1]!;
     }
 
@@ -105,7 +105,7 @@ export class Tools {
     static toGroupSymbol(rank: string): GroupSymbol;
     static toGroupSymbol(rank: string): GroupSymbol {
         rank = this.toId(rank);
-        if (this.rankNames.includes(rank as GroupNames)) rank = "voice";
+        if (!this.rankNames.includes(rank as GroupNames)) rank = "voice";
         return this.rankSymbols[this.rankNames.indexOf(rank as GroupNames) + 1]!;
     }
 
