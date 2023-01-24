@@ -58,5 +58,7 @@ export type {
     UserOptions,
     GlobalPermissions,
     GroupSymbol,
+    GroupNames,
     AuthLevel,
+    Ranks,
 } from "../types/index";

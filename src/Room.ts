@@ -10,7 +10,7 @@ import type { Tournament } from "./Tour";
 
 import type { MessageWaits, awaitMessageOptions, RoomMessageOptions } from "../types/Message";
 import type { RoomOptions, RoomPermissions } from "../types/Room";
-import type { GroupSymbol, AuthLevel } from "../types/UserGroups";
+import type { GroupSymbol, GroupNames, AuthLevel } from "../types/UserGroups";
 
 export class Room {
     id: string;
@@ -267,6 +267,7 @@ export class Room {
             GlobalRank = user.group ?? " ";
             user = user.id;
         }
+        if (!this.isExist || !this.auth) return GlobalRank;
         if (this.visibility === "secret") return this.getRoomRank(user);
         const RoomRank: GroupSymbol = this.getRoomRank(user);
         return Tools.sortByRank([RoomRank, GlobalRank])[0] as GroupSymbol;
@@ -335,6 +336,14 @@ export class Room {
         else return can;
     }
 
+    hasRank(rank: GroupNames | GroupSymbol, user: User | string): boolean {
+        if ((user instanceof User && user.locked) || !rank) return false;
+        const auth = this.getRank(user);
+        if (!Tools.rankSymbols.includes(rank as GroupSymbol))
+            rank = Tools.toGroupSymbol(rank as Exclude<typeof rank, GroupSymbol>);
+        return Tools.isHigherRank(auth, rank as GroupSymbol);
+    }
+
     isVoice(userid: string): boolean {
         userid = Tools.toId(userid);
         if (this.auth && this.isExist) return this.auth["+"]?.includes(userid) ?? false;
@@ -363,12 +372,6 @@ export class Room {
         userid = Tools.toId(userid);
         if (this.auth && this.isExist) return this.auth["#"]?.includes(userid) ?? false;
         return false;
-    }
-
-    hasRank(user: string | User, auth: GroupSymbol): boolean {
-        if (!this.auth || !this.isExist) return false;
-        const rank = this.getRank(user);
-        return Tools.isHigherRank(rank, auth);
     }
 
     isRoomStaff(userid: string): boolean {

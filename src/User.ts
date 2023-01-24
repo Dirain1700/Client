@@ -1,6 +1,7 @@
 "use strict";
 
 import { PSAPIError } from "./Error";
+import { Room } from "./Room";
 import { Tools } from "./Tools";
 
 import type { Client } from "./Client";
@@ -8,7 +9,7 @@ import type { Message } from "./Message";
 
 import type { MessageWaits, awaitMessageOptions, UserMessageOptions } from "../types/Message";
 import type { UserOptions, GlobalPermissions } from "../types/User";
-import type { GroupSymbol } from "../types/UserGroups";
+import type { GroupSymbol, GroupNames } from "../types/UserGroups";
 
 export class User {
     id: string;
@@ -151,6 +152,15 @@ export class User {
         const can = Tools.isHigherRank(this.group, auth);
         if (strict && !can) throw new PSAPIError("PERMISSION_DENIED", auth, this.group);
         else return can;
+    }
+
+    hasRank(rank: GroupNames | GroupSymbol, room?: Room): boolean {
+        if (this.locked || !rank) return false;
+        let auth = this.group;
+        if (room instanceof Room) auth = room.getRank(this);
+        if (!Tools.rankSymbols.includes(rank as GroupSymbol))
+            rank = Tools.toGroupSymbol(rank as Exclude<typeof rank, GroupSymbol>);
+        return Tools.isHigherRank(auth, rank as GroupSymbol);
     }
 
     get isGlobalVoice(): boolean {

@@ -1,6 +1,6 @@
 "use strict";
 
-import type { GroupSymbol } from "../types/UserGroups";
+import type { GroupSymbol, GroupNames } from "../types/UserGroups";
 
 const AND = "&";
 const LESS_THAN = "<";
@@ -32,7 +32,7 @@ const ESCAPED_NUMBER_SINGLE_QUOTE = "&#39;";
 const ESCAPED_NUMBER_SLASH = "&#47;";
 
 export class Tools {
-    static readonly rankList = [
+    static readonly rankSymbols: Array<GroupSymbol & string> = [
         "~", //OldAdmin
         "&", //NewAdmin
         "#", //RoomOwner
@@ -49,9 +49,25 @@ export class Tools {
         "‽", //Locked
     ];
 
+    static readonly rankNames: Array<GroupNames & string> = [
+        "admin",
+        "roomowner",
+        "bot",
+        "mod",
+        "host",
+        "driver",
+        "sectionleader",
+        "player",
+        "voice",
+        "prizewinner",
+        "normal",
+        "muted",
+        "locked",
+    ];
+
     static readonly ranks = {
         admin: "&",
-        owner: "#",
+        roomowner: "#",
         bot: "*",
         mod: "@",
         host: "★",
@@ -77,8 +93,24 @@ export class Tools {
         return new Promise((r) => setTimeout(r, t));
     }
 
+    static toGroupName(rank: GroupSymbol & string): GroupNames;
+    static toGroupName(rank: string): GroupNames;
+    static toGroupName(rank: string): GroupNames {
+        if (rank === "~") rank = "&";
+        else if (this.rankSymbols.includes(rank as GroupSymbol)) rank = " ";
+        return this.rankNames[this.rankSymbols.indexOf(rank as GroupSymbol) - 1]!;
+    }
+
+    static toGroupSymbol(rank: GroupNames & string): GroupSymbol;
+    static toGroupSymbol(rank: string): GroupSymbol;
+    static toGroupSymbol(rank: string): GroupSymbol {
+        rank = this.toId(rank);
+        if (this.rankNames.includes(rank as GroupNames)) rank = "voice";
+        return this.rankSymbols[this.rankNames.indexOf(rank as GroupNames) + 1]!;
+    }
+
     static sortByRank(arr: GroupSymbol[]): GroupSymbol[] {
-        arr.sort((a, b) => this.rankList.indexOf(a) - this.rankList.indexOf(b));
+        arr.sort((a, b) => this.rankSymbols.indexOf(a) - this.rankSymbols.indexOf(b));
         return arr;
     }
 

@@ -60,4 +60,4 @@ export type {
     TourEndData,
 } from "./Tour";
 
-export type { GroupSymbol, AuthLevel } from "./UserGroups";
+export type { GroupSymbol, GroupNames, AuthLevel, Ranks } from "./UserGroups";
