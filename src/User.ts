@@ -157,9 +157,11 @@ export class User {
     hasRank(rank: GroupNames | GroupSymbol, room?: Room): boolean {
         if (this.locked || !rank) return false;
         let auth = this.group;
-        if (room instanceof Room) auth = room.getRank(this);
+        if (room instanceof Room) return room.hasRank(rank, this);
         if (!Tools.rankSymbols.includes(rank as GroupSymbol))
             rank = Tools.toGroupSymbol(rank as Exclude<typeof rank, GroupSymbol>);
+        if (!Tools.rankSymbols.includes(auth as GroupSymbol))
+            auth = Tools.toGroupSymbol(auth as Exclude<typeof rank, GroupSymbol>);
         return Tools.isHigherRank(auth, rank as GroupSymbol);
     }
 
