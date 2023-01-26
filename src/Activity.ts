@@ -61,12 +61,27 @@ export abstract class Activity {
         return player;
     }
 
-    removePlayer(name: string): Player | undefined {
+    removePlayer(name: string, played?: boolean): Player | undefined {
         const player = this.players.get(Tools.toId(name));
         if (!player) {
             this.sayError("USER_NOT_FOUND", name);
             return;
         }
+        this.players.delete(player.id);
+        if (played) {
+            player.remove();
+            this.pastPlayers.set(player.id, player);
+        }
+        return player;
+    }
+
+    eliminatePlayer(name: string): Player | undefined {
+        const player = this.players.get(Tools.toId(name));
+        if (!player) {
+            this.sayError("USER_NOT_FOUND", name);
+            return;
+        }
+        player.eliminate();
         this.players.delete(player.id);
         this.pastPlayers.set(player.id, player);
         return player;

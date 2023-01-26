@@ -1,7 +1,12 @@
 "use strict";
 
+import { Collection } from "@discordjs/collection";
+
 import { Activity } from "./Activity";
+
 import { Tools } from "./Tools";
+
+import type { Player } from "./Activity";
 
 import type { Room } from "./Room";
 
@@ -113,19 +118,10 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
         return this;
     }
 
-    get getWinner(): string[] {
+    getWinner(): Player[] {
         if (!this.ended || this.forceEnded) return [];
-        if (this.isElim()) {
-            return [this.data.results[0]![0]];
-        } else if (this.isRR()) {
-            const users = (this as Tournament<RoundRobinBracket>).data.bracketData?.tableHeaders?.cols ?? [];
-            const scores = (this as Tournament<RoundRobinBracket>).data.bracketData.scores ?? [];
-            const bestScore = scores.reduce((c, p) => Math.max(c, p));
-            const bestUsers: string[] = [];
-            for (let i = 0; i < scores.length; i++) {
-                if (scores[i] == bestScore) bestUsers.push(users[i]!);
-            }
-            return bestUsers;
-        } else throw new Error("Generator type did not match anything");
+        const players = new Collection<string, Player>().concat(this.players, this.pastPlayers);
+        const minScore = players.map((e) => e.score).reduce((c, p) => Math.max(c, p));
+        return players.filter((e) => e.score === minScore).toJSON();
     }
 }

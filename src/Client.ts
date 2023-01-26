@@ -997,8 +997,7 @@ export class Client extends EventEmitter {
                         const user1 = tourEvent[0]!,
                             user2 = tourEvent[1]!;
                         if (room.tour) {
-                            room.tour.removePlayer(user1);
-                            room.tour.addPlayer(user2);
+                            room.tour.renameUser(user1, user2);
                         }
                         this.emit(Events.TOUR_REPLACE, room, this.getUser(user1), this.getUser(user2));
                         break;
@@ -1020,6 +1019,24 @@ export class Client extends EventEmitter {
                             recorded = tourEvent[4] as "success" | "fail",
                             battleRoom = tourEvent[2]!;
                         const score = rawScore.split(",").map((e) => parseInt(Tools.toId(e))) as [number, number];
+
+                        if (room.tour) {
+                            if (result === "win") {
+                                room.tour.removePoints(user2, -1);
+                                if (
+                                    room.tour.isElim() &&
+                                    room.tour.players.get(Tools.toId(user2))?.score === -1 * room.tour.round.number
+                                )
+                                    room.tour.eliminatePlayer(user1);
+                            } else if (result === "loss") {
+                                room.tour.removePoints(user1, -1);
+                                if (
+                                    room.tour.isElim() &&
+                                    room.tour.players.get(Tools.toId(user2))?.score === -1 * room.tour.round.number
+                                )
+                                    room.tour.eliminatePlayer(user2);
+                            }
+                        }
 
                         this.emit(
                             Events.TOUR_BATTLE_END,
