@@ -109,7 +109,7 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
         return this;
     }
 
-    forceEnd() {
+    forceEnd(): this {
         this.client.send(`${this.room.roomid}|/tour end`);
         return this;
     }
