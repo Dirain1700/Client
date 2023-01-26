@@ -1030,17 +1030,21 @@ export class Client extends EventEmitter {
 
                     case "end": {
                         const data: TourEndData = JSON.parse(tourEvent[0]!);
+                        room.update();
                         if (room.tour) {
                             room.tour.update(data);
                             room.tour.onEnd(false);
                         }
                         this.emit(Events.TOUR_END, room, data, false);
+                        room.tour = null;
                         break;
                     }
 
                     case "forceend": {
                         if (room.tour) room.tour.onEnd(true);
                         this.emit(Events.TOUR_END, room, null, true);
+                        room.tour = null;
+                        break;
                     }
                 }
                 break;
