@@ -1,6 +1,6 @@
 "use strict";
 
-import { Activity, Player } from "./Activity";
+import { Activity } from "./Activity";
 import { Tools } from "./Tools";
 
 import type { Room } from "./Room";
@@ -80,11 +80,6 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
         this.playerCap = this.data.playerCap;
         this.room.update();
         return this;
-    }
-
-    getPlayer(userid: string): Player | undefined {
-        userid = Tools.toId(userid);
-        return this.players.get(userid) ?? this.pastPlayers.get(userid);
     }
 
     isElim(): this is Tournament<EliminationBracket> {

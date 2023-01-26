@@ -922,6 +922,10 @@ export class Client extends EventEmitter {
                 this.users.cache.set(New.userid, New);
                 this.emit(Events.USER_RENAME, New, user);
                 this.users.cache.delete(Old);
+                if (room) {
+                    room.update();
+                    if (room.tour) room.tour.renameUser(Old, New.userid);
+                }
                 break;
             }
 

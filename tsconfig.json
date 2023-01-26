@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         // module settings
+        "moduleResolution": "node",
 
         // emit settings
         "target": "esnext",

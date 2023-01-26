@@ -17,7 +17,7 @@ export abstract class Activity {
     ended: boolean = false;
     room: Room;
     pm: User | null;
-    htmlPageBase: string = "";
+    htmlPageBase?: string;
     uhtmlBaseName?: string;
     htmlPages = new Map<string, string>();
     playerCount: number = 0;
@@ -45,26 +45,65 @@ export abstract class Activity {
     abstract forceEnd(): this;
     abstract onEnd(): this;
 
-    addPlayer(name: string): Player | null {
+    getPlayer(userid: string): Player | undefined {
+        userid = Tools.toId(userid);
+        return this.players.get(userid) ?? this.pastPlayers.get(userid);
+    }
+
+    addPlayer(name: string): Player | undefined {
         const user = this.client.users.raw.get(Tools.toId(name));
         if (!user || !user.rooms) {
             this.sayError("USER_NOT_FOUND", name);
-            return null;
+            return;
         }
         const player = new Player(user, this);
         this.players.set(player.id, player);
         return player;
     }
 
-    removePlayer(name: string): Player | null {
+    removePlayer(name: string): Player | undefined {
+        const player = this.players.get(Tools.toId(name));
+        if (!player) {
+            this.sayError("USER_NOT_FOUND", name);
+            return;
+        }
+        this.players.delete(player.id);
+        this.pastPlayers.set(player.id, player);
+        return player;
+    }
+
+    renameUser(oldUser: string, newUser: string): Player | undefined {
+        const oldPlayer = this.getPlayer(Tools.toId(oldUser));
+        if (!oldPlayer) return;
+        const user = this.client.users.cache.get(Tools.toId(newUser));
+        if (!user) return;
+        if (user.avatar === null) user.avatar = 1;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const newPlayer = new Player(user as any as UserOptions, this);
+        newPlayer.eliminated = oldPlayer.eliminated;
+        newPlayer.isPlayed = oldPlayer.isPlayed;
+        newPlayer.online = true;
+        newPlayer.frozen = oldPlayer.frozen;
+        newPlayer.score = oldPlayer.score;
+        return newPlayer;
+    }
+
+    addPoints(name: string, points: number): Player | null {
         const player = this.players.get(Tools.toId(name));
         if (!player) {
             this.sayError("USER_NOT_FOUND", name);
             return null;
         }
-        this.players.delete(player.id);
-        this.pastPlayers.set(player.id, player);
-        return player;
+        return player.addPoints(points);
+    }
+
+    removePoints(name: string, points: number): Player | null {
+        const player = this.players.get(Tools.toId(name));
+        if (!player) {
+            this.sayError("USER_NOT_FOUND", name);
+            return null;
+        }
+        return player.removePoints(points);
     }
 
     sayError(err: ActivityErrorType, name: string): void {
