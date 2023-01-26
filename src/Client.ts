@@ -6,6 +6,7 @@ import * as querystring from "node:querystring";
 import * as url from "node:url";
 import * as util from "node:util";
 
+import { Collection } from "@discordjs/collection";
 import { WebSocket } from "ws";
 
 import { ClientUser } from "./ClientUser";
@@ -75,16 +76,16 @@ export class Client extends EventEmitter {
     throttleInterval: 25 | 100 | 600 = 600;
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     webSocket: any;
-    private _autoReconnect: NodeJS.Timeout = setTimeout(() => null, 0);
+    private _autoReconnect: NodeJS.Timeout | undefined = undefined;
     events = Events;
     rooms: {
-        cache: Map<string, Room>;
-        raw: Map<string, RoomOptions>;
+        cache: Collection<string, Room>;
+        raw: Collection<string, RoomOptions>;
         fetch: (roomid: string, force?: boolean) => Promise<Room>;
     };
     users: {
-        cache: Map<string, User>;
-        raw: Map<string, UserOptions>;
+        cache: Collection<string, User>;
+        raw: Collection<string, UserOptions>;
         fetch: (userid: string, useCache?: boolean) => Promise<User>;
     };
     user: ClientUser | null;
@@ -122,6 +123,7 @@ export class Client extends EventEmitter {
         };
         Object.defineProperties(this, {
             options: defineOptions,
+            _autoReconnect: defineOptions,
             sendTimer: defineOptions,
             userdetailsQueue: defineOptions,
             roominfoQueue: defineOptions,
@@ -133,8 +135,8 @@ export class Client extends EventEmitter {
             challstr: defineOptions,
         });
         this.user = null;
-        this.rooms = { cache: new Map(), raw: new Map(), fetch: this.fetchRoom };
-        this.users = { cache: new Map(), raw: new Map(), fetch: this.fetchUser };
+        this.rooms = { cache: new Collection(), raw: new Collection(), fetch: this.fetchRoom };
+        this.users = { cache: new Collection(), raw: new Collection(), fetch: this.fetchUser };
     }
 
     /* eslint-disable @typescript-eslint/no-explicit-any */

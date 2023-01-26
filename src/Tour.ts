@@ -84,9 +84,7 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
 
     getPlayer(userid: string): Player | undefined {
         userid = Tools.toId(userid);
-        if (this.players[userid]) return this.players[userid];
-        else if (this.pastPlayers[userid]) return this.pastPlayers[userid];
-        else return undefined;
+        return this.players.get(userid) ?? this.pastPlayers.get(userid);
     }
 
     isElim(): this is Tournament<EliminationBracket> {

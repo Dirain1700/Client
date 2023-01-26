@@ -1,5 +1,7 @@
 "use strict";
 
+import { Collection } from "@discordjs/collection";
+
 import { Tools } from "./Tools";
 import { User } from "./User";
 
@@ -8,7 +10,6 @@ import type { Room } from "./Room";
 
 import type { ActivityErrorType } from "../types/Activity";
 import type { UserOptions } from "../types/User";
-import type { Dict } from "../types/utils";
 
 export abstract class Activity {
     started: boolean = false;
@@ -17,10 +18,11 @@ export abstract class Activity {
     room: Room;
     pm: User | null;
     htmlPageBase: string = "";
+    uhtmlBaseName?: string;
     htmlPages = new Map<string, string>();
     playerCount: number = 0;
-    players: Dict<Player> = {};
-    pastPlayers: Dict<Player> = {};
+    players = new Collection<string, Player>();
+    pastPlayers = new Collection<string, Player>();
     showSignupsHtml: boolean = false;
     startTime: number | null = null;
     startTimer: NodeJS.Timer | null = null;
@@ -30,7 +32,6 @@ export abstract class Activity {
     // set in init();
     id!: string;
     name!: string;
-    uhtmlBaseName!: string;
 
     constructor(target: Room, user?: User) {
         if (user instanceof User) this.pm = user;
@@ -51,18 +52,18 @@ export abstract class Activity {
             return null;
         }
         const player = new Player(user, this);
-        this.players[player.id] = player;
+        this.players.set(player.id, player);
         return player;
     }
 
     removePlayer(name: string): Player | null {
-        const player = this.players[Tools.toId(name)];
+        const player = this.players.get(Tools.toId(name));
         if (!player) {
             this.sayError("USER_NOT_FOUND", name);
             return null;
         }
-        delete this.players[player.id];
-        this.pastPlayers[player.id] = player;
+        this.players.delete(player.id);
+        this.pastPlayers.set(player.id, player);
         return player;
     }
 
