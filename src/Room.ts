@@ -270,6 +270,7 @@ export class Room {
         if (!this.isExist || !this.auth) return GlobalRank;
         if (this.visibility === "secret") return this.getRoomRank(user);
         const RoomRank: GroupSymbol = this.getRoomRank(user);
+        if (!Tools.rankSymbols.includes(RoomRank)) return "+";
         return Tools.sortByRank([RoomRank, GlobalRank])[0] as GroupSymbol;
     }
 
@@ -338,7 +339,9 @@ export class Room {
 
     hasRank(rank: GroupNames | GroupSymbol, user: User | string): boolean {
         if ((user instanceof User && user.locked) || !rank) return false;
-        const auth = this.getRank(user);
+        let auth = this.getRank(user);
+        if (!Tools.rankSymbols.includes(auth as GroupSymbol))
+            auth = Tools.toGroupSymbol(auth as Exclude<typeof auth, GroupSymbol>);
         if (!Tools.rankSymbols.includes(rank as GroupSymbol))
             rank = Tools.toGroupSymbol(rank as Exclude<typeof rank, GroupSymbol>);
         return Tools.isHigherRank(auth, rank as GroupSymbol);
@@ -346,8 +349,9 @@ export class Room {
 
     isVoice(userid: string): boolean {
         userid = Tools.toId(userid);
-        if (this.auth && this.isExist) return this.auth["+"]?.includes(userid) ?? false;
-        return false;
+        const rank = this.getRoomRank(userid);
+        if (!Tools.rankSymbols.includes(rank)) return true;
+        return rank === "+";
     }
 
     isDriver(userid: string): boolean {
