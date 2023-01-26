@@ -15,7 +15,7 @@ import type { GroupSymbol, GroupNames, AuthLevel } from "../types/UserGroups";
 export class Room {
     id: string;
     roomid: string;
-    title: string | null;
+    title: string;
     type: "chat" | "battle" | "html";
     visibility: "public" | "hidden" | "secret";
     modchat: AuthLevel | null;
@@ -23,22 +23,22 @@ export class Room {
     tour: Tournament | null = null;
     auth: {
         [key: GroupSymbol | string]: string[];
-    } | null;
-    users: string[] | null;
+    };
+    users: string[];
     waits: MessageWaits<Room>[];
     readonly isExist: boolean;
     readonly client: Client;
 
     constructor(init: RoomOptions, client: Client) {
         this.id = init.id;
-        this.roomid = init.roomid ?? init.id;
-        this.title = init.title || null;
+        this.roomid = init.roomid || init.id;
+        this.title = init.title || init.id;
         this.type = init.id?.startsWith("view-") ? "html" : init.type;
         this.visibility = init.visibility || "secret";
         this.modchat = init.modchat || null;
         this.modjoin = init.modjoin || null;
-        this.auth = init.auth || null;
-        this.users = init.users || null;
+        this.auth = init.auth || {};
+        this.users = init.users || [];
         this.waits = init.waits ?? [];
         this.isExist = init.error ? false : true;
         this.client = client;
@@ -347,6 +347,13 @@ export class Room {
         return Tools.isHigherRank(auth, rank as GroupSymbol);
     }
 
+    isMuted(userid: string): boolean {
+        const mutedUsers = this.users.filter((e) => e.startsWith("!")).map(Tools.toId);
+        if (!mutedUsers.length) return false;
+        userid = Tools.toId(userid);
+        return mutedUsers.includes(userid);
+    }
+
     isVoice(userid: string): boolean {
         userid = Tools.toId(userid);
         const rank = this.getRoomRank(userid);
@@ -356,35 +363,35 @@ export class Room {
 
     isDriver(userid: string): boolean {
         userid = Tools.toId(userid);
-        if (this.auth && this.isExist) return this.auth["%"]?.includes(userid) ?? false;
-        return false;
+        if (!this.isExist) return false;
+        return this.auth["%"]?.includes(userid) ?? false;
     }
 
     isMod(userid: string): boolean {
         userid = Tools.toId(userid);
-        if (this.auth && this.isExist) return this.auth["@"]?.includes(userid) ?? false;
-        return false;
+        if (!this.isExist) return false;
+        return this.auth["@"]?.includes(userid) ?? false;
     }
 
     isBot(userid: string): boolean {
         userid = Tools.toId(userid);
-        if (this.auth && this.isExist) return this.auth["*"]?.includes(userid) ?? false;
-        return false;
+        if (!this.isExist) return false;
+        return this.auth["*"]?.includes(userid) ?? false;
     }
 
     isOwner(userid: string): boolean {
         userid = Tools.toId(userid);
-        if (this.auth && this.isExist) return this.auth["#"]?.includes(userid) ?? false;
-        return false;
+        if (!this.isExist) return false;
+        return this.auth["#"]?.includes(userid) ?? false;
     }
 
     isRoomStaff(userid: string): boolean {
-        if (this.auth && this.isExist) return this.isDriver(userid) || this.isMod(userid) || this.isOwner(userid);
-        return false;
+        if (!this.isExist) return false;
+        return this.isDriver(userid) || this.isMod(userid) || this.isOwner(userid);
     }
 
     isStaff(user: User): boolean {
-        if (user instanceof User && this.auth && this.isExist) {
+        if (user instanceof User && this.isExist) {
             if (user.online) return user.isGlobalStaff || this.isRoomStaff(user.userid);
             else return this.isRoomStaff(user.userid);
         }
