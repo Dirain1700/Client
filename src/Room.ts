@@ -189,7 +189,7 @@ export class Room {
         this.useCommand(`/sendhtmlpage ${user},${id},${html}`);
     }
 
-    deleteMessages(user: string, clear: boolean, reason: string, lines?: number): Promise<Message<Room> | null> {
+    hidetext(user: string, clear: boolean, lines?: number | null, reason?: string): Promise<Message<Room> | null> {
         this.checkCan("hidetext", this.client.status.id);
         const r = this;
         return new Promise((resolve, reject) => {
@@ -288,9 +288,7 @@ export class Room {
         return rank;
     }
 
-    checkCan(permission: RoomPermissions, user: User | string, strict?: boolean): boolean;
-    checkCan(permission: string, user: User | string, strict?: boolean): boolean;
-    checkCan(permission: string | RoomPermissions, user: User | string, strict?: boolean): boolean {
+    checkCan(permission: string & RoomPermissions, user: User | string, strict?: boolean): boolean {
         if (!this.isExist || !this.auth) {
             if (strict) throw new PSAPIError("EMPTY", "Room");
             else return false;
@@ -299,9 +297,11 @@ export class Room {
             if (strict) throw new PSAPIError("NOT_LOGGED_IN");
             else return false;
         }
-        permission = Tools.toId(permission);
         let auth: GroupSymbol = " ";
         switch (permission) {
+            case "chat":
+                auth = " ";
+                break;
             case "broadcast":
                 auth = "+";
                 break;
@@ -323,13 +323,12 @@ export class Room {
             case "declare":
                 auth = "*";
                 break;
-            case "intro":
+            case "roomintro":
                 auth = "#";
                 break;
-        }
-        if (auth === " ") {
-            if (strict) throw new PSAPIError("PERMISSION_NOT_FOUND", permission);
-            else return false;
+            default:
+                if (strict) throw new PSAPIError("PERMISSION_NOT_FOUND", permission satisfies never);
+                else return false;
         }
         const userAuth = this.getRank(user instanceof User ? user.id : user);
         const can = Tools.isHigherRank(userAuth, auth);

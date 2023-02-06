@@ -20,19 +20,6 @@ export interface UserOptions {
     client?: Client;
 }
 
-export type GlobalPermissions = string &
-    (
-        | "warn"
-        | "lock"
-        | "alts"
-        | "forcerename"
-        | "globalban"
-        | "ip"
-        | "forcewin"
-        | "forcetie"
-        | "promote"
-        | "demote"
-        | "banip"
-        | "hotpatch"
-        | "eval"
-    );
+// prettier-ignore
+export type GlobalPermissions = "chat" | "groupchat" | "warn" | "lock" | "alts" |
+    "forcerename" | "globalban" | "ip" | "forceend" | "promote" | "banip" | "bypassall";

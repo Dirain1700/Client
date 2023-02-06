@@ -78,19 +78,6 @@ export interface BattleRoom {
     isPrivate?: boolean | "hidden" | "voice";
 }
 
-export type RoomPermissions = string &
-    (
-        | "broadcast"
-        | "show"
-        | "warn"
-        | "tour"
-        | "mute"
-        | "announce"
-        | "announcement"
-        | "ban"
-        | "roomban"
-        | "rfaq"
-        | "html"
-        | "declare"
-        | "intro"
-    );
+// prettier-ignore
+export type RoomPermissions = "chat" | "broadcast" | "show" | "warn" | "tour" | "mute" | "hidetext" |
+    "announce" | "announcement" | "ban" | "roomban" | "rfaq" | "html" | "declare" | "roomintro";

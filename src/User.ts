@@ -109,17 +109,14 @@ export class User {
         });
     }
 
-    checkCan(permission: GlobalPermissions, strict?: boolean): boolean;
-    checkCan(permission: string, strict?: boolean): boolean;
-    checkCan(permission: string | GlobalPermissions, strict?: boolean): boolean {
+    checkCan(permission: string & GlobalPermissions, strict?: boolean): boolean {
         if (this.locked) {
             if (strict) throw new PSAPIError("PERMISSION_DENIED", " ", "‽");
             else return false;
         }
-        permission = Tools.toId(permission);
         let auth: GroupSymbol = " ";
         switch (permission) {
-            case "broadcast":
+            case "chat":
                 auth = " ";
                 break;
             case "groupchat":
@@ -135,19 +132,15 @@ export class User {
             case "ip":
                 auth = "@";
                 break;
-            case "forcewin":
-            case "forcetie":
+            case "forceend":
             case "promote":
-            case "demote":
             case "banip":
-            case "hotpatch":
-            case "eval":
+            case "bypassall":
                 auth = "&";
                 break;
-        }
-        if (auth === " " && permission !== "broadcast") {
-            if (strict) throw new PSAPIError("PERMISSION_NOT_FOUND", permission);
-            else return false;
+            default:
+                if (strict) throw new PSAPIError("PERMISSION_NOT_FOUND", permission satisfies never);
+                else return false;
         }
         const can = Tools.isHigherRank(this.group, auth);
         if (strict && !can) throw new PSAPIError("PERMISSION_DENIED", auth, this.group);
