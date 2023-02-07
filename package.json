@@ -9,9 +9,9 @@
         "ws": "^8.12.0"
     },
     "devDependencies": {
-        "@typescript-eslint/eslint-plugin": "^5.49.0",
-        "@typescript-eslint/parser": "^5.49.0",
-        "eslint": "^8.32.0",
+        "@typescript-eslint/eslint-plugin": "^5.51.0",
+        "@typescript-eslint/parser": "^5.51.0",
+        "eslint": "^8.33.0",
         "eslint-plugin-import": "^2.27.5",
         "prettier": "^2.8.3",
         "typescript": "^4.9.4"
@@ -36,7 +36,8 @@
         "pre:cjs": "tsc -p tsconfig.cjs.json --noEmit",
         "pre:esm": "tsc -p tsconfig.esm.json --noEmit",
         "ci": "npm run check && npm run lint && npm run pre-tsc",
-        "build": "npm run write && npm run lint-fix && npm run tsc"
+        "build": "npm run write && npm run lint-fix && npm run tsc",
+        "prepublishOnly": "npm run build"
     },
     "keywords": [],
     "author": "Dirain1700",
