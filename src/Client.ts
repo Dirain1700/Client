@@ -1205,6 +1205,7 @@ export class Client extends EventEmitter {
             room = new Room(input, this) as Room;
             this.send(`|/cmd roominfo ${input.id}`);
         } else Object.assign(room!, input);
+        room.setVisibility();
         this.rooms.cache.set(room.roomid!, room);
         return room as Room;
     }

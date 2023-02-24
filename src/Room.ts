@@ -46,6 +46,13 @@ export class Room {
             enumerable: false,
             writable: true,
         });
+        this.setVisibility();
+    }
+
+    setVisibility(): void {
+        if (this.visibility !== "secret") return;
+        const users: [string, GroupSymbol][] = this.users.map((u) => [Tools.toId(u), u.charAt(0) as GroupSymbol]);
+        if (users.some(([u, a]) => !Tools.isHigherRank(this.getRoomRank(u), a))) this.visibility = "hidden";
     }
 
     send(content: RoomMessageOptions): Promise<Message<Room>> | void {
