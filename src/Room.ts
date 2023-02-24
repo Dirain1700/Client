@@ -75,10 +75,10 @@ export class Room {
         this.useCommand("/roomintro " + html);
     }
 
-    setModchat(rank: GroupSymbom): void {
-        if (Tools.isHigherRank(rank, "%")) this.checkCan("roomban", this.client.statis.id, true);
+    setModchat(rank: GroupSymbol): void {
+        if (Tools.isHigherRank(rank, "%")) this.checkCan("roomban", this.client.status.id, true);
         else this.checkCan("warn", this.client.status.id, true);
-        this.useCommand("/modchat " + ac);
+        this.useCommand("/modchat " + rank);
     }
 
     setAnnounce(content?: string | null): void {
