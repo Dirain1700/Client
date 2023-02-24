@@ -68,6 +68,12 @@ export class Room {
         this.useCommand("/roomintro " + html);
     }
 
+    setModchat(rank: GroupSymbom): void {
+        if (Tools.isHigherRank(rank, "%")) this.checkCan("roomban", this.client.statis.id, true);
+        else this.checkCan("warn", this.client.status.id, true);
+        this.useCommand("/modchat " + ac);
+    }
+
     setAnnounce(content?: string | null): void {
         this.checkCan("announcement", this.client.status.id, true);
         if (content) this.send("/announcement create " + content);
