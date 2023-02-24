@@ -129,7 +129,7 @@ export class Room {
         if (change) return this.changePrivateUhtml(user, id, html);
         user = Tools.toId(user);
         if (!user || !id || !html) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "ID" : "HTML");
-        this.useCommand(`/sendprivateuhtml ${user},${id},${html}}`);
+        this.useCommand(`/sendprivateuhtml ${user},${id},${html}`);
     }
 
     changePrivateUhtml(user: string, id: string, html: string): void {
