@@ -86,7 +86,7 @@ export class Message<T extends Room | User = Room | User> {
         }
     }
 
-    reply(content: string, options: IUserOutGoingMessageOptions | IRoomOutGoingMessageOptions): void {
+    reply(content: string, options?: IUserOutGoingMessageOptions | IRoomOutGoingMessageOptions): void {
         return this.target.send(content, options ?? {});
     }
 
