@@ -106,11 +106,6 @@ export class Room {
         return this;
     }
 
-    setRoomIntro(html: string): void {
-        this.checkCan("roomintro", this.client.status.id, true);
-        this.send("/roomintro " + html, { type: "command", measure: false });
-    }
-
     setModchat(rank: GroupSymbol): void {
         if (Tools.isHigherRank(rank, "%")) this.checkCan("roomban", this.client.status.id, true);
         else this.checkCan("warn", this.client.status.id, true);
