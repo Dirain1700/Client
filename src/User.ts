@@ -28,13 +28,14 @@ export class User {
     online: boolean;
     waits: MessageWaits<User>[];
     alts: string[];
+    lastFetchTime: number = 0;
     readonly client: Client;
 
     constructor(init: UserOptions, client: Client) {
         this.id = init.id;
         this.userid = init.userid;
         this.name = init.name;
-        this.avatar = init.avatar || null;
+        this.avatar = init.avatar ?? null;
         this.group = init.group ?? " ";
         this.locked = this.group === "‽";
         this.sectionLeader = init.customgroup === "Section Leader";
@@ -42,7 +43,7 @@ export class User {
         this.status = init.status ?? "";
         this.rooms = init.rooms || null;
         this.friended = init.friended ?? false;
-        this.online = init.rooms ? true : false;
+        this.online = init.avatar === undefined ? false : true;
         this.waits = [];
         this.alts = [];
         this.client = init?.client ?? client;
@@ -72,10 +73,30 @@ export class User {
         return "|/pm " + this.userid + "," + content;
     }
 
+    setLastFetchTime(time?: number): void {
+        if (time && time > Date.now()) return;
+        this.lastFetchTime = time ?? Date.now();
+    }
+
     update(): this {
         const user = this.client.users.cache.get(this.id);
         if (!user) return this;
         Object.assign(this, user);
+        return this;
+    }
+
+    addRoom(roomid: string): this {
+        roomid = Tools.toRoomId(roomid);
+        if (!roomid) return this;
+        if (!this.rooms) this.rooms = Object.create(null)!;
+        this.rooms![roomid] = {};
+        return this;
+    }
+
+    removeRoom(roomid: string): this {
+        roomid = Tools.toRoomId(roomid);
+        if (!roomid || !this.rooms) return this;
+        delete this.rooms[roomid];
         return this;
     }
 

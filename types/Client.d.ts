@@ -59,7 +59,7 @@ export interface ClientEvents {
     messageDelete: [message: Message<User | Room>];
     roomUserAdd: [room: Room, user: User];
     roomUserRemove: [room: Room, user: User];
-    userRename: [newUser: User, oldUser: User];
+    userRename: [newUser: User, oldUser: string];
     clientRoomAdd: [room: Room];
     clientRoomRemove: [room: Room];
     tourCreate: [room: Room, format: string, type: string, playerCap: number | null];

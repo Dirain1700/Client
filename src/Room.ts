@@ -26,6 +26,7 @@ export class Room {
         [key: GroupSymbol | string]: string[];
     };
     users: string[];
+    lastFetchTime: number = 0;
     waits: MessageWaits<Room>[];
     readonly isExist: boolean;
     readonly client: Client;
@@ -76,10 +77,32 @@ export class Room {
         return this.roomid + "|" + content;
     }
 
+    setLastFetchTime(time?: number): void {
+        if (time && time > Date.now()) return;
+        this.lastFetchTime = time ?? Date.now();
+    }
+
     update(): this {
         const room = this.client.rooms.cache.get(this.id);
         if (!room) return this;
         Object.assign(this, room);
+        return this;
+    }
+
+    addUser(name: string): this {
+        const userid = Tools.toId(name);
+        if (!userid) return this;
+        if (this.users.map(Tools.toId).includes(userid)) return this;
+        this.users.push(" " + name);
+        return this;
+    }
+
+    removeUser(userid: string): this {
+        userid = Tools.toId(userid);
+        if (!userid) return this;
+        const nameIndex = this.users.map(Tools.toId).indexOf(userid);
+        if (nameIndex === -1) return this;
+        this.users.splice(nameIndex, 1);
         return this;
     }
 

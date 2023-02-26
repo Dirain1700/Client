@@ -40,6 +40,8 @@ import type { TourUpdateData, EliminationBracket, RoundRobinBracket, TourEndData
 import type { UserOptions } from "../types/User";
 
 const MAIN_HOST = "sim3.psim.us";
+const ROOM_FETCH_COOLDOWN = 5000;
+const USER_FETCH_COOLDOWN = 3000;
 const Events: ClientEventNames = {
     READY: "ready",
     QUERY_RESPONSE: "queryResponse",
@@ -490,6 +492,26 @@ export class Client extends EventEmitter {
                 }
                 setTimeout(() => promise.onTimeout(), 3 * 1000);
             }
+            if (text.startsWith("|/cmd ")) {
+                const type = Tools.toId(text.split(" ")[1]!);
+                let target = Tools.toRoomId(text.split(" ")[2]!);
+                if (type === "userdetails") {
+                    target = Tools.toId(target);
+                    const user = this.users.cache.get(target);
+                    if (user && Date.now() - user.lastFetchTime < USER_FETCH_COOLDOWN) {
+                        const pUser = this.userdetailsQueue.find((e) => e.id === target);
+                        if (pUser) pUser.resolve(user);
+                        continue;
+                    }
+                } else {
+                    const room = this.rooms.cache.get(Tools.toRoomId(target));
+                    if (room && Date.now() - room.lastFetchTime < ROOM_FETCH_COOLDOWN) {
+                        const pRoom = this.roominfoQueue.find((e) => e.id === target);
+                        if (pRoom) pRoom.resolve(room);
+                        continue;
+                    }
+                }
+            }
             this.webSocket.send(text);
         }
     }
@@ -582,7 +604,7 @@ export class Client extends EventEmitter {
                       this
                   );
 
-        if (room && room.type === "chat") this.fetchRoom(room.id, false).catch(() => this.rooms.cache.get(room.id));
+        //if (room && room.type === "chat") this.fetchRoom(room.id, false).catch(() => this.rooms.cache.get(room.id));
 
         for (let i = 0; i < lines.length; i++) {
             const line: string | undefined = lines[i]!.trim();
@@ -679,7 +701,16 @@ export class Client extends EventEmitter {
                         this.options.autoJoin.forEach((r: string) => this.noreplySend("|/j " + Tools.toRoomId(r)));
                     if (this.options.avatar) this.noreplySend(`|/avatar ${this.options.avatar}`);
                     if (this.options.status) this.noreplySend(`|/status ${this.options.status}`);
-                    await Tools.sleep(this.throttleInterval);
+                    if (!this.user)
+                        this.user = new ClientUser(
+                            {
+                                id: this.status.id,
+                                userid: this.status.id,
+                                name: this.status.name,
+                                rooms: false,
+                            },
+                            this
+                        );
                     if (this.status.id) await this.fetchUser(this.status.id, true);
                     if (this.user) this.user.settings = JSON.parse(event[3] as string);
                     this.emit(Events.READY);
@@ -713,17 +744,17 @@ export class Client extends EventEmitter {
             }
             case "init": {
                 if (!isRoomNotEmp(room)) return;
-                if (room.id.startsWith("view-")) this.emit(Events.OPEN_HTML_PAGE, room);
-                else {
-                    room = await this.fetchRoom(room.id).catch(() => room);
-                    if (!isRoomNotEmp(room)) return;
-                    this.emit(Events.CLIENT_ROOM_ADD, room);
-                }
+                if (room.id.startsWith("view-")) return void this.emit(Events.OPEN_HTML_PAGE, room);
+
+                if (!this.rooms.cache.has(room.id)) room = await this.fetchRoom(room.id, true);
+                room.addUser(this.user!.name);
+                this.emit(Events.CLIENT_ROOM_ADD, room);
+
                 break;
             }
             case "deinit": {
                 if (!isRoomNotEmp(room)) return;
-                this.fetchUser((this.user as ClientUser)?.userid ?? this.status.id!, false);
+                room.removeUser(this.user!.userid);
                 if (room.id.startsWith("view-")) this.emit(Events.CLOSE_HTML_PAGE, room!);
                 else this.emit(Events.CLIENT_ROOM_REMOVE, room!);
 
@@ -813,7 +844,7 @@ export class Client extends EventEmitter {
                 if (!isRoomNotEmp(room)) return;
                 if (!event[0] || !Tools.toId(event[0])) break;
                 room = this.rooms.cache.get(room.id) ?? room;
-                const author = await this.fetchUser(event[0] as string, false),
+                const author = this.getUser(event[0] as string),
                     content = event.slice(1).join("|") as string,
                     message = new Message<Room>({
                         author: author,
@@ -839,7 +870,7 @@ export class Client extends EventEmitter {
                 if (!isRoomNotEmp(room)) return;
                 room = this.rooms.cache.get(room.id);
                 if (!isRoomNotEmp(room)) return;
-                const by = await this.fetchUser(event[1] as string, true),
+                const by = this.getUser(event[1] as string),
                     value = event.slice(2).join("|"),
                     message = new Message<Room>({
                         author: by,
@@ -865,7 +896,7 @@ export class Client extends EventEmitter {
 
             case "pm": {
                 if (!event[0] || !event[1] || !Tools.toId(event[0]) || !Tools.toId(event[1])) {
-                    const value = event.slice(2).join("|") as string;
+                    const value = event.slice(2).join("|");
                     if (!this.trusted && value.startsWith("/raw ") && this.status.loggedIn) {
                         //prettier-ignore
                         if (value.includes("<small style=\"color:gray\">(trusted)</small>")) this.trusted = true;
@@ -876,9 +907,19 @@ export class Client extends EventEmitter {
                     }
                     break;
                 }
-                const author = await this.fetchUser(event[0] as string, true),
-                    sendTo = await this.fetchUser(event[1] as string, true),
-                    value = event.slice(2).join("|") as string;
+                const authorName = Tools.toId(event[0]),
+                    receiverName = Tools.toId(event[1]);
+                let author: User, sendTo: User;
+                if (this.user?.userid) {
+                    if (authorName === this.user.userid) author = this.user;
+                    else author = await this.fetchUser(authorName, true);
+                    if (receiverName === this.user.userid) sendTo = this.user;
+                    else sendTo = await this.fetchUser(receiverName, true);
+                } else {
+                    author = await this.fetchUser(authorName, true);
+                    sendTo = await this.fetchUser(receiverName, true);
+                }
+                const value = event.slice(2).join("|")!;
                 let target: User;
                 if (author.id === this.status.id) target = sendTo;
                 else target = author;
@@ -908,8 +949,12 @@ export class Client extends EventEmitter {
             case "J":
             case "join": {
                 if (!isRoomNotEmp(room)) return;
-                const user = await this.fetchUser(Tools.toId(event.join("|")), true);
-                room = await this.fetchRoom(room.id, false).catch(() => room as Room);
+                const name = event.join("|"),
+                    id = Tools.toId(event.join("|"));
+                let user = this.getUser(id);
+                if (!user) user = await this.fetchUser(id);
+                user.addRoom(room.id);
+                room.addUser(name);
                 this.emit(Events.ROOM_USER_ADD, room, user);
                 break;
             }
@@ -918,8 +963,11 @@ export class Client extends EventEmitter {
             case "L":
             case "leave": {
                 if (!isRoomNotEmp(room)) return;
-                const user = await this.fetchUser(Tools.toId(event.join("|")), true);
-                room = await this.fetchRoom(room.id, false).catch(() => room as Room);
+                const id = Tools.toId(event.join("|"));
+                room.removeUser(id);
+                const user =
+                    this.getUser(id) ?? new User({ id, userid: id, name: event.join("|"), rooms: false }, this);
+                if (user.rooms) user.removeRoom(room.id);
                 this.emit(Events.ROOM_USER_REMOVE, room, user);
                 break;
             }
@@ -928,14 +976,21 @@ export class Client extends EventEmitter {
             case "N":
             case "name": {
                 const Old = Tools.toId(event[1] as string),
-                    New = await this.fetchUser(Tools.toId(event[0] as string), true);
-                if (!this.users.cache.has(Old)) break;
+                    New =
+                        this.users.cache.get(Old) ??
+                        new User(
+                            {
+                                id: Tools.toId(event[0]!),
+                                userid: Tools.toId(event[0]!),
+                                name: event[0]!,
+                                rooms: false,
+                            },
+                            this
+                        );
 
-                const user =
-                    this.users.cache.get(Old) ?? new User({ id: Old, userid: Old, name: Old, rooms: false }, this);
                 New.alts.push(Old);
                 this.users.cache.set(New.userid, New);
-                this.emit(Events.USER_RENAME, New, user);
+                this.emit(Events.USER_RENAME, New, Old);
                 this.users.cache.delete(Old);
                 if (room) {
                     room.update();
@@ -1131,15 +1186,13 @@ export class Client extends EventEmitter {
         id = Tools.toId(id);
         if (this.users.cache.has(id)) return this.users.cache.get(id) as User;
         const Users: User[] = [...this.users.cache.values()];
-
         for (const user of Users) {
             if (user.alts.some((u) => u === id)) return user;
         }
-
         return;
     }
 
-    addUser(input: UserOptions): User | null {
+    addUser(input: UserOptions, fetched?: boolean): User | null {
         if (typeof input !== "object" || !input.userid) return null;
         let user: User | undefined = this.users.cache.get(input.userid);
         if (user && input.id !== input.userid) {
@@ -1168,6 +1221,7 @@ export class Client extends EventEmitter {
             delete input.alts;
             Object.assign(user, input);
         }
+        if (fetched !== false) user.setLastFetchTime();
         this.users.cache.set(user!.userid, user!);
         return user as User;
     }
@@ -1211,9 +1265,8 @@ export class Client extends EventEmitter {
         return this.rooms.cache.get(roomid);
     }
 
-    addRoom(input: RoomOptions): Room {
-        if (typeof input !== "object" || !input.roomid)
-            throw new Error("Input must be an object with roomid for new Room");
+    addRoom(input: RoomOptions, fetched?: boolean): Room {
+        if (typeof input !== "object" || !input.roomid) throw new PSAPIError("EMPTY", "Room");
 
         let room: Room | undefined = this.rooms.cache.get(input.roomid);
         if (!room) {
@@ -1221,6 +1274,7 @@ export class Client extends EventEmitter {
             this.noreplySend(`|/cmd roominfo ${input.id}`);
         } else Object.assign(room!, input);
         room.setVisibility();
+        if (fetched !== false) room.setLastFetchTime();
         this.rooms.cache.set(room.roomid!, room);
         return room as Room;
     }
