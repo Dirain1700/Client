@@ -708,6 +708,7 @@ export class Client extends EventEmitter {
                                 userid: this.status.id,
                                 name: this.status.name,
                                 rooms: false,
+                                avatar: this.options.avatar,
                             },
                             this
                         );
