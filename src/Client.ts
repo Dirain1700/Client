@@ -1222,6 +1222,7 @@ export class Client extends EventEmitter {
             Object.assign(user, input);
         }
         if (fetched !== false) user.setLastFetchTime();
+        user.setIsOnline();
         this.users.cache.set(user!.userid, user!);
         return user as User;
     }

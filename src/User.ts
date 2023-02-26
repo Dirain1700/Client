@@ -43,7 +43,7 @@ export class User {
         this.status = init.status ?? "";
         this.rooms = init.rooms || null;
         this.friended = init.friended ?? false;
-        this.online = init.avatar === undefined ? false : true;
+        this.online = !!this.avatar;
         this.waits = [];
         this.alts = [];
         this.client = init?.client ?? client;
@@ -76,6 +76,11 @@ export class User {
     setLastFetchTime(time?: number): void {
         if (time && time > Date.now()) return;
         this.lastFetchTime = time ?? Date.now();
+    }
+
+    setIsOnline(): boolean {
+        this.online = !!this.avatar;
+        return this.online;
     }
 
     update(): this {
