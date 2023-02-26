@@ -1,63 +1,35 @@
 export type { ActivityErrorType } from "./Activity";
 
 export type {
-    ClientOptions,
-    ClientEvents,
     ClientEventNames,
-    EventOptions,
-    OpenListener,
-    MessageListener,
+    ClientEvents,
+    ClientOptions,
     CloseListener,
-    ErrorListener,
     CustomListener,
+    ErrorListener,
+    IMessageType,
+    MessageListener,
+    OpenListener,
+    PendingMessage,
+    PostLoginOptions,
     PromisedRoom,
     PromisedUser,
-    StatusType,
     ServerConfig,
-    PostLoginOptions,
-    PendingMessage,
+    StatusType,
 } from "./Client";
-
-export type { Dict, valueOf, PromiseResolve, PromiseReject } from "./utils";
 
 export type { UserSettings } from "./ClientUser";
 
-export type {
-    MessageInput,
-    UserMessageOptions,
-    RoomMessageOptions,
-    MessageWaits,
-    awaitMessageOptions,
-} from "./Message";
+export type { PSAPIErrorType } from "./Error";
 
-export type {
-    RoomOptions,
-    UhtmlOptions,
-    HTMLBoxOptions,
-    RankuHTMLOptions,
-    RankHTMLBoxOptions,
-    PrivateuHTMLOptions,
-    PrivateHTMLOptions,
-    PMuHTMLOptions,
-    PmHTMLBoxOptions,
-    PMHTMLOptions,
-    NormalHTMLOptions,
-    RankHTMLOptions,
-    HTMLOptions,
-    IHtmlPageData,
-    BattleRoom,
-    RoomPermissions,
-} from "./Room";
+export type {} from "./Message";
 
-export type { UserOptions, GlobalPermissions } from "./User";
+export type { BattleRoom, RoomOptions, RoomPermissions } from "./Room";
 
-export type {
-    TourUpdateData,
-    EliminationBracket,
-    EliminationBracketData,
-    IRRBattleStatus,
-    RoundRobinBracket,
-    TourEndData,
-} from "./Tour";
+export type { EliminationBracket, EliminationBracketData, IRRBattleStatus, RoundRobinBracket } from "./Tour";
 
-export type { GroupSymbol, GroupNames, AuthLevel, Ranks } from "./UserGroups";
+export type { GlobalPermissions, UserOptions } from "./User";
+
+export type { GroupNames, GroupSymbol, Ranks } from "./UserGroups";
+
+export type { Dict, valueOf } from "./utils";

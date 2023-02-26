@@ -1,7 +1,6 @@
 import type { TimeoutError } from "../src/Error";
 import type { Message } from "../src/Message";
 import type { Room } from "../src/Room";
-import type { Tournament } from "../src/Tour";
 import type { User } from "../src/User";
 import type { RoomOptions } from "./Room";
 import type { TourUpdateData, TourEndData } from "./Tour";
@@ -19,14 +18,9 @@ export interface ClientOptions {
     status?: string;
     avatar?: string | number;
     prefix?: string;
-    classes?: CustomClass;
     autoJoin?: string[];
     retryLogin?: number;
     autoReconnect?: number;
-}
-
-export interface CustomClass {
-    Tournament?: Tournament;
 }
 
 export interface ClientEventNames {
@@ -122,6 +116,33 @@ export interface CustomListener {
     options?: EventOptions;
 }
 
+// prettier-ignore
+export type IMessageType = "command" | "code" | "room-chat" | "pm-chat";
+
+interface BaseOutGoingMessageOptions {
+    text: string;
+    raw?: string;
+    measure?: boolean;
+    type?: IMessageType;
+}
+
+export interface IRoomOutGoingMessageOptions extends BaseOutGoingMessageOptions {
+    roomid: string;
+}
+
+export interface IUserOutGoingMessageOptions extends BaseOutGoingMessageOptions {
+    userid: string;
+}
+
+export interface IOutGoingMessage<T extends User | Room> {
+    userid: T extends User ? string : null;
+    roomid: T extends Room ? string : null;
+    text: string;
+    raw: string;
+    measure: boolean;
+    type: IMessageType;
+}
+
 export interface PromisedRoom {
     id: string;
     time: string;
@@ -157,13 +178,11 @@ export interface PostLoginOptions {
     headers?: any;
 }
 
-export interface PendingMessage<T> {
-    id: string;
-    resolve: (message: T) => void;
-    reject: (reason: TimeoutError) => void;
-}
-
-export interface IOutGoingMessage {
+export interface PendingMessage {
     id: string;
     content: string;
+    sentTime: number;
+    received: boolean;
+    onTimeout: () => void;
+    onReject: (error: Error) => void;
 }

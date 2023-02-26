@@ -7,7 +7,8 @@ import { Tools } from "./Tools";
 import type { Client } from "./Client";
 import type { Message } from "./Message";
 
-import type { MessageWaits, awaitMessageOptions, UserMessageOptions } from "../types/Message";
+import type { IUserOutGoingMessageOptions } from "../types/Client";
+import type { MessageWaits, awaitMessageOptions } from "../types/Message";
 import type { UserOptions, GlobalPermissions } from "../types/User";
 import type { GroupSymbol, GroupNames } from "../types/UserGroups";
 
@@ -51,8 +52,24 @@ export class User {
         });
     }
 
-    send(content: UserMessageOptions): Promise<Message<User>> | void {
-        return this.client.sendUser(this.userid, content);
+    send(content: string, options?: Partial<IUserOutGoingMessageOptions>): void {
+        if (!this.online) throw new PSAPIError("USER_OFFLINE", this.userid);
+        if (!content) throw new PSAPIError("EMPTY_MESSAGE");
+
+        const outgoingMessage: IUserOutGoingMessageOptions = {
+            userid: this.userid,
+            text: this.setupMessage(content),
+            raw: content,
+            type: options && options.type ? options.type : undefined,
+            measure: options && options.measure ? options.measure : undefined,
+        };
+
+        this.client.send(outgoingMessage);
+    }
+
+    setupMessage(content: string): string {
+        if (!this.online) throw new PSAPIError("USER_OFFLINE", this.userid);
+        return "|/pm " + this.userid + "," + content;
     }
 
     update(): this {

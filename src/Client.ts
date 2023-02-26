@@ -10,7 +10,7 @@ import { Collection } from "@discordjs/collection";
 import { WebSocket } from "ws";
 
 import { ClientUser } from "./ClientUser";
-import { TimeoutError, AccessError } from "./Error";
+import { TimeoutError, AccessError, PSAPIError } from "./Error";
 import { Message } from "./Message";
 import { Room } from "./Room";
 import { Tools } from "./Tools";
@@ -24,15 +24,18 @@ import type {
     ClientOptions,
     ClientEvents,
     ClientEventNames,
+    IOutGoingMessage,
+    IRoomOutGoingMessageOptions,
+    IUserOutGoingMessageOptions,
     PromisedRoom,
     PromisedUser,
+    PendingMessage,
     StatusType,
     ServerConfig,
     PostLoginOptions,
-    PendingMessage,
 } from "../types/Client";
-import type { MessageInput, UserMessageOptions, RoomMessageOptions } from "../types/Message";
-import type { RoomOptions, RankHTMLOptions, PrivateHTMLOptions, HTMLOptions } from "../types/Room";
+import type { MessageInput } from "../types/Message";
+import type { RoomOptions } from "../types/Room";
 import type { TourUpdateData, EliminationBracket, RoundRobinBracket, TourEndData } from "../types/Tour";
 import type { UserOptions } from "../types/User";
 
@@ -103,13 +106,13 @@ export class Client extends EventEmitter {
     } = {};
 
     private sendTimer: NodeJS.Timeout | undefined = undefined;
-    outGoingMessage: string[] = [];
+    outGoingMessage: IOutGoingMessage<Room | User>[] = [];
     private userdetailsQueue: PromisedUser[] = [];
     private roominfoQueue: PromisedRoom[] = [];
     resolvedRoom: string[] = [];
     resolvedUser: string[] = [];
-    private PromisedPM: PendingMessage<Message<User>>[] = [];
-    private PromisedChat: PendingMessage<Message<Room>>[] = [];
+    private PromisedPM: PendingMessage[] = [];
+    private PromisedChat: PendingMessage[] = [];
     private challstr: { key: string; value: string } = { key: "", value: "" };
 
     constructor(options: ClientOptions) {
@@ -375,7 +378,7 @@ export class Client extends EventEmitter {
                     //eslint-disable-next-line no-empty
                 } catch (e) {}
                 console.log("Sending login trn...");
-                client.send(`|/trn ${name},0,${data}`);
+                client.noreplySend(`|/trn ${name},0,${data}`);
                 setInterval(client.upkeep.bind(client), 10 * 60 * 1000);
             });
         });
@@ -432,116 +435,131 @@ export class Client extends EventEmitter {
             0,
             this.outGoingMessage.length <= this.messageThrottle ? this.outGoingMessage.length : this.messageThrottle
         );
-        arr.forEach((e) => this.webSocket.send(e));
+
+        for (const m of arr) {
+            const { roomid, userid, type, raw, text, measure } = m;
+            let expection = "";
+
+            switch (type) {
+                case "pm-chat":
+                case "room-chat":
+                    expection = raw ?? text.split("|").slice(1).join("|");
+                    break;
+                case "code":
+                    expection = "!code";
+                    break;
+                case "command":
+                    if (raw.charAt(0) === "/") expection = "";
+                    else expection = (raw ?? text.split("|").slice(1).join("|")).split(" ")[0]!;
+                    break;
+                default:
+                    console.error("Unrecognized message type " + type + " detected.");
+            }
+            if (measure) {
+                let promise: PendingMessage;
+                if (userid) {
+                    promise = {
+                        id: userid!,
+                        content: expection,
+                        sentTime: Date.now(),
+                        received: false,
+                        onTimeout: function () {
+                            if (this.received) return;
+                            throw new TimeoutError("Request timeout: Failed to send a PM between " + userid);
+                        },
+                        onReject: function (error: Error) {
+                            throw error;
+                        },
+                    };
+                    this.PromisedPM.push(promise);
+                } else {
+                    promise = {
+                        id: roomid!,
+                        content: expection,
+                        sentTime: Date.now(),
+                        received: false,
+                        onTimeout: function () {
+                            if (this.received) return;
+                            throw new TimeoutError("Request timeout: Failed to send a message to " + roomid);
+                        },
+                        onReject: function (error: Error) {
+                            throw error;
+                        },
+                    };
+                    this.PromisedChat.push(promise);
+                }
+                setTimeout(() => promise.onTimeout(), 3 * 1000);
+            }
+            this.webSocket.send(text);
+        }
     }
 
-    send(content: string | string[], code?: boolean): void {
-        if (Array.isArray(content)) return void content.forEach((e) => this.send(e, code));
-        if (!code && content.match(/\\n/g)) content.split("\n").forEach((e) => this.outGoingMessage.push(e));
-        else this.outGoingMessage.push(content);
-        if (!this.sendTimer) this.sendTimer = setInterval(() => this.runOutGoingMessage(), this.throttleInterval);
-    }
-
-    sendUser(user: string, input: string | UserMessageOptions): Promise<Message<User>> | void {
-        let str: string = "";
-        if (typeof input === "string") str += input;
-        else str += input.content;
-
-        user = Tools.toId(user);
-
-        this.send(`|/pm ${user},${str}`);
-        if (str.startsWith("/")) return;
-        const client = this;
-        return new Promise((resolve, reject) => {
-            const PM: PendingMessage<Message<User>> = {
-                id: user,
-                resolve: (message: Message<User>) => {
-                    resolve(message);
-                    client.PromisedPM = client.PromisedPM.filter((e) => e.id !== user);
-                },
-                reject: function (reason: TimeoutError) {
-                    if (!client.PromisedPM.includes(this)) return;
-                    reject(reason);
-                    client.PromisedPM = client.PromisedPM.filter((e) => e.id !== user);
-                },
-            };
-            client.PromisedPM.push(PM);
-            setTimeout(PM.reject, 3 * 1000, new TimeoutError(`sendUser: ${user}, content: ${str})`));
-        });
-    }
-
-    sendRoom(room: string, input: RoomMessageOptions): Promise<Message<Room>> | void {
-        let str: string = "";
-        if (typeof input === "string") str += input!;
-        else {
-            const { id, content, edit, box } = input;
-            if (edit && box) throw new TypeError("You cannot edit HTML box.");
-
-            //eslint-disable-next-line no-inner-declarations
-            function hasAllowedDisplay(init: HTMLOptions): init is RankHTMLOptions {
-                return Object.keys(init as RankHTMLOptions).includes("allowedDisplay");
-            }
-            //eslint-disable-next-line no-inner-declarations
-            function isPrivate(init: HTMLOptions): init is PrivateHTMLOptions {
-                return Object.keys(init as PrivateHTMLOptions).includes("Private");
-            }
-            if (hasAllowedDisplay(input)) {
-                const { allowedDisplay } = input;
-                if (!box) str += `/${edit ? "change" : "add"}rankuhtml ${allowedDisplay},`;
-                else str += `/addrankhtmlbox ${allowedDisplay},`;
-            } else if (isPrivate(input)) {
-                const { private: name } = input;
-                if (!box) str += `/${edit ? "change" : "send"}privateuhtml ${name},`;
-                else str += `/sendprivatehtmlbox ${name},`;
-            } else {
-                if (!box) str += `/${edit ? "change" : "add"}uhtml ${id},`;
-                else str += "/addhtmlbox";
-            }
-            if (!box) str += `${id},`;
-            str += content;
+    send(message: IRoomOutGoingMessageOptions | IUserOutGoingMessageOptions): void {
+        message.raw ??= "";
+        if (message.type !== "code") {
+            message.text = Tools.trim(message.text);
+            message.raw = Tools.trim(message.raw);
+        } else {
+            message.text = message.text.trim();
+            message.raw = message.raw.trim();
         }
 
-        room = Tools.toRoomId(room);
-        this.send(`${room}|${str}`);
-        if (str.startsWith("/")) return;
-        const client = this;
-        return new Promise((resolve, reject) => {
-            const chat: PendingMessage<Message<Room>> = {
-                id: room,
-                resolve: (message: Message<Room>) => {
-                    resolve(message);
-                    client.PromisedChat = client.PromisedChat.filter((e) => e.id !== room);
-                },
-                reject: function (reason: TimeoutError) {
-                    if (!client.PromisedChat.includes(this)) return;
-                    reject(reason);
-                    client.PromisedChat = client.PromisedChat.filter((e) => e.id !== room);
-                },
-            };
-            client.PromisedChat.push(chat);
-            setTimeout(chat.reject, 3 * 1000, new TimeoutError(`sendRoom(roomid: ${room}, content: ${str})`));
+        /* eslint-disable @typescript-eslint/no-explicit-any */
+        function toRoom(
+            options: IRoomOutGoingMessageOptions | IUserOutGoingMessageOptions
+        ): options is IRoomOutGoingMessageOptions {
+            return (options as any).roomid && (options as any).roomid !== "";
+        }
+        function toUser(
+            options: IRoomOutGoingMessageOptions | IUserOutGoingMessageOptions
+        ): options is IUserOutGoingMessageOptions {
+            return (options as any).userid && (options as any).userid !== "";
+        }
+        /* eslint-enable */
+
+        message.measure ??= false;
+
+        if (toRoom(message)) {
+            const room = this.rooms.cache.get(message.roomid);
+            if (!room || !room.isExist) throw new PSAPIError("ROOM_NONEXIST");
+            message.type ??= "room-chat";
+            this.outGoingMessage.push(message as IOutGoingMessage<Room>);
+        } else if (toUser(message)) {
+            const user = this.users.cache.get(message.userid);
+            if (!user || !user.online) throw new PSAPIError("USER_OFFLINE");
+            message.type ??= "pm-chat";
+            this.outGoingMessage.push(message as IOutGoingMessage<User>);
+        } else {
+            (message as IUserOutGoingMessageOptions).type = "command";
+            (message as IUserOutGoingMessageOptions).measure = false;
+            this.outGoingMessage.push(message as IOutGoingMessage<User>);
+        }
+
+        if (!this.sendTimer) this.sendTimer = setInterval(() => this.runOutGoingMessage(), this.throttleInterval);
+        return;
+    }
+
+    noreplySend(content: string): void {
+        return this.send({
+            userid: "",
+            text: content,
+            raw: "",
+            type: "command",
+            measure: false,
         });
     }
 
-    joinRoom(roomid: string): Promise<Room> {
+    joinRoom(roomid: string): void {
         roomid = Tools.toRoomId(roomid);
-        if (!roomid) throw new Error("Room ID should not be empty.");
-        this.send("|/j " + roomid);
-        const client = this;
-        //eslint-disable-next-line no-async-promise-executor
-        return new Promise(async (resolve, reject) => {
-            await Tools.sleep(client.throttleInterval);
-            client.fetchRoom.bind(client)(roomid, true).then(resolve).catch(reject);
-        });
+        if (!roomid) throw new PSAPIError("EMPTY", "Room");
+        this.noreplySend("|/j " + roomid);
     }
 
-    leaveRoom(roomid: string): Room {
+    leaveRoom(roomid: string): void {
         roomid = Tools.toRoomId(roomid);
-        if (!roomid) throw new Error("Room ID should not be empty.");
-        const room = this.rooms.cache.get(roomid);
-        if (!room) throw new Error(`Room "${roomid}" does not exist.`);
-        this.send("|/l " + roomid);
-        return room;
+        if (!roomid) throw new PSAPIError("EMPTY", "Room");
+        if (!this.rooms.cache.has(roomid)) throw new PSAPIError("ROOM_NONEXIST", roomid);
+        this.noreplySend("|/l " + roomid);
     }
 
     async onMessage(message: string): Promise<void> {
@@ -656,11 +674,11 @@ export class Client extends EventEmitter {
                 if (!event[0]!.startsWith(" Guest")) {
                     clearTimeout(this._autoReconnect);
                     this.status.loggedIn = true;
-                    this.send("|/ip");
-                    if (this.options.autoJoin)
-                        this.send(this.options.autoJoin.map((r: string) => "|/j " + Tools.toRoomId(r)));
-                    if (this.options.avatar) this.send(`|/avatar ${this.options.avatar as string | number}`);
-                    if (this.options.status) this.send(`|/status ${this.options.status as string}`);
+                    this.noreplySend("|/ip");
+                    if (this.options.autoJoin?.length)
+                        this.options.autoJoin.forEach((r: string) => this.noreplySend("|/j " + Tools.toRoomId(r)));
+                    if (this.options.avatar) this.noreplySend(`|/avatar ${this.options.avatar}`);
+                    if (this.options.status) this.noreplySend(`|/status ${this.options.status}`);
                     await Tools.sleep(this.throttleInterval);
                     if (this.status.id) await this.fetchUser(this.status.id, true);
                     if (this.user) this.user.settings = JSON.parse(event[3] as string);
@@ -695,7 +713,6 @@ export class Client extends EventEmitter {
             }
             case "init": {
                 if (!isRoomNotEmp(room)) return;
-                this.fetchUser((this.user as ClientUser)?.userid ?? this.status.id!, true);
                 if (room.id.startsWith("view-")) this.emit(Events.OPEN_HTML_PAGE, room);
                 else {
                     room = await this.fetchRoom(room.id).catch(() => room);
@@ -738,11 +755,9 @@ export class Client extends EventEmitter {
                         this.rooms.raw.set(roominfo.id, roominfo);
                         if (roominfo.users && !this.rooms.cache.has(roominfo.id)) {
                             await Tools.sleep(this.throttleInterval);
-                            await this.send(
-                                roominfo.users
-                                    .filter((u) => !client.users.cache.has(Tools.toId(u)))
-                                    .map((u) => `|/cmd userdetails ${Tools.toId(u)}`)
-                            );
+                            roominfo.users
+                                .filter((u) => !client.users.cache.has(Tools.toId(u)))
+                                .forEach((u) => this.noreplySend(`|/cmd userdetails ${Tools.toId(u)}`));
                         }
 
                         const PendingRoom: PromisedRoom[] = this.roominfoQueue.filter((r) => r.id === roominfo!.id);
@@ -812,7 +827,7 @@ export class Client extends EventEmitter {
                 if (!this.user) return;
                 for (const element of this.PromisedChat) {
                     if (element.id === message.target.roomid && this.user!.userid === message.author.userid) {
-                        element.resolve(message);
+                        element.received = true;
                         break;
                     }
                 }
@@ -838,7 +853,7 @@ export class Client extends EventEmitter {
                 if (this.user) {
                     for (const element of this.PromisedChat) {
                         if (element.id === message.target.roomid && this.user!.userid === message.author.userid) {
-                            element.resolve(message);
+                            element.received = true;
                             break;
                         }
                     }
@@ -882,7 +897,7 @@ export class Client extends EventEmitter {
                 if (!this.user) break;
                 for (const element of this.PromisedPM) {
                     if (element.id === message.target.userid && this.user.userid === message.author.userid) {
-                        element.resolve(message);
+                        element.received = true;
                         break;
                     }
                 }
@@ -1095,7 +1110,7 @@ export class Client extends EventEmitter {
                 },
             };
 
-            client.send(`|/cmd userdetails ${userid}`);
+            client.noreplySend(`|/cmd userdetails ${userid}`);
             client.userdetailsQueue.push(user);
             if (useCache) {
                 const u: User = new User(
@@ -1183,7 +1198,7 @@ export class Client extends EventEmitter {
                 },
             };
             client.roominfoQueue.push(r);
-            client.send(`|/cmd roominfo ${roomid}`);
+            client.noreplySend(`|/cmd roominfo ${roomid}`);
             setTimeout(r.reject, 5 * 1000, {
                 id: roomid,
                 error: "timeout",
@@ -1203,7 +1218,7 @@ export class Client extends EventEmitter {
         let room: Room | undefined = this.rooms.cache.get(input.roomid);
         if (!room) {
             room = new Room(input, this) as Room;
-            this.send(`|/cmd roominfo ${input.id}`);
+            this.noreplySend(`|/cmd roominfo ${input.id}`);
         } else Object.assign(room!, input);
         room.setVisibility();
         this.rooms.cache.set(room.roomid!, room);

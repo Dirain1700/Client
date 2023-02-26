@@ -21,12 +21,17 @@ export class PSAPIError extends Error {
         let message: string = "";
         switch (errorType) {
             case "EMPTY": {
-                message = "Cannot parse" + args[0] ?? " because it is Empty";
+                message = "Cannot parse" + args[0]! + " because it is Empty";
+                break;
+            }
+
+            case "EMPTY_MESSAGE": {
+                message = "Message cannot be empty";
                 break;
             }
 
             case "PERMISSION_NOT_FOUND": {
-                message = "Permission not found: " + args[0] ?? "";
+                message = "Permission " + args[0]! + " not found";
                 break;
             }
 
@@ -39,6 +44,20 @@ export class PSAPIError extends Error {
                 message = "Permission denied: Expected " + args[0]! ?? " but got " + args[1]!;
                 break;
             }
+
+            case "ROOM_NONEXIST": {
+                message = "Room " + args[0]! + " not found";
+                break;
+            }
+
+            case "USER_OFFLINE": {
+                message = "User " + args[0]! + " not found";
+                break;
+            }
+
+            default:
+                // prettier-ignore
+                throw new Error("Unknown PSAPIError type: " + (errorType satisfies never));
         }
         super(message);
     }

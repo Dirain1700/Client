@@ -2,7 +2,6 @@ import type { Client } from "../src/Client";
 import type { Message } from "../src/Message";
 import type { Room } from "../src/Room";
 import type { User } from "../src/User";
-import type { HTMLOptions } from "./Room";
 
 export interface MessageInput<T extends User | Room | unknown> {
     author: User;
@@ -13,10 +12,6 @@ export interface MessageInput<T extends User | Room | unknown> {
     time: number;
     client: Client;
 }
-
-export type UserMessageOptions = string | { content: string };
-
-export type RoomMessageOptions = string | HTMLOptions;
 
 /* eslint-disable @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, no-unused-vars */
 export interface MessageWaits<T extends User | Room> {
@@ -32,7 +27,7 @@ export interface MessageWaits<T extends User | Room> {
 }
 /* eslint-enable @typescript-eslint/ban-types */
 
-export interface awaitMessageOptions<T extends User | Room> {
+export interface awaitMessageOptions<T extends User | Room = User | Room> {
     filter: (message: Message<T>) => boolean;
     max: number;
     time: number;

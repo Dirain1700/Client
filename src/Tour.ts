@@ -96,7 +96,7 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
     }
 
     forceStart(): this {
-        this.client.send(`${this.room.roomid}|/tour start`);
+        this.room.send("/tour start", { type: "command", measure: false });
         return this;
     }
 
@@ -108,7 +108,7 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
     }
 
     forceEnd(): this {
-        this.client.send(`${this.room.roomid}|/tour end`);
+        this.room.send("/tour end");
         return this;
     }
 

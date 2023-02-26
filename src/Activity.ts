@@ -127,10 +127,12 @@ export abstract class Activity {
             case "USER_NOT_FOUND":
                 message += "User not found: " + name;
                 break;
+            default:
+                throw new Error("Unknown Activity error type: " + (err satisfies never));
         }
         if (!message) return;
-        message = this.room.roomid + "|Error: " + message;
-        this.client.send(message);
+        message = "Error: " + message;
+        this.room.send(message);
     }
 
     sendUhtml(id: string, html: string, change?: boolean): void {

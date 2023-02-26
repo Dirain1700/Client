@@ -154,4 +154,8 @@ export class Tools {
             .replaceAll(ESCAPED_SPACE, SPACE)
             .replaceAll(ESCAPED_HYPHEN, HYPHEN);
     }
+
+    static trim(content: string): string {
+        return content.trim().replaceAll(/ {2,}/gimu, " ");
+    }
 }

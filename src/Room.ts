@@ -8,7 +8,8 @@ import type { Client } from "./Client";
 import type { Message } from "./Message";
 import type { Tournament } from "./Tour";
 
-import type { MessageWaits, awaitMessageOptions, RoomMessageOptions } from "../types/Message";
+import type { IRoomOutGoingMessageOptions } from "../types/Client";
+import type { MessageWaits, awaitMessageOptions } from "../types/Message";
 import type { RoomOptions, RoomPermissions } from "../types/Room";
 import type { GroupSymbol, GroupNames, AuthLevel } from "../types/UserGroups";
 
@@ -55,12 +56,24 @@ export class Room {
         if (users.some(([u, a]) => !Tools.isHigherRank(this.getRoomRank(u), a))) this.visibility = "hidden";
     }
 
-    send(content: RoomMessageOptions): Promise<Message<Room>> | void {
-        return this.client.sendRoom(this.roomid!, content);
+    send(content: string, options?: Partial<IRoomOutGoingMessageOptions>): void {
+        if (!this.isExist || !this.roomid) throw new PSAPIError("ROOM_NONEXIST", this.id);
+        if (!content) throw new PSAPIError("EMPTY_MESSAGE");
+
+        const outgoingMessage: IRoomOutGoingMessageOptions = {
+            roomid: this.roomid,
+            text: this.setupMessage(content),
+            raw: content,
+            type: options && options.type ? options.type : undefined,
+            measure: options && options.measure ? options.measure : undefined,
+        };
+
+        this.client.send(outgoingMessage);
     }
 
-    useCommand(command: string): void {
-        this.client.send(this.roomid + "|" + command);
+    setupMessage(content: string): string {
+        if (!this.isExist || !this.roomid) throw new PSAPIError("ROOM_NONEXIST", this.id);
+        return this.roomid + "|" + content;
     }
 
     update(): this {
@@ -72,69 +85,69 @@ export class Room {
 
     setRoomIntro(html: string): void {
         this.checkCan("roomintro", this.client.status.id, true);
-        this.useCommand("/roomintro " + html);
+        this.send("/roomintro " + html, { type: "command", measure: false });
     }
 
     setModchat(rank: GroupSymbol): void {
         if (Tools.isHigherRank(rank, "%")) this.checkCan("roomban", this.client.status.id, true);
         else this.checkCan("warn", this.client.status.id, true);
-        this.useCommand("/modchat " + rank);
+        this.send("/modchat " + rank, { type: "command", measure: false });
     }
 
     setAnnounce(content?: string | null): void {
         this.checkCan("announcement", this.client.status.id, true);
         if (content) this.send("/announcement create " + content);
-        else this.useCommand("/announcement end");
+        else this.send("/announcement end", { type: "command", measure: false });
     }
 
     sendUhtml(id: string, html: string, change?: boolean): void {
         this.checkCan("html", this.client.status.id, true);
         if (change) this.changeUhtml(id, html);
         if (!id || !html) throw new PSAPIError("EMPTY", !id ? "ID" : "HTML");
-        this.useCommand(`/adduhtml ${id},${html}`);
+        this.send(`/adduhtml ${id},${html}`, { type: "command", measure: false });
     }
 
     changeUhtml(id: string, html: string): void {
         this.checkCan("html", this.client.status.id, true);
         if (!id || !html) throw new PSAPIError("EMPTY", !id ? "ID" : "HTML");
-        this.useCommand(`/changeuhtml ${id},${html}`);
+        this.send(`/changeuhtml ${id},${html}`, { type: "command", measure: false });
     }
 
     clearUhtml(id: string): void {
         this.checkCan("html", this.client.status.id, true);
         if (!id) throw new PSAPIError("EMPTY", "ID");
-        this.useCommand(`/changeuhtml ${id},<div></div>`);
+        this.send(`/changeuhtml ${id},<div></div>`, { type: "command", measure: false });
     }
 
     sendHtmlBox(html: string): void {
         this.checkCan("html", this.client.status.id, true);
         if (!html) throw new PSAPIError("EMPTY", "HTML");
-        this.useCommand(`/addhtmlbox ${html}`);
+        this.send(`/addhtmlbox ${html}`, { type: "command", measure: false });
     }
 
     sendAuthUhtml(rank: GroupSymbol, id: string, html: string, change?: boolean): void {
         this.checkCan("html", this.client.status.id, true);
         if (change) this.changeAuthUhtml(rank, id, html);
         if (!id || !html) throw new PSAPIError("EMPTY", !id ? "ID" : "HTML");
-        this.useCommand(`/addrankuhtml ${rank},${id},${html}`);
+        this.send(`/addrankuhtml ${rank},${id},${html}`, { type: "command", measure: false });
     }
 
     changeAuthUhtml(rank: GroupSymbol, id: string, html: string): void {
         this.checkCan("html", this.client.status.id, true);
         if (!id || !html) throw new PSAPIError("EMPTY", !id ? "ID" : "HTML");
-        this.useCommand(`/changerankuhtml ${rank},${id},${html}`);
+        this.send(`/changerankuhtml ${rank},${id},${html}`, { type: "command", measure: false });
     }
 
     clearAuthUhtml(rank: GroupSymbol, id: string): void {
         this.checkCan("html", this.client.status.id, true);
         if (!id) throw new PSAPIError("EMPTY", "ID");
-        this.useCommand(`/changeuhtml ${rank},${id},<div></div>`);
+        this.send(`/changeuhtml ${rank},${id},<div></div>`, { type: "command", measure: false });
     }
 
     sendAuthHtmlBox(rank: GroupSymbol, html: string): void {
         this.checkCan("html", this.client.status.id, true);
         if (!html) throw new PSAPIError("EMPTY", "HTML");
-        this.useCommand(`/addrankhtmlbox ${rank},${html}`);
+        this.send(`/addrankhtmlbox ${rank},${html}`, { type: "command", measure: false });
     }
 
     sendPrivateUhtml(user: string, id: string, html: string, change?: boolean): void {
@@ -142,28 +155,28 @@ export class Room {
         if (change) return this.changePrivateUhtml(user, id, html);
         user = Tools.toId(user);
         if (!user || !id || !html) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "ID" : "HTML");
-        this.useCommand(`/sendprivateuhtml ${user},${id},${html}`);
+        this.send(`/sendprivateuhtml ${user},${id},${html}`, { type: "command", measure: false });
     }
 
     changePrivateUhtml(user: string, id: string, html: string): void {
         this.checkCan("html", this.client.status.id, true);
         user = Tools.toId(user);
         if (!user || !html || !id) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "uhtml ID" : "HTML");
-        this.useCommand(`/changeprivateuhtml ${user},${id},${html}`);
+        this.send(`/changeprivateuhtml ${user},${id},${html}`, { type: "command", measure: false });
     }
 
     clearPrivateUhtml(user: string, id: string): void {
         this.checkCan("html", this.client.status.id, true);
         user = Tools.toId(user);
         if (!user || !id) throw new PSAPIError("EMPTY", !user ? "User" : "ID");
-        this.useCommand(`/changeprivateuhtml ${user},${id},<div></div>`);
+        this.send(`/changeprivateuhtml ${user},${id},<div></div>`, { type: "command", measure: false });
     }
 
     sendPrivateHtmlBox(user: string, html: string): void {
         this.checkCan("html", this.client.status.id, true);
         user = Tools.toId(user);
         if (!user || !html) throw new PSAPIError("EMPTY", !user ? "User" : "HTML");
-        this.useCommand(`/sendprivatehtmlbox ${user},${html}`);
+        this.send(`/sendprivatehtmlbox ${user},${html}`, { type: "command", measure: false });
     }
 
     sendPmUhtml(user: string, id: string, html: string, change?: boolean): void {
@@ -171,46 +184,46 @@ export class Room {
         if (change) return this.changePmUhtml(user, id, html);
         user = Tools.toId(user);
         if (!user || !id || !html) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "ID" : "HTML");
-        this.useCommand(`/pmuhtml ${user},${id},${html}`);
+        this.send(`/pmuhtml ${user},${id},${html}`, { type: "command", measure: false });
     }
 
     changePmUhtml(user: string, id: string, html: string): void {
         this.checkCan("html", this.client.status.id, true);
         user = Tools.toId(user);
         if (!user || !id || !html) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "ID" : "HTML");
-        this.useCommand(`/pmuhtmlchange ${user},${id},${html}`);
+        this.send(`/pmuhtmlchange ${user},${id},${html}`, { type: "command", measure: false });
     }
 
     clearPmUhtml(user: string, id: string): void {
         this.checkCan("html", this.client.status.id, true);
         user = Tools.toId(user);
         if (!user || !id) throw new PSAPIError("EMPTY", !user ? "User" : "ID");
-        this.useCommand(`/pmuhtmlchange ${user},${id},<div></div>`);
+        this.send(`/pmuhtmlchange ${user},${id},<div></div>`, { type: "command", measure: false });
     }
 
     sendPmHtmlBox(user: string, html: string): void {
         this.checkCan("html", this.client.status.id, true);
         user = Tools.toId(user);
         if (!user || !html) throw new PSAPIError("EMPTY", !user ? "User" : "ID");
-        this.useCommand(`/pminfobox ${user},${html}`);
+        this.send(`/pminfobox ${user},${html}`, { type: "command", measure: false });
     }
 
     sendHtmlPage(user: string, id: string, html: string): void {
         this.checkCan("html", this.client.status.id, true);
         user = Tools.toId(user);
         if (!user || !id || !html) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "ID" : "HTML");
-        this.useCommand(`/sendhtmlpage ${user},${id},${html}`);
+        this.send(`/sendhtmlpage ${user},${id},${html}`, { type: "command", measure: false });
     }
 
     hidetext(user: string, clear: boolean, lines?: number | null, reason?: string): Promise<Message<Room> | null> {
         this.checkCan("hidetext", this.client.status.id);
         const r = this;
         return new Promise((resolve, reject) => {
-            r.client.sendRoom(
-                r.id,
+            r.send(
                 `/${clear ? "clear" : "hide"}${lines ? "lines" : "text"} ${user},${lines ? lines + "," : ""}${
                     reason || ""
-                }`
+                }`,
+                { type: "command", measure: false }
             );
             r.awaitMessages({
                 filter: (m: Message<Room>) =>

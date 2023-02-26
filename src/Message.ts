@@ -5,7 +5,8 @@ import { User } from "./User";
 
 import type { Client } from "./Client";
 
-import type { MessageInput, MessageWaits, UserMessageOptions, RoomMessageOptions } from "../types/Message";
+import type { IUserOutGoingMessageOptions, IRoomOutGoingMessageOptions } from "../types/Client";
+import type { MessageInput, MessageWaits } from "../types/Message";
 import type { RoomOptions } from "../types/Room";
 import type { UserOptions } from "../types/User";
 
@@ -85,10 +86,8 @@ export class Message<T extends Room | User = Room | User> {
         }
     }
 
-    reply(option: UserMessageOptions | RoomMessageOptions): Promise<Message<Room | User>> | void {
-        if (this.inRoom()) return this.client.sendRoom(this.target.id, option as RoomMessageOptions);
-        else if (this.inPm()) return this.client.sendUser(this.target.id, option as UserMessageOptions);
-        else throw new Error("Message<T>.target is neither Room or User.");
+    reply(content: string, options: IUserOutGoingMessageOptions | IRoomOutGoingMessageOptions): void {
+        return this.target.send(content, options ?? {});
     }
 
     inPm(): this is Message<User> {
