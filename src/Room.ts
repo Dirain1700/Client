@@ -106,70 +106,87 @@ export class Room {
         return this;
     }
 
+    announce(text: string): void {
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("warn", this.client.user, true);
+        this.send("/announce " + text, { type: "command", measure: false });
+    }
+
     setModchat(rank: GroupSymbol): void {
-        if (Tools.isHigherRank(rank, "%")) this.checkCan("roomban", this.client.status.id, true);
-        else this.checkCan("warn", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        if (Tools.isHigherRank(rank, "%")) this.checkCan("roomban", this.client.user, true);
+        else this.checkCan("warn", this.client.user, true);
         this.send("/modchat " + rank, { type: "command", measure: false });
     }
 
     setAnnounce(content?: string | null): void {
-        this.checkCan("announcement", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("announcement", this.client.user, true);
         if (content) this.send("/announcement create " + content);
         else this.send("/announcement end", { type: "command", measure: false });
     }
 
     sendUhtml(id: string, html: string, change?: boolean): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         if (change) this.changeUhtml(id, html);
         if (!id || !html) throw new PSAPIError("EMPTY", !id ? "ID" : "HTML");
         this.send(`/adduhtml ${id},${html}`, { type: "command", measure: false });
     }
 
     changeUhtml(id: string, html: string): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         if (!id || !html) throw new PSAPIError("EMPTY", !id ? "ID" : "HTML");
         this.send(`/changeuhtml ${id},${html}`, { type: "command", measure: false });
     }
 
     clearUhtml(id: string): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         if (!id) throw new PSAPIError("EMPTY", "ID");
         this.send(`/changeuhtml ${id},<div></div>`, { type: "command", measure: false });
     }
 
     sendHtmlBox(html: string): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         if (!html) throw new PSAPIError("EMPTY", "HTML");
         this.send(`/addhtmlbox ${html}`, { type: "command", measure: false });
     }
 
     sendAuthUhtml(rank: GroupSymbol, id: string, html: string, change?: boolean): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         if (change) this.changeAuthUhtml(rank, id, html);
         if (!id || !html) throw new PSAPIError("EMPTY", !id ? "ID" : "HTML");
         this.send(`/addrankuhtml ${rank},${id},${html}`, { type: "command", measure: false });
     }
 
     changeAuthUhtml(rank: GroupSymbol, id: string, html: string): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         if (!id || !html) throw new PSAPIError("EMPTY", !id ? "ID" : "HTML");
         this.send(`/changerankuhtml ${rank},${id},${html}`, { type: "command", measure: false });
     }
 
     clearAuthUhtml(rank: GroupSymbol, id: string): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         if (!id) throw new PSAPIError("EMPTY", "ID");
         this.send(`/changeuhtml ${rank},${id},<div></div>`, { type: "command", measure: false });
     }
 
     sendAuthHtmlBox(rank: GroupSymbol, html: string): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         if (!html) throw new PSAPIError("EMPTY", "HTML");
         this.send(`/addrankhtmlbox ${rank},${html}`, { type: "command", measure: false });
     }
 
     sendPrivateUhtml(user: string, id: string, html: string, change?: boolean): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         if (change) return this.changePrivateUhtml(user, id, html);
         user = Tools.toId(user);
         if (!user || !id || !html) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "ID" : "HTML");
@@ -177,28 +194,32 @@ export class Room {
     }
 
     changePrivateUhtml(user: string, id: string, html: string): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         user = Tools.toId(user);
         if (!user || !html || !id) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "uhtml ID" : "HTML");
         this.send(`/changeprivateuhtml ${user},${id},${html}`, { type: "command", measure: false });
     }
 
     clearPrivateUhtml(user: string, id: string): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         user = Tools.toId(user);
         if (!user || !id) throw new PSAPIError("EMPTY", !user ? "User" : "ID");
         this.send(`/changeprivateuhtml ${user},${id},<div></div>`, { type: "command", measure: false });
     }
 
     sendPrivateHtmlBox(user: string, html: string): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         user = Tools.toId(user);
         if (!user || !html) throw new PSAPIError("EMPTY", !user ? "User" : "HTML");
         this.send(`/sendprivatehtmlbox ${user},${html}`, { type: "command", measure: false });
     }
 
     sendPmUhtml(user: string, id: string, html: string, change?: boolean): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         if (change) return this.changePmUhtml(user, id, html);
         user = Tools.toId(user);
         if (!user || !id || !html) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "ID" : "HTML");
@@ -206,35 +227,46 @@ export class Room {
     }
 
     changePmUhtml(user: string, id: string, html: string): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         user = Tools.toId(user);
         if (!user || !id || !html) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "ID" : "HTML");
         this.send(`/pmuhtmlchange ${user},${id},${html}`, { type: "command", measure: false });
     }
 
     clearPmUhtml(user: string, id: string): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         user = Tools.toId(user);
         if (!user || !id) throw new PSAPIError("EMPTY", !user ? "User" : "ID");
         this.send(`/pmuhtmlchange ${user},${id},<div></div>`, { type: "command", measure: false });
     }
 
     sendPmHtmlBox(user: string, html: string): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         user = Tools.toId(user);
         if (!user || !html) throw new PSAPIError("EMPTY", !user ? "User" : "ID");
         this.send(`/pminfobox ${user},${html}`, { type: "command", measure: false });
     }
 
     sendHtmlPage(user: string, id: string, html: string): void {
-        this.checkCan("html", this.client.status.id, true);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("html", this.client.user, true);
         user = Tools.toId(user);
         if (!user || !id || !html) throw new PSAPIError("EMPTY", !user ? "User" : !id ? "ID" : "HTML");
         this.send(`/sendhtmlpage ${user},${id},${html}`, { type: "command", measure: false });
     }
 
+    modnote(text: string): void {
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("warn", this.client.user);
+        this.send("/modnote " + text, { type: "command", measure: false });
+    }
+
     hidetext(user: string, clear: boolean, lines?: number | null, reason?: string): Promise<Message<Room> | null> {
-        this.checkCan("hidetext", this.client.status.id);
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("hidetext", this.client.user);
         const r = this;
         return new Promise((resolve, reject) => {
             r.send(
@@ -253,6 +285,14 @@ export class Room {
                 .then((m: Message<Room>[] | null) => resolve((m as Message<Room>[])[0]!))
                 .catch(reject);
         });
+    }
+
+    warn(targetUser: User, reason?: string): void {
+        if (!targetUser.online) return;
+        if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
+        this.checkCan("warn", this.client.user, true);
+        if (this.isStaff(targetUser)) return;
+        this.send("/warn " + targetUser.userid + reason ? "," + reason : "", { type: "command", measure: false });
     }
 
     awaitMessages(options: awaitMessageOptions<Room>): Promise<Message<Room>[] | null> {
