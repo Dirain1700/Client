@@ -43,7 +43,7 @@ export class User {
         this.status = init.status ?? "";
         this.rooms = init.rooms || null;
         this.friended = init.friended ?? false;
-        this.online = !!this.avatar;
+        this.online = this.avatar !== null;
         this.waits = [];
         this.alts = [];
         this.client = init?.client ?? client;

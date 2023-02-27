@@ -604,8 +604,6 @@ export class Client extends EventEmitter {
                       this
                   );
 
-        //if (room && room.type === "chat") this.fetchRoom(room.id, false).catch(() => this.rooms.cache.get(room.id));
-
         for (let i = 0; i < lines.length; i++) {
             const line: string | undefined = lines[i]!.trim();
             if (!line) continue;
@@ -628,8 +626,9 @@ export class Client extends EventEmitter {
                                 this.parseMessage(nextLine.trim(), room!);
                                 for (let p = n + 1; p < lines.length; p++) {
                                     nextLine = lines[p]!.trim();
+                                    if (nextLine.startsWith("|c:|")) continue;
                                     // prettier-ignore
-                                    if (
+                                    else if (
                                         nextLine.startsWith("|raw|<div class=\"infobox infobox-roomintro\">") &&
                                         nextLine.endsWith("</div>")
                                     ) {
@@ -732,6 +731,9 @@ export class Client extends EventEmitter {
                                 userid: id,
                                 name: id,
                                 rooms: false,
+                                group: "&",
+                                avatar: 0,
+                                autoconfirmed: true,
                             },
                             this
                         )
@@ -845,7 +847,7 @@ export class Client extends EventEmitter {
                 if (!isRoomNotEmp(room)) return;
                 if (!event[0] || !Tools.toId(event[0])) break;
                 room = this.rooms.cache.get(room.id) ?? room;
-                const author = this.getUser(event[0] as string),
+                const author = this.getUser(event[0]!) ?? (await this.fetchUser(event[0]!)),
                     content = event.slice(1).join("|") as string,
                     message = new Message<Room>({
                         author: author,
@@ -871,7 +873,7 @@ export class Client extends EventEmitter {
                 if (!isRoomNotEmp(room)) return;
                 room = this.rooms.cache.get(room.id);
                 if (!isRoomNotEmp(room)) return;
-                const by = this.getUser(event[1] as string),
+                const by = this.getUser(event[1]!) ?? (await this.fetchUser(event[1]!)),
                     value = event.slice(2).join("|"),
                     message = new Message<Room>({
                         author: by,
