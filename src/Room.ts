@@ -292,7 +292,7 @@ export class Room {
         if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
         this.checkCan("warn", this.client.user, true);
         if (this.isStaff(targetUser)) return;
-        this.send("/warn " + targetUser.userid + reason ? "," + reason : "", { type: "command", measure: false });
+        this.send("/warn " + targetUser.userid + (reason ? "," + reason : ""), { type: "command", measure: false });
     }
 
     awaitMessages(options: awaitMessageOptions<Room>): Promise<Message<Room>[] | null> {
