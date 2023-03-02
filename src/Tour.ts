@@ -3,11 +3,9 @@
 import { Collection } from "@discordjs/collection";
 
 import { Activity } from "./Activity";
-
 import { Tools } from "./Tools";
 
 import type { Player } from "./Activity";
-
 import type { Room } from "./Room";
 
 import type { TourUpdateData, TourEndData, EliminationBracket, RoundRobinBracket } from "../types/Tour";
