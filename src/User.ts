@@ -55,7 +55,7 @@ export class User {
         if (init.rooms) {
             Object.keys(init.rooms).forEach((r) => {
                 const room = client.getRoom(r);
-                if (!room || room.isExist) return;
+                if (!room || room.exists) return;
                 this.rooms.set(room.roomid, room);
             });
         }
@@ -103,7 +103,7 @@ export class User {
         roomid = Tools.toRoomId(roomid);
         if (!roomid) return this;
         const room = this.client.getRoom(roomid);
-        if (!room || !room.isExist) return this;
+        if (!room || !room.exists) return this;
         this.rooms.set(room.roomid, room);
         return this;
     }

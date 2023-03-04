@@ -31,7 +31,7 @@ export class Room {
     users: string[];
     lastFetchTime: number = 0;
     waits: MessageWaits<Room>[];
-    readonly isExist: boolean;
+    readonly exists: boolean;
     readonly client: Client;
 
     constructor(init: RoomOptions, client: Client) {
@@ -46,7 +46,7 @@ export class Room {
         this.userCollection = new Collection();
         this.users = init.users || [];
         this.waits = init.waits ?? [];
-        this.isExist = init.error ? false : true;
+        this.exists = init.error ? false : true;
         this.client = client;
         Object.defineProperty(this, "waits", {
             enumerable: false,
@@ -63,7 +63,7 @@ export class Room {
     }
 
     send(content: string, options?: Partial<IRoomOutGoingMessageOptions>): void {
-        if (!this.isExist || !this.roomid) throw new PSAPIError("ROOM_NONEXIST", this.id);
+        if (!this.exists || !this.roomid) throw new PSAPIError("ROOM_NONEXIST", this.id);
         if (!content) throw new PSAPIError("EMPTY_MESSAGE");
 
         const outgoingMessage: IRoomOutGoingMessageOptions = {
@@ -78,7 +78,7 @@ export class Room {
     }
 
     setupMessage(content: string): string {
-        if (!this.isExist || !this.roomid) throw new PSAPIError("ROOM_NONEXIST", this.id);
+        if (!this.exists || !this.roomid) throw new PSAPIError("ROOM_NONEXIST", this.id);
         return this.roomid + "|" + content;
     }
 
@@ -368,7 +368,7 @@ export class Room {
             GlobalRank = user.group ?? " ";
             user = user.id;
         }
-        if (!this.isExist || !this.auth) return GlobalRank;
+        if (!this.exists || !this.auth) return GlobalRank;
         if (this.visibility === "secret") return this.getRoomRank(user);
         const RoomRank: GroupSymbol = this.getRoomRank(user);
         if (!Tools.rankSymbols.includes(RoomRank)) return "+";
@@ -390,7 +390,7 @@ export class Room {
     }
 
     checkCan(permission: string & RoomPermissions, user: User | string, strict?: boolean): boolean {
-        if (!this.isExist || !this.auth) {
+        if (!this.exists || !this.auth) {
             if (strict) throw new PSAPIError("EMPTY", "Room");
             else return false;
         }
@@ -463,35 +463,35 @@ export class Room {
 
     isDriver(userid: string): boolean {
         userid = Tools.toId(userid);
-        if (!this.isExist) return false;
+        if (!this.exists) return false;
         return this.auth["%"]?.includes(userid) ?? false;
     }
 
     isMod(userid: string): boolean {
         userid = Tools.toId(userid);
-        if (!this.isExist) return false;
+        if (!this.exists) return false;
         return this.auth["@"]?.includes(userid) ?? false;
     }
 
     isBot(userid: string): boolean {
         userid = Tools.toId(userid);
-        if (!this.isExist) return false;
+        if (!this.exists) return false;
         return this.auth["*"]?.includes(userid) ?? false;
     }
 
     isOwner(userid: string): boolean {
         userid = Tools.toId(userid);
-        if (!this.isExist) return false;
+        if (!this.exists) return false;
         return this.auth["#"]?.includes(userid) ?? false;
     }
 
     isRoomStaff(userid: string): boolean {
-        if (!this.isExist) return false;
+        if (!this.exists) return false;
         return this.isDriver(userid) || this.isMod(userid) || this.isOwner(userid);
     }
 
     isStaff(user: User): boolean {
-        if (this.isExist) {
+        if (this.exists) {
             if (user.online) return user.isGlobalStaff || this.isRoomStaff(user.userid);
             else return this.isRoomStaff(user.userid);
         }

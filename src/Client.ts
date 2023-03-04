@@ -543,7 +543,7 @@ export class Client extends EventEmitter {
 
         if (toRoom(message)) {
             const room = this.rooms.cache.get(message.roomid);
-            if (!room || !room.isExist) throw new PSAPIError("ROOM_NONEXIST");
+            if (!room || !room.exists) throw new PSAPIError("ROOM_NONEXIST");
             message.type ??= "room-chat";
             this.outGoingMessage.push(message as IOutGoingMessage<Room>);
         } else if (toUser(message)) {
