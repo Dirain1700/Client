@@ -52,6 +52,10 @@ export class Room {
             enumerable: false,
             writable: true,
         });
+        Object.defineProperty(this, "client", {
+            enumerable: false,
+            writable: true,
+        });
         this.setVisibility();
         this.update();
     }

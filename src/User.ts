@@ -52,6 +52,10 @@ export class User {
             enumerable: false,
             writable: true,
         });
+        Object.defineProperty(this, "client", {
+            enumerable: false,
+            writable: true,
+        });
         if (init.rooms) {
             Object.keys(init.rooms).forEach((r) => {
                 const room = client.getRoom(r);

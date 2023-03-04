@@ -38,6 +38,10 @@ export abstract class Activity {
         else this.pm = null;
         this.room = target;
         this.client = target.client;
+        Object.defineProperty(this, "client", {
+            enumerable: false,
+            writable: true,
+        });
     }
 
     abstract forceStart(): this;

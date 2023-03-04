@@ -84,6 +84,10 @@ export class Message<T extends Room | User = Room | User> {
             });
             this.awaited = message.awaited;
         }
+        Object.defineProperty(this, "client", {
+            enumerable: false,
+            writable: true,
+        });
     }
 
     reply(content: string, options?: IUserOutGoingMessageOptions | IRoomOutGoingMessageOptions): void {
