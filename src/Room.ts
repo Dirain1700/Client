@@ -1,5 +1,7 @@
 "use strict";
 
+import { Collection } from "@discordjs/collection";
+
 import { PSAPIError } from "./Error";
 import { Tools } from "./Tools";
 import { User } from "./User";
@@ -25,6 +27,7 @@ export class Room {
     auth: {
         [key: GroupSymbol | string]: string[];
     };
+    userCollection: Collection<string, User>;
     users: string[];
     lastFetchTime: number = 0;
     waits: MessageWaits<Room>[];
@@ -40,6 +43,7 @@ export class Room {
         this.modchat = init.modchat || null;
         this.modjoin = init.modjoin || null;
         this.auth = init.auth || {};
+        this.userCollection = new Collection();
         this.users = init.users || [];
         this.waits = init.waits ?? [];
         this.isExist = init.error ? false : true;
@@ -49,6 +53,7 @@ export class Room {
             writable: true,
         });
         this.setVisibility();
+        this.update();
     }
 
     setVisibility(): void {
@@ -86,23 +91,35 @@ export class Room {
         const room = this.client.rooms.cache.get(this.id);
         if (!room) return this;
         Object.assign(this, room);
+        this.users.forEach((u) => {
+            if (this.userCollection.has(Tools.toId(u))) return;
+        });
         return this;
     }
 
     addUser(name: string): this {
         const userid = Tools.toId(name);
         if (!userid) return this;
-        if (this.users.map(Tools.toId).includes(userid)) return this;
-        this.users.push(" " + name);
+        const user = this.client.getUser(userid);
+        if (!user) return this;
+        if (this.users.map(Tools.toId).includes(userid)) {
+            const nameIndex = this.users.map(Tools.toId).indexOf(userid);
+            if (nameIndex === -1) return this;
+            this.users.splice(nameIndex, 1);
+        }
+        this.users.push(user.group + user.name);
+        this.userCollection.set(user.userid, user);
         return this;
     }
 
     removeUser(userid: string): this {
         userid = Tools.toId(userid);
-        if (!userid) return this;
-        const nameIndex = this.users.map(Tools.toId).indexOf(userid);
-        if (nameIndex === -1) return this;
-        this.users.splice(nameIndex, 1);
+        if (userid) {
+            const nameIndex = this.users.map(Tools.toId).indexOf(userid);
+            if (nameIndex === -1) return this;
+            this.users.splice(nameIndex, 1);
+        }
+        if (this.userCollection.has(userid)) this.userCollection.delete(userid);
         return this;
     }
 
@@ -479,5 +496,15 @@ export class Room {
             else return this.isRoomStaff(user.userid);
         }
         return false;
+    }
+
+    getOnlineStaffs(ignoreGlobals?: boolean): Collection<string, User> {
+        return this.userCollection.filter((u) => {
+            if (!this.isStaff(u)) return false;
+            if (ignoreGlobals) {
+                if (!this.isRoomStaff(u.userid)) return false;
+                else return true;
+            } else return true;
+        });
     }
 }

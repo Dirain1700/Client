@@ -1,5 +1,7 @@
 "use strict";
 
+import { Collection } from "@discordjs/collection";
+
 import { PSAPIError } from "./Error";
 import { Room } from "./Room";
 import { Tools } from "./Tools";
@@ -22,8 +24,7 @@ export class User {
     sectionLeader: boolean;
     autoconfirmed: boolean;
     status: string;
-    //eslint-disable-next-line @typescript-eslint/no-explicit-any
-    rooms: { [key: string]: { [key: string]: any } } | null;
+    rooms: Collection<string, Room>;
     friended: boolean;
     online: boolean;
     waits: MessageWaits<User>[];
@@ -41,7 +42,7 @@ export class User {
         this.sectionLeader = init.customgroup === "Section Leader";
         this.autoconfirmed = init.autoconfirmed ?? false;
         this.status = init.status ?? "";
-        this.rooms = init.rooms || null;
+        this.rooms = new Collection();
         this.friended = init.friended ?? false;
         this.online = this.avatar !== null;
         this.waits = [];
@@ -51,6 +52,14 @@ export class User {
             enumerable: false,
             writable: true,
         });
+        if (init.rooms) {
+            Object.keys(init.rooms).forEach((r) => {
+                const room = client.getRoom(r);
+                if (!room || room.isExist) return;
+                this.rooms.set(room.roomid, room);
+            });
+        }
+        this.update();
     }
 
     send(content: string, options?: Partial<IUserOutGoingMessageOptions>): void {
@@ -93,15 +102,16 @@ export class User {
     addRoom(roomid: string): this {
         roomid = Tools.toRoomId(roomid);
         if (!roomid) return this;
-        if (!this.rooms) this.rooms = Object.create(null)!;
-        this.rooms![roomid] = {};
+        const room = this.client.getRoom(roomid);
+        if (!room || !room.isExist) return this;
+        this.rooms.set(room.roomid, room);
         return this;
     }
 
     removeRoom(roomid: string): this {
         roomid = Tools.toRoomId(roomid);
-        if (!roomid || !this.rooms) return this;
-        delete this.rooms[roomid];
+        if (!roomid || !this.rooms.has(roomid)) return this;
+        this.rooms.delete(roomid);
         return this;
     }
 
