@@ -63,7 +63,7 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
         this.data.format = format;
         this.data.playerCap = playerCap;
         this.playerCap = playerCap;
-        this.isSingleElimination = this.round.number === 1;
+        this.isSingleElimination = this.isElim() && this.round.number === 1;
     }
 
     update(data?: Partial<TourUpdateData<T> & TourEndData<T>>): this {
@@ -81,6 +81,7 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
         };
         this.started = !!this.data.bracketData;
         this.playerCap = this.data.playerCap;
+        this.isSingleElimination = this.isElim() && this.round.number === 1;
         this.room.update();
         return this;
     }

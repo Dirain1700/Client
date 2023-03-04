@@ -1100,14 +1100,14 @@ export class Client extends EventEmitter {
                                     room.tour.isElim() &&
                                     room.tour.players.get(Tools.toId(user2))?.score === -1 * room.tour.round.number
                                 )
-                                    room.tour.eliminatePlayer(user1);
+                                    room.tour.eliminatePlayer(user2);
                             } else if (result === "loss") {
                                 room.tour.removePoints(user1, 1);
                                 if (
                                     room.tour.isElim() &&
                                     room.tour.players.get(Tools.toId(user2))?.score === -1 * room.tour.round.number
                                 )
-                                    room.tour.eliminatePlayer(user2);
+                                    room.tour.eliminatePlayer(user1);
                             }
                         }
 
