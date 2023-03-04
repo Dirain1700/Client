@@ -474,7 +474,7 @@ export class Room {
     }
 
     isStaff(user: User): boolean {
-        if (user instanceof User && this.isExist) {
+        if (this.isExist) {
             if (user.online) return user.isGlobalStaff || this.isRoomStaff(user.userid);
             else return this.isRoomStaff(user.userid);
         }
