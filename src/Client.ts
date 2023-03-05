@@ -296,7 +296,8 @@ export class Client extends EventEmitter {
     private setMessageInterval(): void {
         const isPublicBot: boolean = (() => {
             if (!this.user) return false;
-            return this.user.group === "*" ? true : Object.keys(this.user.rooms ?? {}).some((r) => r.startsWith("*"));
+            if (this.user.group === "*") return true;
+            return this.user.rooms.some((r) => r.visibility === "public" && r.isBot(this.user!.userid));
         })();
 
         const isTrusted: boolean = (() => {
@@ -1222,7 +1223,19 @@ export class Client extends EventEmitter {
             if (user.alts.length && input.alts?.length)
                 for (const id of input.alts!) if (!user.alts.includes(id)) user.alts.push(id);
             delete input.alts;
-            Object.assign(user, input);
+            for (const [k, v] of Object.entries(input)) {
+                if (k === "rooms" || k === "client") continue;
+                // @ts-expect-error props exists in user
+                if (k in user) user[k] = v;
+            }
+        }
+        if (input.rooms) {
+            const rooms = Object.keys(input.rooms).map((r) => r.replace(/^[^a-z0-9]/i, ""));
+            for (const id of rooms) {
+                const room = this.getRoom(id);
+                if (!room) continue;
+                user.rooms.set(room.roomid, room);
+            }
         }
         if (fetched !== false) user.setLastFetchTime();
         user.setIsOnline();
@@ -1276,7 +1289,20 @@ export class Client extends EventEmitter {
         if (!room) {
             room = new Room(input, this) as Room;
             this.noreplySend(`|/cmd roominfo ${input.id}`);
-        } else Object.assign(room!, input);
+        } else {
+            for (const [k, v] of Object.entries(input)) {
+                if (k === "client" || k === "error") continue;
+                // @ts-expect-error props exists in room
+                if (k in room) room[k] = v;
+            }
+        }
+        if (input.users) {
+            for (const id of input.users) {
+                const user = this.getUser(id);
+                if (!user) continue;
+                room.userCollection.set(user.userid, user);
+            }
+        }
         room.setVisibility();
         if (fetched !== false) room.setLastFetchTime();
         this.rooms.cache.set(room.roomid!, room);

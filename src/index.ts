@@ -42,5 +42,5 @@ export type {
     StatusType,
     UserOptions,
     UserSettings,
-    valueOf,
+    valueof,
 } from "../types/index";
