@@ -10,7 +10,7 @@ on:
         branches: [main]
 
 jobs:
-    build:
+    check:
         runs-on: ubuntu-latest
 
         strategy:
@@ -20,6 +20,17 @@ jobs:
 
         steps:
             - uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
+
+            - name: Changed Files
+              id: changed-files
+              uses: tj-actions/changed-files@v35.6.3
+              with:
+                  files: |
+                      src
+                      types
+
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v3
               with:
@@ -27,3 +38,27 @@ jobs:
                   cache: "npm"
             - run: npm ci
             - run: npm run ci
+
+    publish:
+        needs: check
+        if: ${{ github.repository_owner == 'dirain1700' && jobs.check.steps.changed-files.outputs.any_changed == 'true' }}
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                node-version: [18.x]
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ matrix.node-version }}
+                  registry-url: "https://registry.npmjs.org"
+                  scope: "@dirain"
+                  always-auth: true
+
+            - run: npm ci
+            - run: npm version prerelease --preid "dev.$(date +%s)-$(git rev-parse --short HEAD)" --no-git-tag-version
+            - run: npm publish --tag dev
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
