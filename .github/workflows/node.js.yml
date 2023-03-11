@@ -34,9 +34,6 @@ jobs:
                       src/**
                       types/**
 
-            - name: Display is any source files changed
-              run: echo ${{ steps.changed-files.outputs.any_changed == 'true' }}
-
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v3
               with:
