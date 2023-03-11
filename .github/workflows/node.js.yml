@@ -9,6 +9,8 @@ on:
 
 jobs:
     check:
+        name: Test
+
         runs-on: ubuntu-latest
 
         strategy:
@@ -48,10 +50,11 @@ jobs:
               run: npm run ci
 
     publish:
+        name: Publish
+
         needs: check
 
-        # if: ${{ success() && github.repository_owner == 'dirain1700' && needs.jobs.check.outputs.source_any_changed }}
-        if: ${{ success() }}
+        if: ${{ success() && github.repository_owner == 'dirain1700' && needs.jobs.check.outputs.source_any_changed }}        if: ${{ success() }}
 
         runs-on: ubuntu-latest
 
