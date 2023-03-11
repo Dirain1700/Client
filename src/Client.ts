@@ -733,7 +733,7 @@ export class Client extends EventEmitter {
                                 name: id,
                                 rooms: false,
                                 group: "&",
-                                avatar: 0,
+                                avatar: 1,
                                 autoconfirmed: true,
                             },
                             this
