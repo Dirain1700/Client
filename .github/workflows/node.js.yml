@@ -40,7 +40,7 @@ jobs:
 
     publish:
         needs: check
-        if: ${{ success() && github.repository_owner == 'dirain1700' && needs.jobs.check.steps.changed-files.outputs.any_changed == 'true' }}
+        if: ${{ success() && github.repository_owner == 'dirain1700' && needs.jobs.check.steps.changed-files.outputs.any_changed == true }}
         runs-on: ubuntu-latest
         strategy:
             matrix:
