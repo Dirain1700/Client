@@ -543,13 +543,13 @@ export class Client extends EventEmitter {
         message.measure ??= false;
 
         if (toRoom(message)) {
-            const room = this.rooms.cache.get(message.roomid);
+            const room = this.getRoom(message.roomid);
             if (!room || !room.exists) throw new PSAPIError("ROOM_NONEXIST");
             message.type ??= "room-chat";
             this.outGoingMessage.push(message as IOutGoingMessage<Room>);
-        } else if (toUser(message)) {
-            const user = this.users.cache.get(message.userid);
-            if (!user || !user.online) throw new PSAPIError("USER_OFFLINE");
+        } else if (toUser(message) && message.userid) {
+            const user = this.getUser(message.userid);
+            if (message.userid !== "" && (!user || !user.online)) throw new PSAPIError("USER_OFFLINE", message.userid);
             message.type ??= "pm-chat";
             this.outGoingMessage.push(message as IOutGoingMessage<User>);
         } else {
@@ -826,12 +826,28 @@ export class Client extends EventEmitter {
                         if (!userdetails || !userdetails.userid) return;
                         this.users.raw.set(userdetails.id, userdetails);
                         if (userdetails.id === this.status.id!) {
-                            if (this.user) Object.assign(this.user, userdetails);
-                            else this.user = new ClientUser(userdetails, client);
+                            if (this.user) {
+                                this.user.update();
+                                for (const [k, v] of Object.entries(userdetails)) {
+                                    if (k === "rooms") {
+                                        for (const r of Object.keys(userdetails.rooms).map((r) =>
+                                            Tools.toRoomId(r.replace(/^[^a-z0-9]/i, ""))
+                                        )) {
+                                            const room = this.rooms.cache.get(r);
+                                            if (!room || !room.exists) continue;
+                                            this.user.rooms.set(room.roomid, room);
+                                        }
+                                    } else if (k === "client") {
+                                        // @ts-expect-error props should exists in ClientUser
+                                        if (k in this.user) this.user[k] = v;
+                                    }
+                                }
+                            } else this.user = new ClientUser(userdetails, client);
+                            this.user.online = true;
                             this.setMessageInterval();
                         }
                         const user = this.addUser(userdetails);
-                        if (!user) return;
+                        if (!user) break;
                         const PendingUser: PromisedUser[] = this.userdetailsQueue.filter(
                             (u) => u.id === userdetails!.id
                         );
