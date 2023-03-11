@@ -54,7 +54,7 @@ jobs:
 
         needs: check
 
-        if: ${{ success() && github.repository_owner == 'dirain1700' && needs.jobs.check.outputs.source_any_changed }}        if: ${{ success() }}
+        if: ${{ success() && github.repository_owner == 'dirain1700' && needs.jobs.check.outputs.source_any_changed }}
 
         runs-on: ubuntu-latest
 
