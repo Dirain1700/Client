@@ -65,7 +65,7 @@ jobs:
             - name: Display conditions
               run: |
                   echo "is valid?: ${{ github.repository_owner == 'dirain1700' }}"
-                  echo "source changed?: ${{ needs.jobs.check.outputs.source_any_changed }}"
+                  echo "source changed?: ${{ needs.check.outputs.source_any_changed }}"
                   exit 0
 
             - name: Use Node.js ${{ matrix.node-version }}
