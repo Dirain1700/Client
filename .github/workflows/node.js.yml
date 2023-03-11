@@ -51,6 +51,7 @@ jobs:
         needs: check
 
         # if: ${{ success() && github.repository_owner == 'dirain1700' && needs.jobs.check.outputs.source_any_changed == 'true' }}
+        if: ${{ success() }}
 
         runs-on: ubuntu-latest
 
@@ -63,7 +64,6 @@ jobs:
 
             - name: Display conditions
               run: |
-                  echo "success?: ${{ success() }}"
                   echo "is valid?: ${{ github.repository_owner == 'dirain1700' }}"
                   echo "source changed?: ${{ needs.jobs.check.outputs.source_any_changed == 'true' }}"
                   exit 0
