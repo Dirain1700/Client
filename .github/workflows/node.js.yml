@@ -17,7 +17,7 @@ jobs:
                 # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
         outputs:
-          source_any_changed: ${{ steps.changed-files.outputs.any_changed }}
+            source_any_changed: ${{ steps.changed-files.outputs.any_changed }}
 
         steps:
             - uses: actions/checkout@v3
