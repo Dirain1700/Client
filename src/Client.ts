@@ -460,7 +460,7 @@ export class Client extends EventEmitter {
             }
             if (measure) {
                 let promise: PendingMessage;
-                if (userid) {
+                if (typeof userid === "string") {
                     promise = {
                         id: userid!,
                         content: expection,
