@@ -119,8 +119,8 @@ export class Client extends EventEmitter {
 
     constructor(options: ClientOptions) {
         super();
-        options.retryLogin ||= 10 * 1000;
-        options.autoReconnect ||= 30 * 1000;
+        options.retryLogin ||= 15 * 1000;
+        options.autoReconnect ||= 10 * 1000;
         this.options = options;
         const defineOptions = {
             enumerable: false,
@@ -183,8 +183,8 @@ export class Client extends EventEmitter {
     }
     /* eslint-enable */
 
-    public connect(): void {
-        if (!this.ws || this.ws.readyState === 1) return;
+    public connect(re?: boolean): void {
+        if (this.ws && this.ws.readyState === 1) return;
         const httpsOptions = {
             hostname: this.mainServer,
             path:
@@ -199,7 +199,7 @@ export class Client extends EventEmitter {
             },
         };
 
-        console.log("Trying to connect to the server " + this.serverURL + "...");
+        if (!re) console.log("Trying to connect to the server " + this.serverURL + "...");
         https
             .get(httpsOptions, (response: IncomingMessage) => {
                 response.setEncoding("utf8");
@@ -235,11 +235,22 @@ export class Client extends EventEmitter {
                             this.closed = false;
                             this.setEventListeners();
 
-                            this.ws.on("message", (message: ws.MessageEvent) => {
+                            if (this.ws!.readyState === 0)
+                                this._autoReconnect = setInterval(() => {
+                                    if (this.ws!.readyState === 1) {
+                                        clearInterval(this._autoReconnect);
+                                        this._autoReconnect = undefined;
+                                    }
+                                    console.log("Retrying login cause the server had no response...");
+                                    this.ws = null;
+                                    this.connect();
+                                }, this.options.autoReconnect);
+
+                            this.ws!.on("message", (message: ws.MessageEvent) => {
                                 this.onMessage(message.toString());
                             });
 
-                            this.ws.on("close", () => {
+                            this.ws!.on("close", () => {
                                 if (!this.closed) this._autoReconnect = setInterval(() => this.connect(), 1000 * 30);
                             });
                         }
