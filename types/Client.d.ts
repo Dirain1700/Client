@@ -1,4 +1,3 @@
-
 import type { TimeoutError } from "../src/Error";
 import type { Message } from "../src/Message";
 import type { Room } from "../src/Room";
