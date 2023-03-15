@@ -18,7 +18,7 @@ import { Tournament } from "./Tour";
 import { User } from "./User";
 
 import type { IncomingMessage } from "http";
-import type { ClientOptions as wsClientOptions } from "ws";
+import type * as ws from "ws";
 
 import type {
     ClientOptions,
@@ -80,7 +80,7 @@ export class Client extends EventEmitter {
     readonly messageThrottle = 3;
     throttleInterval: 25 | 100 | 600 = 600;
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
-    webSocket: any;
+    ws: WebSocket | null = null;
     private _autoReconnect: NodeJS.Timeout | undefined = undefined;
     events = Events;
     rooms: {
@@ -184,6 +184,7 @@ export class Client extends EventEmitter {
     /* eslint-enable */
 
     public connect(): void {
+        if (!this.ws || this.ws.readyState === 1) return;
         const httpsOptions = {
             hostname: this.mainServer,
             path:
@@ -220,7 +221,7 @@ export class Client extends EventEmitter {
                                 address = "ws://" + config.host + ":" + (config.port || 8000) + "/showdown/websocket";
                             }
 
-                            const wsOptions: wsClientOptions = {
+                            const wsOptions: ws.ClientOptions = {
                                 maxPayload: 8 * 100 * 1024 * 1024,
                                 perMessageDeflate: false,
                                 headers: {
@@ -229,16 +230,16 @@ export class Client extends EventEmitter {
                                 },
                             };
 
-                            this.webSocket = new WebSocket(address, [], wsOptions);
+                            this.ws = new WebSocket(address, [], wsOptions) as WebSocket;
                             this.connected = true;
                             this.closed = false;
                             this.setEventListeners();
 
-                            this.webSocket.on("message", (message: Buffer) => {
+                            this.ws.on("message", (message: ws.MessageEvent) => {
                                 this.onMessage(message.toString());
                             });
 
-                            this.webSocket.on("close", () => {
+                            this.ws.on("close", () => {
                                 if (!this.closed) this._autoReconnect = setInterval(() => this.connect(), 1000 * 30);
                             });
                         }
@@ -255,40 +256,47 @@ export class Client extends EventEmitter {
     }
 
     public disconnect(): void {
+        if (!this.ws) return;
         this.connected = false;
         this.loggedIn = false;
         this.closed = true;
-        this.webSocket.close();
+        this.ws.terminate();
     }
 
     private setEventListeners(): void {
+        if (!this.ws) return;
         if (this.options.openListener)
-            this.webSocket.addEventListener(
-                "open",
+            this.ws.addEventListener(
+                // @ts-expect-error open is open
+                "open" as string,
                 this.options.openListener.function,
                 this.options.openListener.options ?? {}
             );
         if (this.options.messageListener)
-            this.webSocket.addEventListener(
-                "message",
+            this.ws.addEventListener(
+                // @ts-expect-error message isnt open
+                "message" as string,
                 this.options.messageListener.function,
                 this.options.messageListener.options ?? {}
             );
         if (this.options.closeListener)
-            this.webSocket.addEventListener(
-                "close",
+            this.ws.addEventListener(
+                // @ts-expect-error close isnt open
+                "close" as string,
                 this.options.closeListener.function,
                 this.options.closeListener.options ?? {}
             );
         if (this.options.errorListener)
-            this.webSocket.addEventListener(
-                "error",
+            this.ws.addEventListener(
+                // @ts-expect-error error isnt open
+                "error" as string,
                 this.options.errorListener.function,
                 this.options.errorListener.options ?? {}
             );
         if (this.options.customListener) {
             for (const Listener of this.options.customListener) {
-                this.webSocket.addEventListener(Listener.event, Listener.function, Listener.options ?? {});
+                // @ts-expect-error union isnt open
+                this.ws.addEventListener(Listener.event as string, Listener.function, Listener.options ?? {});
             }
         }
     }
@@ -430,6 +438,7 @@ export class Client extends EventEmitter {
     }
 
     private runOutGoingMessage(): void {
+        if (!this.ws) return;
         if (!this.outGoingMessage.length) {
             clearTimeout(this.sendTimer);
             this.sendTimer = undefined;
@@ -513,7 +522,7 @@ export class Client extends EventEmitter {
                     }
                 }
             }
-            this.webSocket.send(text);
+            this.ws.send(text);
         }
     }
 

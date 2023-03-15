@@ -1,11 +1,13 @@
+
 import type { TimeoutError } from "../src/Error";
 import type { Message } from "../src/Message";
 import type { Room } from "../src/Room";
 import type { User } from "../src/User";
 import type { RoomOptions } from "./Room";
 import type { TourUpdateData, TourEndData } from "./Tour";
+import type { RawData } from "ws";
 
-/* eslint-disable no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types */
+/* eslint-disable no-unused-vars, @typescript-eslint/no-explicit-any */
 
 export interface ClientOptions {
     openListener?: OpenListener;
@@ -93,16 +95,16 @@ interface EventOptions {
 }
 
 export interface OpenListener {
-    function: () => any;
+    function: () => void;
     event?: EventOptions;
     options?: EventOptions;
 }
 export interface MessageListener {
-    function: (message: Buffer | ArrayBuffer | Buffer[]) => any;
+    function: (data: RawData, isBinary: boolean) => any;
     options?: EventOptions;
 }
 export interface CloseListener {
-    function: (code: number, reason?: Buffer) => any;
+    function: (code: number, reason: Buffer) => any;
     options?: EventOptions;
 }
 export interface ErrorListener {
@@ -112,7 +114,7 @@ export interface ErrorListener {
 
 export interface CustomListener {
     event: "close" | "error" | "message" | "open" | "ping" | "pong" | "redirect" | "unexpected-response" | "upgrade";
-    function: Function;
+    function: (...args: any[]) => void;
     options?: EventOptions;
 }
 
