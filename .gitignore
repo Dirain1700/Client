@@ -47,6 +47,8 @@ build/Release
 
 # TypeScript output files
 dist/*
+build.*
+!build.mts
 
 # Dependency directories
 node_modules/
