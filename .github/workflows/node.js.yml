@@ -34,7 +34,6 @@ jobs:
                       src/**
                       types/**
                       package.json
-                      package-lock.json
 
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v3
