@@ -35,6 +35,8 @@ jobs:
                       types/**
                       package.json
 
+            - run: echo steps.changed-files.outputs
+
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v3
               with:
