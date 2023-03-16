@@ -72,11 +72,6 @@ jobs:
                   scope: "@dirain"
                   always-auth: true
 
-            - name: Deprecate previous version of the package
-              run: npm deprecate @dirain/client@dev "This developing version has been deprecated."
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
             - name: Install dependencies
               run: npm ci
 
