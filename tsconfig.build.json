@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+        // module settings
+        "module": "nodenext",
+
+        // emit settings
+        "target": "esnext",
+        "sourceMap": true,
+        "importsNotUsedAsValues": "error",
+        "esModuleInterop": true,
+        "noEmitOnError": true,
+        "forceConsistentCasingInFileNames": true,
+        "incremental": false,
+
+        // type checks
+        "strict": true,
+        "noImplicitReturns": true,
+        "noImplicitAny": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": true,
+        "strictBindCallApply": true,
+        "noPropertyAccessFromIndexSignature": false,
+        "typeRoots": ["node_modules/@types"]
+    },
+    "include": ["build.mts"]
+}
