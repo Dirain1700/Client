@@ -34,8 +34,7 @@ jobs:
                       src/**
                       types/**
                       package.json
-
-            - run: echo '${{ toJSON(steps.changed-files.outputs) }}'
+                      package-lock.json
 
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v3
@@ -54,7 +53,7 @@ jobs:
 
         needs: check
 
-        if: ${{ success() && github.repository_owner == 'dirain1700' && needs.check.outputs.source_any_changed }}
+        if: ${{ success() && github.repository_owner == 'dirain1700' && needs.check.outputs.source_any_changed == 'true' }}
 
         runs-on: ubuntu-latest
 
