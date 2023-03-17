@@ -1,5 +1,7 @@
 # @dirain/client
 
+[![Node.js CI](https://github.com/Dirain1700/Client/actions/workflows/node.js.yml/badge.svg)](https://github.com/Dirain1700/Client/actions/workflows/node.js.yml)
+
 ## About
 
 @dirain/client is a very fragile Node.js dual module to you create bots with Pokémon Showdown API.
@@ -38,6 +40,8 @@ client.on("ready", () => {
 });
 ```
 
+Log into registered account:
+
 ```js
 const { Client } = require("@dirain/client");
 
@@ -45,10 +49,10 @@ const client = new Client({ name: "myAccountName", pass: "thisIsMyRealPassWord",
 
 client.connect();
 
-client.on("ready", () => console.log("Logged in as", client.user.name));
+client.on("ready", () => console.log("Logged in as ", client.user.name));
 
 client.on("messageCreate", (message) => {
-    if (message.content === "ping") message.reply("Bang!");
+    if (message.content === "ping") message.reply("Pong!");
 });
 ```
 
@@ -56,17 +60,16 @@ With TypeScript:
 
 ```ts
 import { Client } from "@dirain/client";
-import type { ClientUser } from "@dirain/client";
 
-const client = new Client({ name: "thisIsMyAc", "thisIsNotMyPassLOL", autoJoin: ["botdevelopment"] });
+const client = new Client({ name: "My account ~", "NotRealPassL0L", autoJoin: ["botdevelopment"] });
 
 client.connect();
 
-client.on("ready", () => console.log("Logged in as", (client.user as ClientUser)?.name);
+client.on("ready", () => console.log("Logged in as ", client.user!.name);
 
 client.on("messageCreate", (message) => {
     if (message.author.id === client.status.id) return;
 
-    if (message.content === ping) message.reply("Bang!");
+    if (message.content === "ping") message.reply("Pong!");
 });
 ```
