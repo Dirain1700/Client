@@ -23,6 +23,7 @@ const Generators = {
 // T is wheather the tournament is Elimination or Round Robin
 export class Tournament<T extends EliminationBracket | RoundRobinBracket = EliminationBracket> extends Activity {
     data: TourUpdateData<T> & TourEndData<T>;
+    format: string;
     isSingleElimination: boolean;
     type: T extends EliminationBracket ? "Elimination" : "Round Robin";
     round: {
@@ -60,6 +61,7 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
             name: gen,
             number: Generators[gen as keyof typeof Generators] ?? parseInt(gen.replace("-tuple", "")),
         };
+        this.format = format;
         this.data.format = format;
         this.data.playerCap = playerCap;
         this.playerCap = playerCap;
