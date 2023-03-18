@@ -1117,7 +1117,7 @@ export class Client extends EventEmitter {
                         const user1 = tourEvent[0]!,
                             user2 = tourEvent[1]!,
                             battleRoom = tourEvent[2]!;
-                        this.emit(Events.TOUR_BATTLE_START, room, this.getUser(user1), this.getUser(user2), battleRoom);
+                        this.emit(Events.TOUR_BATTLE_START, room, this.getUser(user1)!, this.getUser(user2)!, battleRoom);
                         break;
                     }
 
