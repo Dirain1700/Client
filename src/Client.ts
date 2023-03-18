@@ -1007,8 +1007,9 @@ export class Client extends EventEmitter {
                 room.removeUser(id);
                 const user =
                     this.getUser(id) ?? new User({ id, userid: id, name: event.join("|"), rooms: false }, this);
-                if (user.rooms) user.removeRoom(room.id);
+                user.removeRoom(room.id);
                 this.emit(Events.ROOM_USER_REMOVE, room, user);
+                if (!user.rooms.size) this.users.cache.delete(user.id);
                 break;
             }
 
@@ -1117,7 +1118,13 @@ export class Client extends EventEmitter {
                         const user1 = tourEvent[0]!,
                             user2 = tourEvent[1]!,
                             battleRoom = tourEvent[2]!;
-                        this.emit(Events.TOUR_BATTLE_START, room, this.getUser(user1)!, this.getUser(user2)!, battleRoom);
+                        this.emit(
+                            Events.TOUR_BATTLE_START,
+                            room,
+                            this.getUser(user1)!,
+                            this.getUser(user2)!,
+                            battleRoom
+                        );
                         break;
                     }
 
