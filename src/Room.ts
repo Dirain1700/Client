@@ -92,11 +92,23 @@ export class Room {
     }
 
     update(): this {
+        this.setUsers();
         const room = this.client.rooms.cache.get(this.id);
         if (!room) return this;
         Object.assign(this, room);
+        return this;
+    }
+
+    setUsers(): this {
         this.users.forEach((u) => {
-            if (this.userCollection.has(Tools.toId(u))) return;
+            const previousUser = this.userCollection.get(Tools.toId(u));
+            if (previousUser) {
+                this.userCollection.set(previousUser.userid, previousUser.update());
+                return;
+            }
+            const user = this.client.getUser(u);
+            if (!user) return;
+            this.userCollection.set(user.userid, user);
         });
         return this;
     }
