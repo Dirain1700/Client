@@ -65,12 +65,12 @@ export interface ClientEvents {
     clientRoomRemove: [room: Room];
     tourCreate: [room: Room, format: string, type: string, playerCap: number | null];
     tourUpdate: [room: Room, data: TourUpdateData];
-    TOUR_UPDATE_END: [room: Room];
-    TOUR_JOIN: [room: Room, user: User];
-    TOUR_LEAVE: [room: Room, user: User | undefined];
-    TOUR_REPLACE: [room: Room, user1: User | undefined, user2: User | undefined];
-    TOUR_BATTLE_START: [room: Room, user1: User, user2: User, battle: string];
-    TOUR_BATTLE_END: [
+    tourUpdateEnd: [room: Room];
+    tourJoin: [room: Room, user: User];
+    tourLeave: [room: Room, user: User | undefined];
+    tourReplace: [room: Room, user1: User | undefined, user2: User | undefined];
+    tourBattleStart: [room: Room, user1: User, user2: User, battle: string];
+    tourBattleEnd: [
         room: Room,
         user1: User,
         user2: User,
