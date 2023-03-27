@@ -15,7 +15,7 @@
         "eslint": "^8.36.0",
         "eslint-plugin-import": "^2.27.5",
         "prettier": "^2.8.7",
-        "typescript": "^5.0.2"
+        "typescript": "^4.9.5"
     },
     "exports": {
         "import": "./dist/esm/index.mjs",
@@ -36,17 +36,17 @@
         "check": "prettier --check .",
         "generate-exports": "node generate-exports",
         "copy-dts": "node copy-types",
-        "tsc": "npm run tsc:cjs & npm run tsc:esm",
+        "tsc": "npm run tsc:cjs && npm run tsc:esm",
         "tsc:cjs": "tsc -p tsconfig.cjs.json --noEmit --emitDeclarationOnly false",
         "tsc:esm": "tsc -p tsconfig.esm.json --noEmit --emitDeclarationOnly false",
-        "emitDeclaration": "npm run emit:cjs && npm run emit:esm",
+        "emitDeclaration": "npm run emit:cjs & npm run emit:esm",
         "emit:cjs": "tsc -p tsconfig.cjs.json",
         "emit:esm": "tsc -p tsconfig.esm.json",
         "ci": "npm run check && npm run lint && npm run tsc",
         "build": "npm run write && npm run lint-fix && npm run tsc & npm run esbuild",
         "build-esbuild": "tsc -p tsconfig.build.json",
-        "esbuild": "node --enable-source-maps build.mjs",
-        "prepublishOnly": "npm run check && (npm run generate-exports & npm run copy-dts & npm run build-esbuild) && npm run check && npm run lint && (npm run esbuild & npm run emitDeclaration)"
+        "esbuild": "node --enable-source-maps build.js",
+        "prepublishOnly": "npm run check && (npm run generate-exports & npm run copy-dts & npm run build-esbuild) && npm run lint && (npm run esbuild & npm run emitDeclaration)"
     },
     "keywords": [],
     "author": "Dirain1700",
