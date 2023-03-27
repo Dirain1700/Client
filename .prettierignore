@@ -6,4 +6,5 @@ package-lock.json
 .config/*
 dist/*
 build.*
+!build.ts
 node_modules/*
