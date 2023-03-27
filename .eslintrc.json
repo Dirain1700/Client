@@ -24,6 +24,9 @@
             "plugins": ["@typescript-eslint", "import"],
             "rules": {
                 "no-unused-vars": "off",
+                "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+                "@typescript-eslint/consistent-type-imports": "error",
+                "@typescript-eslint/prefer-ts-expect-error": "error",
                 "@typescript-eslint/no-inferrable-types": "off",
                 "@typescript-eslint/no-this-alias": "off",
                 "@typescript-eslint/no-non-null-assertion": "off",

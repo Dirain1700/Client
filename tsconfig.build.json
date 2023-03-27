@@ -6,7 +6,6 @@
         // emit settings
         "target": "esnext",
         "sourceMap": true,
-        "importsNotUsedAsValues": "error",
         "esModuleInterop": true,
         "noEmitOnError": true,
         "forceConsistentCasingInFileNames": true,

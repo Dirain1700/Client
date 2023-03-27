@@ -9,7 +9,6 @@
         "declaration": true,
         "declarationMap": true,
         "sourceMap": true,
-        "importsNotUsedAsValues": "error",
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "incremental": true,
