@@ -7,9 +7,13 @@ on:
     push:
         branches: main
 
+    workflow_dispatch:
+
 jobs:
     check:
         name: Test
+
+        if: github.event_name == 'push'
 
         runs-on: ubuntu-latest
 
@@ -75,9 +79,31 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
+            - name: Check previous dev package
+              id: check-prev
+              if: steps.changed-files.outputs.CAN_PUBLISH == 'true'
+              uses: actions/github-script@v6
+              with:
+                  script: |
+                      const { execSync } = require("child_process");
+                      const { name } = require("./package.json");
+                      core.setOutput("PACK_NAME", name);
+                      try {
+                          const version = execSync("npm info " + name + "@dev version");
+                          if (!version) return;
+                          core.setOutput("PRE_VERSION", version.toString().replaceAll("\n", ""));
+                      } catch(e) {}
+
+            - name: Deprecate Previous version of the package
+              if: steps.check-prev.outputs.PRE_VERSION
+              run: npm deprecate ${{ steps.check-prev.outputs.PACK_NAME }}@${{ steps.check-prev.outputs.PRE_VERSION }} "This dev version has been deprecated automatically. Please use newest one."
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
             - name: Update package version
               run: npm version prerelease --preid "dev.$(date +%s)-$(git rev-parse --short HEAD)" --no-git-tag-version
 
+            # Running build is not needed because this package has prepublishOnly
             - name: Publish a package
               run: npm publish --tag dev
               env:
