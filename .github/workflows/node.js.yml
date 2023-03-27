@@ -13,8 +13,6 @@ jobs:
     check:
         name: Test
 
-        if: github.event_name == 'push'
-
         runs-on: ubuntu-latest
 
         strategy:
@@ -57,7 +55,9 @@ jobs:
 
         needs: check
 
-        if: ${{ success() && github.repository_owner == 'dirain1700' && needs.check.outputs.source_any_changed == 'true' }}
+        if: (success() && github.repository_owner == 'dirain1700' &&
+            needs.check.outputs.source_any_changed == 'true') ||
+            github.event_name == 'workflow_dispatch'
 
         runs-on: ubuntu-latest
 
