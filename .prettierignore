@@ -3,6 +3,7 @@ package-lock.json
 .eslintrc.json
 .upm/*
 .cache/*
+.config/*
 dist/*
 build.*
 node_modules/*
