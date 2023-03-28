@@ -421,16 +421,15 @@ export class Client extends EventEmitter {
 
     upkeep(): void {
         const options: PostLoginOptions = {
-            hostname: this.loginURL.hostname,
-            path: this.loginURL.pathname,
+            hostname: this.upkeepURL.hostname,
+            path: this.upkeepURL.pathname,
             agent: false,
             method: "",
         };
-        options.path += querystring.stringify({
+        options.path += "?" + querystring.stringify({
             act: "upkeep",
             challstr: `${this.challstr.key}|${this.challstr.value}`,
         });
-        // const upkeepURL: string = `https://play.pokemonshowdown.com/action.php?act=upkeep&challstr=${this.challstr.key}|${this.challstr.value}`;
         https.get(options, (response: IncomingMessage) => {
             response.setEncoding("utf8");
 
@@ -441,6 +440,7 @@ export class Client extends EventEmitter {
             });
 
             response.on("end", async () => {
+                console.log(data);
                 ended = true;
                 if ((response.statusCode ?? 200) >= 400) {
                     this.emit(Events.CLIENT_ERROR, data);
