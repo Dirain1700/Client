@@ -442,7 +442,6 @@ export class Client extends EventEmitter {
             });
 
             response.on("end", async () => {
-                console.log(data);
                 ended = true;
                 if ((response.statusCode ?? 200) >= 400) {
                     this.emit(Events.CLIENT_ERROR, data);
