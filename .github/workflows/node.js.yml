@@ -50,6 +50,9 @@ jobs:
             - name: Run CI
               run: npm run ci
 
+            - name: Build files
+              run: npm run prepublishOnly
+
     publish:
         name: Publish
 
