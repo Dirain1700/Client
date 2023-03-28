@@ -116,7 +116,7 @@ export class Client extends EventEmitter {
     resolvedUser: string[] = [];
     private PromisedPM: PendingMessage[] = [];
     private PromisedChat: PendingMessage[] = [];
-    private challstr: { key: string; value: string } = { key: "", value: "" };
+    private challstr: string = "";
 
     constructor(options: ClientOptions) {
         super();
@@ -343,7 +343,7 @@ export class Client extends EventEmitter {
                 act: "login",
                 name: name,
                 pass: password,
-                challstr: `${this.challstr.key}|${this.challstr.value}`,
+                challstr: this.challstr,
             });
             options.headers = {
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -357,7 +357,7 @@ export class Client extends EventEmitter {
                     serverid: this.serverId,
                     act: "getassertion",
                     userid: Tools.toId(name),
-                    challstr: `${this.challstr.key}|${this.challstr.value}`,
+                    challstr: this.challstr,
                 });
         }
 
@@ -426,10 +426,12 @@ export class Client extends EventEmitter {
             agent: false,
             method: "",
         };
-        options.path += "?" + querystring.stringify({
-            act: "upkeep",
-            challstr: `${this.challstr.key}|${this.challstr.value}`,
-        });
+        options.path +=
+            "?" +
+            querystring.stringify({
+                act: "upkeep",
+                challstr: this.challstr,
+            });
         https.get(options, (response: IncomingMessage) => {
             response.setEncoding("utf8");
 
@@ -752,10 +754,7 @@ export class Client extends EventEmitter {
                 break;
             }
             case "challstr": {
-                this.challstr = {
-                    key: event[0]!,
-                    value: event[1]!,
-                };
+                this.challstr = event.join("|");
                 for (const id of ["~", "&"]) {
                     this.users.cache.set(
                         id,
