@@ -2,7 +2,7 @@ const { readdirSync, readFileSync, writeFileSync } = require("fs");
 const { format } = require("prettier");
 const runFormat = (string) => format(string, Object.assign({ parser: "typescript" }, require("./.prettierrc")));
 const FileDir = "./types";
-const regex = /export\s(type|interface)\s(\S)+\s({|=)/gi;
+const regex = /export (type|interface) (.)+ ({|=)/gi;
 let FileInput = "";
 let index = 0;
 const AllNameSpaces = [];

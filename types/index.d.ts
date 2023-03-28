@@ -8,6 +8,9 @@ export type {
     CustomListener,
     ErrorListener,
     IMessageType,
+    IOutGoingMessage,
+    IRoomOutGoingMessageOptions,
+    IUserOutGoingMessageOptions,
     MessageListener,
     OpenListener,
     PendingMessage,
@@ -22,11 +25,17 @@ export type { UserSettings } from "./ClientUser";
 
 export type { PSAPIErrorType } from "./Error";
 
-export type {} from "./Message";
+export type { awaitMessageOptions, MessageInput, MessageWaits } from "./Message";
 
 export type { BattleRoom, RoomOptions, RoomPermissions } from "./Room";
 
-export type { EliminationBracket, EliminationBracketData, IRRBattleStatus, RoundRobinBracket } from "./Tour";
+export type {
+    EliminationBracket,
+    EliminationBracketData,
+    IRRBattleStatus,
+    RoundRobinBracket,
+    TourUpdateData,
+} from "./Tour";
 
 export type { GlobalPermissions, UserOptions } from "./User";
 
