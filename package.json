@@ -1,6 +1,6 @@
 {
     "name": "@dirain/client",
-    "version": "0.0.22",
+    "version": "0.0.23",
     "type": "commonjs",
     "dependencies": {
         "@discordjs/collection": "^1.4.0",
