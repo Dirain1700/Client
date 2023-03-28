@@ -75,7 +75,8 @@ export class Client extends EventEmitter {
     private loggedIn: boolean = false;
     readonly serverURL: string = "play.pokemonshowdown.com";
     readonly serverId: string = "showdown";
-    readonly actionURL = new url.URL("https://play.pokemonshowdown.com/~~showdown/action.php");
+    readonly upkeepURL = new url.URL("https://play.pokemonshowdown.com/api/upkeep");
+    readonly loginURL = new url.URL("https://play.pokemonshowdown.com/api/login");
     readonly mainServer: string = "play.pokemonshowdown.com";
     readonly messageThrottle = 3;
     throttleInterval: 25 | 100 | 600 = 600;
@@ -329,8 +330,8 @@ export class Client extends EventEmitter {
 
     private login(name: string, password?: string): void {
         const options: PostLoginOptions = {
-            hostname: this.actionURL.hostname,
-            path: this.actionURL.pathname,
+            hostname: this.loginURL.hostname,
+            path: this.loginURL.pathname,
             agent: false,
             method: "",
         };
@@ -342,8 +343,7 @@ export class Client extends EventEmitter {
                 act: "login",
                 name: name,
                 pass: password,
-                challengekeyid: this.challstr.key,
-                challenge: this.challstr.value,
+                challstr: `${this.challstr.key}|${this.challstr.value}`,
             });
             options.headers = {
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -365,7 +365,8 @@ export class Client extends EventEmitter {
         const request = https.request(options, (response: IncomingMessage) => {
             response.setEncoding("utf8");
             //eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let data: any = "" as string;
+            let data: string = "";
+            let assertion: string;
             response.on("data", (chunk: string) => (data += chunk));
             response.on("end", function () {
                 if (data.length < 50) {
@@ -386,11 +387,13 @@ export class Client extends EventEmitter {
                     }
                     return;
                 }
+                let responseData: { assertion?: string; username?: string; loggedin?: boolean } = {};
                 try {
-                    data = JSON.parse(data.substring(1));
-                    if (data.actionsuccess) data = data.assertion;
-                    else {
-                        console.error(`Unable to login: ${JSON.stringify(data)}`);
+                    responseData = JSON.parse(data.substring(1));
+                    if (responseData.assertion) {
+                        assertion = responseData.assertion;
+                    } else {
+                        console.error(`Unable to login: ${JSON.stringify(responseData, null, 4)}`);
                         if (client.options.retryLogin) {
                             console.log(`Retrying login in ${client.options.retryLogin / 1000}s.`);
                             setTimeout(client.login.bind(client), client.options.retryLogin, name, password);
@@ -400,7 +403,7 @@ export class Client extends EventEmitter {
                     //eslint-disable-next-line no-empty
                 } catch (e) {}
                 console.log("Sending login trn...");
-                client.noreplySend(`|/trn ${name},0,${data}`);
+                if (assertion) client.ws!.send(`|/trn ${name},0,${assertion}`);
                 setInterval(client.upkeep.bind(client), 10 * 60 * 1000);
             });
         });
@@ -417,8 +420,18 @@ export class Client extends EventEmitter {
     }
 
     upkeep(): void {
-        const upkeepURL: string = `https://play.pokemonshowdown.com/action.php?act=upkeep&challstr=${this.challstr.key}|${this.challstr.value}`;
-        https.get(upkeepURL, (response: IncomingMessage) => {
+        const options: PostLoginOptions = {
+            hostname: this.loginURL.hostname,
+            path: this.loginURL.pathname,
+            agent: false,
+            method: "",
+        };
+        options.path += querystring.stringify({
+            act: "upkeep",
+            challstr: `${this.challstr.key}|${this.challstr.value}`,
+        });
+        // const upkeepURL: string = `https://play.pokemonshowdown.com/action.php?act=upkeep&challstr=${this.challstr.key}|${this.challstr.value}`;
+        https.get(options, (response: IncomingMessage) => {
             response.setEncoding("utf8");
 
             let data: string = "";
