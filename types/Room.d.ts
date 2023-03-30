@@ -8,8 +8,8 @@ export interface RoomOptions {
     title?: string;
     type: "chat" | "battle" | "html";
     visibility?: "public" | "hidden" | "secret";
-    modchat?: AuthLevel | null;
-    modjoin?: AuthLevel | null;
+    modchat?: ModchatLevel;
+    modjoin?: ModchatLevel;
     auth?: {
         [key: string]: string[];
     };
@@ -27,3 +27,5 @@ export interface BattleRoom {
 // prettier-ignore
 export type RoomPermissions = "chat" | "broadcast" | "show" | "warn" | "tour" | "mute" | "hidetext" |
     "announce" | "announcement" | "ban" | "roomban" | "rfaq" | "html" | "declare" | "roomintro";
+
+export type ModchatLevel = null | Exclude<AuthLevel, "~" | "!" | "‽">;

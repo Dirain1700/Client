@@ -2,7 +2,7 @@ import type { TimeoutError } from "../src/Error";
 import type { Message } from "../src/Message";
 import type { Room } from "../src/Room";
 import type { User } from "../src/User";
-import type { RoomOptions } from "./Room";
+import type { RoomOptions, ModchatLevel } from "./Room";
 import type { TourUpdateData, TourEndData } from "./Tour";
 import type { RawData } from "ws";
 
@@ -28,6 +28,8 @@ export interface ClientEventNames {
     READY: "ready";
     QUERY_RESPONSE: "queryResponse";
     RAW_DATA: "rawData";
+    MODCHAT: "modchat";
+    MODJOIN: "modjoin";
     MESSAGE_CREATE: "messageCreate";
     COMMAND_EMIT: "commandEmit";
     MESSAGE_DELETE: "messageDelete";
@@ -56,6 +58,8 @@ export interface ClientEvents {
     ready: [client?: undefined];
     queryResponse: [event: string];
     rawData: [message: string, room: Room];
+    modchat: [modchatLevel: ModchatLevel, room: Room];
+    modjoin: [modjoinLevel: ModchatLevel, room: Room];
     messageCreate: [message: Message<User | Room>];
     messageDelete: [message: Message<User | Room>];
     roomUserAdd: [room: Room, user: User];

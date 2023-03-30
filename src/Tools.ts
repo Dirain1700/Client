@@ -1,6 +1,22 @@
 "use strict";
 
+import type { ModchatLevel } from "../types/Room";
 import type { GroupSymbol, GroupNames } from "../types/UserGroups";
+
+const MODCHAT_REGEX =
+    /<div class="broadcast-red"><strong>Moderated chat was set to (?<level>(unlocked|autoconfirmed|whitelist|trusted|&|#|★|\*|@|%|☆|§|\+|\^))!<\/strong><br \/>Only users of rank (unlocked|autoconfirmed|whitelist|trusted|&|#|★|\*|@|%|☆|§|\+|\^) and higher can talk.<\/div>/;
+('<div class="broadcast-red"><strong>Moderated chat was set to ^!</strong><br />Only users of rank ^ and higher can talk.</div>');
+const MODCHAT_DISABLE_STRING =
+    '<div class="broadcast-blue"><strong>Moderated chat was disabled!</strong><br />Anyone may talk now.</div>';
+
+const MODJOIN_AC_STRING =
+    '<div class="broadcast-red"><strong>Moderated join is set to autoconfirmed!</strong><br />Users must be rank autoconfirmed or invited with <code>/invite</code> to join</div>';
+const MODJOIN_SYNC_STRING =
+    '<div class="broadcast-red"><strong>Moderated join is set to sync with modchat!</strong><br />Only users who can speak in modchat can join.</div>';
+const MODJOIN_DISABLE_STRING =
+    '<div class="broadcast-blue"><strong>This room is no longer invite only!</strong><br />Anyone may now join.</div>';
+const MODJOIN_REGEX =
+    /<div class="broadcast-red"><strong>This room is now invite only!<\/strong><br \/>Users must be rank (?<level>(unlocked|autoconfirmed|whitelist|trusted|&|#|★|\*|@|%|☆|§|\+|\^)) or invited with <code>\/invite<\/code> to join<\/div>/;
 
 const AND = "&";
 const LESS_THAN = "<";
@@ -157,5 +173,27 @@ export class Tools {
 
     static trim(content: string): string {
         return content.trim().replaceAll(/ {2,}/gimu, " ");
+    }
+
+    static isModchatHTML(content: string): ModchatLevel | false {
+        if (content === MODCHAT_DISABLE_STRING) return null;
+        else if (MODCHAT_REGEX.test(content)) {
+            const { level } = content.match(MODCHAT_REGEX)!.groups ?? {};
+            console.log("chat:", level);
+            if (!level) return false;
+            return level as ModchatLevel;
+        } else return false;
+    }
+
+    static isModjoinHTML(content: string, modchatLevel: ModchatLevel): ModchatLevel | false {
+        if (content === MODJOIN_DISABLE_STRING) return null;
+        else if (content === MODJOIN_SYNC_STRING) return modchatLevel;
+        else if (content === MODJOIN_AC_STRING) return "autoconfirmed";
+        else if (MODJOIN_REGEX.test(content)) {
+            const { level } = content.match(MODJOIN_REGEX)!.groups ?? {};
+            console.log("join:", level);
+            if (!level) return false;
+            return level as ModchatLevel;
+        } else return false;
     }
 }

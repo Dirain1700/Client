@@ -46,6 +46,8 @@ const Events: ClientEventNames = {
     READY: "ready",
     QUERY_RESPONSE: "queryResponse",
     RAW_DATA: "rawData",
+    MODCHAT: "modchat",
+    MODJOIN: "modjoin",
     MESSAGE_CREATE: "messageCreate",
     COMMAND_EMIT: "commandEmit",
     MESSAGE_DELETE: "messageDelete",
@@ -705,7 +707,18 @@ export class Client extends EventEmitter {
         switch (eventName) {
             case "raw": {
                 if (!isRoomNotEmp(room)) return;
-                this.emit(Events.RAW_DATA, event.join("|")!, room);
+                const modchatLevel = Tools.isModchatHTML(event.join("|"));
+                if (modchatLevel !== false) {
+                    room.modchat = modchatLevel;
+                    this.rooms.cache.set(room.roomid, room);
+                    this.emit(Events.MODCHAT, modchatLevel, room);
+                }
+                const modjoinLevel = Tools.isModjoinHTML(event.join("|"), room.modchat);
+                if (modjoinLevel !== false) {
+                    room.modjoin = modjoinLevel;
+                    this.rooms.cache.set(room.roomid, room);
+                    this.emit(Events.MODJOIN, modjoinLevel, room);
+                } else this.emit(Events.RAW_DATA, event.join("|")!, room);
                 break;
             }
             case "formats": {

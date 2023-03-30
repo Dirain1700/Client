@@ -12,8 +12,8 @@ import type { Tournament } from "./Tour";
 
 import type { IRoomOutGoingMessageOptions } from "../types/Client";
 import type { MessageWaits, awaitMessageOptions } from "../types/Message";
-import type { RoomOptions, RoomPermissions } from "../types/Room";
-import type { GroupSymbol, GroupNames, AuthLevel } from "../types/UserGroups";
+import type { RoomOptions, RoomPermissions, ModchatLevel } from "../types/Room";
+import type { GroupSymbol, GroupNames } from "../types/UserGroups";
 
 export class Room {
     id: string;
@@ -21,8 +21,8 @@ export class Room {
     title: string;
     type: "chat" | "battle" | "html";
     visibility: "public" | "hidden" | "secret";
-    modchat: AuthLevel | null;
-    modjoin: AuthLevel | null;
+    modchat: ModchatLevel;
+    modjoin: ModchatLevel;
     tour: Tournament | null = null;
     auth: {
         [key: GroupSymbol | string]: string[];
