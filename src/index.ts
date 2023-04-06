@@ -34,6 +34,7 @@ export type {
     MessageInput,
     MessageListener,
     MessageWaits,
+    ModchatLevel,
     OpenListener,
     PendingMessage,
     PostLoginOptions,
