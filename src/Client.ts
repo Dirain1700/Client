@@ -881,7 +881,7 @@ export class Client extends EventEmitter {
                                             if (!room || !room.exists) continue;
                                             this.user.rooms.set(room.roomid, room);
                                         }
-                                    } else if (k === "client") {
+                                    } else if (k !== "client") {
                                         // @ts-expect-error props should exists in ClientUser
                                         if (k in this.user) this.user[k] = v;
                                     }
