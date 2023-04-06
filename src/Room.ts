@@ -34,7 +34,7 @@ export class Room {
     readonly exists: boolean;
     readonly client: Client;
 
-    constructor(init: RoomOptions, client: Client) {
+    constructor(init: RoomOptions, client: Client, noinit?: boolean) {
         this.id = init.id;
         this.roomid = init.roomid || init.id;
         this.title = init.title || init.id;
@@ -57,7 +57,7 @@ export class Room {
             writable: true,
         });
         this.setVisibility();
-        this.update();
+        if (!this.title && !this.userCollection.size && !noinit) this.update();
     }
 
     setVisibility(): void {

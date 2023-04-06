@@ -26,13 +26,14 @@ export class User {
     status: string;
     rooms: Collection<string, Room>;
     friended: boolean;
+    guestNumber: string;
     online: boolean;
     waits: MessageWaits<User>[];
     alts: string[];
     lastFetchTime: number = 0;
     readonly client: Client;
 
-    constructor(init: UserOptions, client: Client) {
+    constructor(init: UserOptions, client: Client, noinit?: boolean) {
         this.id = init.id;
         this.userid = init.userid;
         this.name = init.name;
@@ -44,6 +45,7 @@ export class User {
         this.status = init.status ?? "";
         this.rooms = new Collection();
         this.friended = init.friended ?? false;
+        this.guestNumber = init.guestNumber ?? "";
         this.online = this.avatar !== null;
         this.waits = [];
         this.alts = [];
@@ -63,7 +65,7 @@ export class User {
                 this.rooms.set(room.roomid, room);
             });
         }
-        this.update();
+        if (!this.avatar && !noinit) this.update();
     }
 
     send(content: string, options?: Partial<IUserOutGoingMessageOptions>): void {

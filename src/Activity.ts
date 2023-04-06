@@ -49,12 +49,17 @@ export abstract class Activity {
     abstract forceEnd(): this;
     abstract onEnd(): this;
 
-    getPlayer(userid: string): Player | undefined {
-        userid = Tools.toId(userid);
-        return this.players.get(userid) ?? this.pastPlayers.get(userid);
+    getPlayer(name: string): Player | undefined {
+        const id = Tools.toId(name);
+        // like "Guest 0000000"
+        const userid: string | undefined = this.client.users.raw.get(id)?.userid;
+        const offline = (userid ? this.client.users.raw.get(userid)?.userid ?? "" : "").startsWith("guest");
+        if (offline) return Tools.createOfflinePlayer(name, this);
+        return this.players.get(id) ?? this.pastPlayers.get(id);
     }
 
     addPlayer(name: string): Player | undefined {
+        if (!Tools.toId(name).startsWith("guest")) return;
         const user = this.client.users.raw.get(Tools.toId(name));
         if (!user || !user.rooms) {
             this.sayError("USER_NOT_FOUND", name);
@@ -68,7 +73,7 @@ export abstract class Activity {
     removePlayer(name: string, played?: boolean): Player | undefined {
         const player = this.players.get(Tools.toId(name));
         if (!player) {
-            this.sayError("USER_NOT_FOUND", name);
+            if (!Tools.toId(name).startsWith("guest")) this.sayError("USER_NOT_FOUND", name);
             return;
         }
         this.players.delete(player.id);
@@ -82,7 +87,7 @@ export abstract class Activity {
     eliminatePlayer(name: string): Player | undefined {
         const player = this.players.get(Tools.toId(name));
         if (!player) {
-            this.sayError("USER_NOT_FOUND", name);
+            if (!Tools.toId(name).startsWith("guest")) this.sayError("USER_NOT_FOUND", name);
             return;
         }
         player.eliminate();
@@ -110,7 +115,7 @@ export abstract class Activity {
     addPoints(name: string, points: number): Player | null {
         const player = this.players.get(Tools.toId(name));
         if (!player) {
-            this.sayError("USER_NOT_FOUND", name);
+            if (!Tools.toId(name).startsWith("guest")) this.sayError("USER_NOT_FOUND", name);
             return null;
         }
         return player.addPoints(points);
@@ -119,7 +124,7 @@ export abstract class Activity {
     removePoints(name: string, points: number): Player | null {
         const player = this.players.get(Tools.toId(name));
         if (!player) {
-            this.sayError("USER_NOT_FOUND", name);
+            if (!Tools.toId(name).startsWith("guest")) this.sayError("USER_NOT_FOUND", name);
             return null;
         }
         return player.removePoints(points);
@@ -199,8 +204,8 @@ export class Player extends User {
     score: number = 0;
     readonly activity;
 
-    constructor(user: UserOptions, activity: Activity) {
-        super(user, activity.client);
+    constructor(user: UserOptions, activity: Activity, noinit?: boolean) {
+        super(user, activity.client, !!noinit);
         this.activity = activity;
     }
 

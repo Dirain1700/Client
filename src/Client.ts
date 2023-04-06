@@ -1266,16 +1266,38 @@ export class Client extends EventEmitter {
     addUser(input: UserOptions, fetched?: boolean): User | null {
         if (typeof input !== "object" || !input.userid) return null;
         let user: User | undefined = this.users.cache.get(input.userid);
-        if (user && input.id !== input.userid) {
+        if (input.userid.startsWith("guest")) {
+            input.guestNumber = input.userid.replace("guest", "");
+            input.userid = input.id;
+            input.alts = [input.userid];
+        } else if (input.id !== input.userid) {
             if (!user || !user.alts.includes(input.userid)) input.alts = [input.userid];
             if (!this.users.cache.has(input.userid)) {
-                this.users.cache.set(
-                    input.userid,
-                    new User(
-                        { id: input.userid, userid: input.userid, name: input.name, rooms: false, alts: [input.id] },
-                        this
-                    )
-                );
+                const origin = this.users.cache.get(input.id);
+                if (origin) {
+                    this.users.cache.set(
+                        input.userid,
+                        Object.assign(origin, {
+                            id: input.userid,
+                            userid: input.userid,
+                            name: input.userid,
+                            alts: [input.id],
+                        })
+                    );
+                } else {
+                    this.users.cache.set(
+                        input.userid,
+                        new User(
+                            Object.assign(input, {
+                                id: input.userid,
+                                userid: input.userid,
+                                name: input.userid,
+                                alts: [input.id],
+                            }),
+                            this
+                        )
+                    );
+                }
                 this.users.fetch(input.userid);
             } else {
                 const altUser = this.users.cache.get(input.userid)!;

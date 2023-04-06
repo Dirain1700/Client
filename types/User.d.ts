@@ -15,6 +15,7 @@ export interface UserOptions {
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     rooms: { [key: string]: any } | false;
     friended?: boolean;
+    guestNumber?: string;
     waits?: MessageWaits<User>[];
     alts?: string[];
     client?: Client;
