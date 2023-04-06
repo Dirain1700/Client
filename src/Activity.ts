@@ -54,7 +54,7 @@ export abstract class Activity {
         // like "Guest 0000000"
         const userid: string | undefined = this.client.users.raw.get(id)?.userid;
         const offline = (userid ? this.client.users.raw.get(userid)?.userid ?? "" : "").startsWith("guest");
-        if (offline) return Tools.createOfflinePlayer(name, this);
+        if (offline) return new Player({ id, userid: id, name, rooms: false }, this);
         return this.players.get(id) ?? this.pastPlayers.get(id);
     }
 

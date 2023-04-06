@@ -2,7 +2,7 @@ const { readdirSync, readFileSync, writeFileSync } = require("fs");
 const { format } = require("prettier");
 const runFormat = (string) => format(string, Object.assign({ parser: "typescript" }, require("./.prettierrc")));
 const FileDir = "./types";
-const regex = /export (type|interface) (.)+ ({|=)/gi;
+const regex = /^export (type|interface)[< ]/g;
 let FileInput = "";
 let index = 0;
 const AllNameSpaces = [];
@@ -19,7 +19,7 @@ for (const FilePath of readdirSync(FileDir)) {
     if (index !== 0) FileInput += "\n\n";
     const File = readFileSync(FileDir + "/" + FilePath, "utf-8");
     const namespaces = File.split("\n")
-        .filter((l) => regex.test(l))
+        .filter((l) => l.match(regex))
         .map((l) => l.split(" ")[2].split("<")[0]);
     namespaces.sort(sort);
     // prettier-ignore

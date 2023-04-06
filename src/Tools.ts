@@ -1,12 +1,5 @@
 "use strict";
 
-import { Player } from "./Activity";
-import { Room } from "./Room";
-import { User } from "./User";
-
-import type { Activity } from "./Activity";
-import type { Client } from "./Client";
-
 import type { ModchatLevel } from "../types/Room";
 import type { GroupSymbol, GroupNames } from "../types/UserGroups";
 
@@ -114,54 +107,6 @@ export class Tools {
 
     static sleep(t: number): Promise<void> {
         return new Promise((r) => setTimeout(r, t));
-    }
-
-    static createChatRoom(title: string, visibility: "public" | "hidden" | "secret", client: Client): Room {
-        if (!title) throw new Error("User title must not be blank");
-        const id = this.toRoomId(title);
-        if (!id) throw new Error("Room title must not be blank");
-        return new Room(
-            {
-                id,
-                title,
-                type: "chat",
-                visibility,
-            },
-            client,
-            true
-        );
-    }
-
-    static createOfflineUser(name: string, client: Client): User {
-        if (!name) throw new Error("User name must not be blank");
-        const id = this.toId(name);
-        if (!id) throw new Error("User name must not be blank");
-        return new User(
-            {
-                id,
-                userid: id,
-                name,
-                rooms: false,
-            },
-            client,
-            true
-        );
-    }
-
-    static createOfflinePlayer(name: string, activity: Activity): Player {
-        if (!name) throw new Error("Player name must not be blank");
-        const id = this.toId(name);
-        if (!id) throw new Error("Player name must not be blank");
-        return new Player(
-            {
-                id,
-                userid: id,
-                name,
-                rooms: false,
-            },
-            activity,
-            true
-        );
     }
 
     static toGroupName(rank: GroupSymbol & string): GroupNames;
