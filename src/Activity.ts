@@ -59,7 +59,7 @@ export abstract class Activity {
     }
 
     addPlayer(name: string): Player | undefined {
-        if (!Tools.toId(name).startsWith("guest")) return;
+        if (Tools.toId(name).startsWith("guest")) return;
         const user = this.client.users.raw.get(Tools.toId(name));
         if (!user || !user.rooms) {
             this.sayError("USER_NOT_FOUND", name);
