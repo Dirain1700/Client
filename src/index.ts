@@ -12,6 +12,7 @@ export * from "./Tools";
 
 export type {
     ActivityErrorType,
+    AuthLevel,
     awaitMessageOptions,
     BattleRoom,
     ClientEventNames,

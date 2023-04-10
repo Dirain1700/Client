@@ -39,6 +39,6 @@ export type {
 
 export type { GlobalPermissions, UserOptions } from "./User";
 
-export type { GroupNames, GroupSymbol, Ranks } from "./UserGroups";
+export type { AuthLevel, GroupNames, GroupSymbol, Ranks } from "./UserGroups";
 
 export type { Dict, valueof } from "./utils";
