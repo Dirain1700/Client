@@ -57,6 +57,7 @@ export class Room {
             writable: true,
         });
         this.setVisibility();
+        this.setUsers();
         if (!this.title && !this.userCollection.size && !noinit) this.update();
     }
 
