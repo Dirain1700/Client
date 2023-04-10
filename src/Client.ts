@@ -1076,8 +1076,6 @@ export class Client extends EventEmitter {
                 if (!isRoomNotEmp(room)) return;
                 const tourEventName = event[0]!;
                 const tourEvent = event.slice(1);
-                console.log(eventName);
-                console.log(event[0]);
                 switch (tourEventName) {
                     case "create": {
                         const format = tourEvent[0]!,
