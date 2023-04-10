@@ -701,7 +701,7 @@ export class Client extends EventEmitter {
         const event: string[] = rawMessage.split("|").slice(2)!;
 
         function isRoomNotEmp(r: Room | null | undefined): r is Room {
-            return r instanceof Room;
+            return !!r && !!r.roomid && r.exists;
         }
 
         switch (eventName) {
@@ -1076,6 +1076,8 @@ export class Client extends EventEmitter {
                 if (!isRoomNotEmp(room)) return;
                 const tourEventName = event[0]!;
                 const tourEvent = event.slice(1);
+                console.log(eventName);
+                console.log(event[0]);
                 switch (tourEventName) {
                     case "create": {
                         const format = tourEvent[0]!,
