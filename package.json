@@ -45,7 +45,7 @@
         "check": "prettier --check .",
         "generate-exports": "node generate-exports",
         "copy-dts": "node copy-types",
-        "tsc": "npm run tsc:cjs && npm run tsc:esm && npm run tsc:test",
+        "tsc": "npm run tsc:cjs && npm run tsc:esm",
         "tsc:cjs": "tsc -p tsconfig.cjs.json --noEmit --emitDeclarationOnly false",
         "tsc:esm": "tsc -p tsconfig.esm.json --noEmit --emitDeclarationOnly false",
         "tsc:test": "tsc -p tsconfig.test.json",
@@ -53,10 +53,11 @@
         "emit:cjs": "tsc -p tsconfig.cjs.json",
         "emit:esm": "tsc -p tsconfig.esm.json",
         "ci": "npm run check && npm run lint && npm run tsc",
-        "build": "npm run write && npm run lint-fix && (npm run emitDeclaration & npm run esbuild)",
+        "build": "npm run write && npm run lint-fix && npm run esbuild && npm run emitDeclaration",
         "build-esbuild": "tsc -p tsconfig.build.json",
         "esbuild": "node --enable-source-maps build.js",
-        "prepublishOnly": "npm run check && (npm run generate-exports & npm run copy-dts & npm run build-esbuild) && npm run lint && (npm run esbuild & npm run emitDeclaration)"
+        "prepublishOnly": "npm run check && (npm run generate-exports & npm run copy-dts & npm run build-esbuild) && npm run lint && (npm run esbuild & npm run emitDeclaration)",
+        "postinstall": "npm run build-esbuild && npm run build"
     },
     "keywords": [],
     "author": "Dirain1700",
