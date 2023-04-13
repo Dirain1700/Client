@@ -54,7 +54,7 @@ jobs:
               run: npm run prepublishOnly
 
             - name: Test
-              run: npm test
+              run: npm run tsc:test && npm test
 
     publish:
         name: Publish
