@@ -1,13 +1,14 @@
 "use strict";
 
-import { readdirSync } from "node:fs";
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 
-import { buildSync } from "esbuild";
+import { build, buildSync } from "esbuild";
+import { aliasPath } from "esbuild-plugin-alias-path";
+import { globSync } from "glob";
+import { cloneDeep } from "lodash";
 
-const targetDir = "./src";
-const targetFiles = readdirSync(targetDir).map((p) => targetDir + "/" + p);
+const targetFiles = globSync(["src/**/*.ts", "data/**/*.ts", "config/**/*.ts"]);
+const targetTestFiles = globSync(["test/**/*.ts"]);
 
 const config = {
     allowOverwrite: true,
@@ -19,25 +20,41 @@ const config = {
     write: true,
 };
 
-console.log("Running CommonJS esbuild...");
+console.log("Transpiling to CommonJS...");
 
 // @ts-expect-error format should be assignable
 // prettier-ignore
-buildSync(Object.assign({
+buildSync(Object.assign(cloneDeep(config), {
     format: "cjs",
     outdir: "dist/cjs",
     tsconfig: path.resolve(__dirname, "tsconfig.cjs.json"),
-}, config));
+}));
 
-console.log("Running ES Module esbuild...");
+console.log("Transpiling to ES Module...");
 
 // @ts-expect-error format should be assignable
 // prettier-ignore
-buildSync(Object.assign({
+buildSync(Object.assign(cloneDeep(config), {
     format: "esm",
     outExtension: { ".js": ".mjs" },
     outdir: "dist/esm",
     tsconfig: path.resolve(__dirname, "tsconfig.esm.json"),
-}, config));
+}));
 
-console.log("Sucessfully built files!");
+console.log("Transpiling test modules...");
+
+// @ts-expect-error format should be assignable
+// prettier-ignore
+build(Object.assign(cloneDeep(config), {
+    bundle: true,
+    entryPoints: targetTestFiles,
+    format: "cjs",
+    minify: true,
+    outdir: "dist/test",
+    tsconfig: path.resolve(__dirname, "tsconfig.test.json"),
+    plugins: [
+        aliasPath({
+            alias: { "@dist/*": path.resolve(__dirname, "./dist") },
+        }),
+    ],
+})).then(() => console.log("Sucessfully built files!"));
