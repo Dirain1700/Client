@@ -53,6 +53,9 @@ jobs:
             - name: Build files
               run: npm run prepublishOnly
 
+            - name: Test
+              run: npm test
+
     publish:
         name: Publish
 
