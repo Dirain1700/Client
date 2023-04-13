@@ -275,6 +275,7 @@ export class Client extends EventEmitter {
         this.loggedIn = false;
         this.closed = true;
         this.ws.terminate();
+        this.ws = null;
     }
 
     private setEventListeners(): void {
