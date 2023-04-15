@@ -47,11 +47,11 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
-            - name: Run CI
-              run: npm run ci
-
             - name: Build files
               run: npm run prepublishOnly
+
+            - name: Run CI
+              run: npm run ci
 
             - name: Test
               run: npm run tsc:test && npm test
