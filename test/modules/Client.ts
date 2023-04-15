@@ -8,7 +8,7 @@ import { createTestRoom, createTestUser } from "../test-tools";
 
 import type { Room } from "@dist/cjs/index";
 
-const testMessageContent = new Date().toISOString() + ": test message from mocha";
+const testMessageContent = new Date().toISOString() + ": test message by mocha";
 
 describe("Client", function () {
     describe("Login", function () {
