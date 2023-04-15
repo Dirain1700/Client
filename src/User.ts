@@ -121,6 +121,10 @@ export class User {
         return this;
     }
 
+    fetch(useCache?: boolean): Promise<User> {
+        return this.client.fetchUser(this.id, !!useCache);
+    }
+
     awaitMessages(options: awaitMessageOptions<User>): Promise<Message<User>[] | null> {
         const isValidOption = (arg: unknown): arg is awaitMessageOptions<User> => {
             if (typeof arg !== "object") return false;

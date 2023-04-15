@@ -140,6 +140,10 @@ export class Room {
         return this;
     }
 
+    fetch(force?: boolean): Promise<Room> {
+        return this.client.fetchRoom(this.roomid, !!force);
+    }
+
     announce(text: string): void {
         if (!this.client.user) throw new PSAPIError("NOT_LOGGED_IN");
         this.checkCan("warn", this.client.user, true);

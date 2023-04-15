@@ -143,8 +143,8 @@ export class Client extends EventEmitter {
             challstr: defineOptions,
         });
         this.user = null;
-        this.rooms = { cache: new Collection(), raw: new Collection(), fetch: this.fetchRoom };
-        this.users = { cache: new Collection(), raw: new Collection(), fetch: this.fetchUser };
+        this.rooms = { cache: new Collection(), raw: new Collection(), fetch: this.fetchRoom.bind(this) };
+        this.users = { cache: new Collection(), raw: new Collection(), fetch: this.fetchUser.bind(this) };
     }
 
     /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -1014,6 +1014,7 @@ export class Client extends EventEmitter {
             case "J":
             case "join": {
                 if (!isRoomNotEmp(room)) return;
+                this.fetchRoom(room.id);
                 const name = event.join("|"),
                     id = Tools.toId(event.join("|"));
                 let user = this.getUser(id);
@@ -1028,6 +1029,7 @@ export class Client extends EventEmitter {
             case "L":
             case "leave": {
                 if (!isRoomNotEmp(room)) return;
+                this.fetchRoom(room.id);
                 const id = Tools.toId(event.join("|"));
                 room.removeUser(id);
                 const user =
@@ -1041,6 +1043,7 @@ export class Client extends EventEmitter {
             case "n":
             case "N":
             case "name": {
+                if (room) this.fetchRoom(room.id);
                 const Old = Tools.toId(event[1] as string),
                     New =
                         this.users.cache.get(Old) ??
@@ -1073,8 +1076,10 @@ export class Client extends EventEmitter {
 
             case "tournament": {
                 if (!isRoomNotEmp(room)) return;
-                room = this.rooms.cache.get(room.id);
-                if (!isRoomNotEmp(room)) return;
+                const cachedRoom = this.rooms.cache.get(room.id);
+                if (!isRoomNotEmp(cachedRoom)) {
+                    room = await this.fetchRoom(room.id);
+                } else room = cachedRoom;
                 const tourEventName = event[0]!;
                 const tourEvent = event.slice(1);
                 switch (tourEventName) {
