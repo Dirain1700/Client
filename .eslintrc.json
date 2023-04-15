@@ -14,7 +14,8 @@
         "comma-spacing": "error",
         "no-extra-semi": "error",
         "quotes": ["off", "double", { "avoidEscape": true }],
-        "no-var": "off"
+        "no-var": "off",
+        "no-trailing-spaces": "error"
     },
     "overrides": [
         {
