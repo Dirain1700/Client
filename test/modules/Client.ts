@@ -39,7 +39,7 @@ describe("Client", function () {
         });
     });
     describe("Message", function () {
-        it("Should send a message in PM", function (done) {
+        it("Should send a message to a User", function (done) {
             this.timeout(5 * 1000);
             this.slow(300);
             client.once("messageCreate", (message) => {
@@ -52,7 +52,7 @@ describe("Client", function () {
             });
             client.user?.send(testMessageContent);
         });
-        it("Should send a message in Room", function (done): void {
+        it("Should send a message to a Room", function (done): void {
             if (process.env["CI"]) return this.skip();
             this.timeout(5 * 1000);
             this.slow(300);
