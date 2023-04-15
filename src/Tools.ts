@@ -179,7 +179,6 @@ export class Tools {
         if (content === MODCHAT_DISABLE_STRING) return null;
         else if (MODCHAT_REGEX.test(content)) {
             const { level } = content.match(MODCHAT_REGEX)!.groups ?? {};
-            console.log("chat:", level);
             if (!level) return false;
             return level as ModchatLevel;
         } else return false;
@@ -191,7 +190,6 @@ export class Tools {
         else if (content === MODJOIN_AC_STRING) return "autoconfirmed";
         else if (MODJOIN_REGEX.test(content)) {
             const { level } = content.match(MODJOIN_REGEX)!.groups ?? {};
-            console.log("join:", level);
             if (!level) return false;
             return level as ModchatLevel;
         } else return false;
