@@ -98,9 +98,9 @@ export class User {
         this.online =
             this.avatar === 0 || this.avatar
                 ? raw
-                    ? !raw.userid.startsWith("guest") || !raw.name.startsWith("Guest ")
-                        ? true
-                        : this.locked
+                    ? raw.userid.startsWith("guest") || raw.name.startsWith("Guest ")
+                        ? this.locked
+                        : true
                     : false
                 : false;
         return this.online;
