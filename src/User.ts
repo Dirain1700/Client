@@ -46,7 +46,6 @@ export class User {
         this.rooms = new Collection();
         this.friended = init.friended ?? false;
         this.guestNumber = init.guestNumber ?? "";
-        this.online = this.avatar !== null;
         this.waits = [];
         this.alts = [];
         this.client = init?.client ?? client;
@@ -66,6 +65,7 @@ export class User {
             });
         }
         if (!this.avatar && !noinit) this.update();
+        this.online = this.setIsOnline();
     }
 
     send(content: string, options?: Partial<IUserOutGoingMessageOptions>): void {
@@ -94,7 +94,15 @@ export class User {
     }
 
     setIsOnline(): boolean {
-        this.online = !!this.avatar;
+        const raw = this.client.users.raw.get(this.id);
+        this.online =
+            this.avatar === 0 || this.avatar
+                ? raw
+                    ? !raw.userid.startsWith("guest")
+                        ? true
+                        : this.locked
+                    : false
+                : false;
         return this.online;
     }
 

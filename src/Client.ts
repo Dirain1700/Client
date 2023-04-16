@@ -795,7 +795,7 @@ export class Client extends EventEmitter {
                 if (!isRoomNotEmp(room)) return;
                 if (room.id.startsWith("view-")) return void this.emit(Events.OPEN_HTML_PAGE, room);
 
-                if (!this.rooms.cache.has(room.id)) room = await this.fetchRoom(room.id, true);
+                room = await this.fetchRoom(room.id, true);
                 room.addUser(this.user!.name);
                 this.emit(Events.CLIENT_ROOM_ADD, room);
 
@@ -808,6 +808,7 @@ export class Client extends EventEmitter {
                 else this.emit(Events.CLIENT_ROOM_REMOVE, room!);
 
                 if (this.rooms.cache.has(room.id)) this.rooms.cache.delete(room!.id);
+                if (room.visibility === "public") room.fetch();
                 break;
             }
             case "html": {
@@ -1016,9 +1017,8 @@ export class Client extends EventEmitter {
                 if (!isRoomNotEmp(room)) return;
                 this.fetchRoom(room.id);
                 const name = event.join("|"),
-                    id = Tools.toId(event.join("|"));
-                let user = this.getUser(id);
-                if (!user) user = await this.fetchUser(id);
+                    id = Tools.toId(event.join("|")),
+                    user = await this.fetchUser(id);
                 user.addRoom(room.id);
                 room.addUser(name);
                 this.emit(Events.ROOM_USER_ADD, room, user);
@@ -1034,6 +1034,8 @@ export class Client extends EventEmitter {
                 room.removeUser(id);
                 const user =
                     this.getUser(id) ?? new User({ id, userid: id, name: event.join("|"), rooms: false }, this);
+                const fetchedUser = await user.fetch();
+                fetchedUser.setIsOnline();
                 user.removeRoom(room.id);
                 this.emit(Events.ROOM_USER_REMOVE, room, user);
                 if (!user.rooms.size) this.users.cache.delete(user.id);
@@ -1057,6 +1059,7 @@ export class Client extends EventEmitter {
                             this
                         );
 
+                New.fetch();
                 New.alts.push(Old);
                 this.users.cache.set(New.userid, New);
                 this.emit(Events.USER_RENAME, New, Old);
