@@ -1279,6 +1279,10 @@ export class Client extends EventEmitter {
             input.guestNumber = input.userid.replace("guest", "");
             input.userid = input.id;
             input.alts = [input.userid];
+        } else if (input.name.startsWith("Guest ")) {
+            input.guestNumber = input.userid.replace("Guest ", "");
+            input.name = input.id;
+            input.alts = [Tools.toId(input.name)];
         } else if (input.id !== input.userid) {
             if (!user || !user.alts.includes(input.userid)) input.alts = [input.userid];
             if (!this.users.cache.has(input.userid)) {
