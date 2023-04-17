@@ -1275,14 +1275,12 @@ export class Client extends EventEmitter {
     addUser(input: UserOptions, fetched?: boolean): User | null {
         if (typeof input !== "object" || !input.userid) return null;
         let user: User | undefined = this.users.cache.get(input.userid);
+        if (user && user.status && !input.status) user.status = "";
         if (input.userid.startsWith("guest")) {
             input.guestNumber = input.userid.replace("guest", "");
             input.userid = input.id;
             input.alts = [input.userid];
-        } else if (input.name.startsWith("Guest ")) {
-            input.guestNumber = input.userid.replace("Guest ", "");
-            input.name = input.id;
-            input.alts = [Tools.toId(input.name)];
+            if (input.name.startsWith("Guest ")) input.name = input.id;
         } else if (input.id !== input.userid) {
             if (!user || !user.alts.includes(input.userid)) input.alts = [input.userid];
             if (!this.users.cache.has(input.userid)) {
