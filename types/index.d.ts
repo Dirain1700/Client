@@ -27,7 +27,7 @@ export type { PSAPIErrorType } from "./Error";
 
 export type { awaitMessageOptions, MessageInput, MessageWaits } from "./Message";
 
-export type { BattleRoom, ModchatLevel, RoomOptions, RoomPermissions } from "./Room";
+export type { IBattlePokemonType, IBattleRoom, ModchatLevel, RoomOptions, RoomPermissions } from "./Room";
 
 export type {
     EliminationBracket,

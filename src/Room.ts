@@ -12,7 +12,7 @@ import type { Tournament } from "./Tour";
 
 import type { IRoomOutGoingMessageOptions } from "../types/Client";
 import type { MessageWaits, awaitMessageOptions } from "../types/Message";
-import type { RoomOptions, RoomPermissions, ModchatLevel } from "../types/Room";
+import type { RoomOptions, RoomPermissions, ModchatLevel, IBattlePokemonType } from "../types/Room";
 import type { GroupSymbol, GroupNames } from "../types/UserGroups";
 
 export class Room {
@@ -101,16 +101,17 @@ export class Room {
     }
 
     setUsers(): this {
-        this.users.forEach((u) => {
+        for (const u of this.users) {
+            this.client.fetchUser(u);
             const previousUser = this.userCollection.get(Tools.toId(u));
             if (previousUser) {
-                this.userCollection.set(previousUser.userid, previousUser.update());
-                return;
+                this.userCollection.set(previousUser.userid, previousUser);
+                break;
             }
             const user = this.client.getUser(u);
-            if (!user) return;
+            if (!user) break;
             this.userCollection.set(user.userid, user);
-        });
+        };
         return this;
     }
 
@@ -527,5 +528,69 @@ export class Room {
                 else return true;
             } else return true;
         });
+    }
+}
+
+export class BattleRoom extends Room {
+    turn: number = 0;
+    tier: string = "";
+    rules: string[] = [];
+    p1: {
+        user?: User;
+        rating: number;
+        pokemons: IBattlePokemonType[];
+    } = { rating: 1000, pokemons: [] };
+    p2: {
+        user?: User;
+        rating: number;
+        pokemons: IBattlePokemonType[];
+    } = { rating: 1000, pokemons: [] };
+    avgRating: number = 1000;
+
+    constructor(init: Room | RoomOptions, client: Client, noinit?: boolean) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        super(init as any as RoomOptions, client, !!noinit);
+        this.visibility = "public";
+    }
+
+    setPlayers(players: { p1?: User; p2?: User }) {
+        if (players.p1) this.p1.user = players.p1;
+        if (players.p2) this.p2.user = players.p2;
+    }
+
+    addPokemon(player: "p1" | "p2", data: IBattlePokemonType) {
+        this[player].pokemons.push(data);
+    }
+
+    setTier(tier: string) {
+        this.tier = tier;
+    }
+
+    addRule(rule: string) {
+        this.rules.push(rule);
+    }
+
+    setRating(ratings: { p1?: number; p2?: number }) {
+        if (ratings.p1) this.p1.rating = ratings.p1;
+        if (ratings.p2) this.p2.rating = ratings.p2;
+        this.setAverage();
+    }
+
+    setAverage(): number {
+        const avg = (this.p1.rating + this.p2.rating) / 2;
+        this.avgRating = avg;
+        return avg;
+    }
+
+    update(): this {
+        this.setUsers();
+        const room = this.client.rooms.battles.get(this.id);
+        if (!room) return this;
+        Object.assign(this, room);
+        return this;
+    }
+
+    fetch(force?: boolean): Promise<BattleRoom> {
+        return this.client.fetchBattleRoom(this.roomid, !!force);
     }
 }

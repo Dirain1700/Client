@@ -18,10 +18,17 @@ export interface RoomOptions {
     waits?: MessageWaits<Room>[];
 }
 
-export interface BattleRoom {
+export interface IBattleRoom {
+    id?: string;
     p1?: string;
     p2?: string;
+    minElo?: number;
     isPrivate?: boolean | "hidden" | "voice";
+}
+
+export interface IBattlePokemonType {
+    name: string;
+    gendar: "M" | "F" | "N";
 }
 
 // prettier-ignore

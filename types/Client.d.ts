@@ -1,9 +1,10 @@
 import type { TimeoutError } from "../src/Error";
 import type { Message } from "../src/Message";
-import type { Room } from "../src/Room";
+import type { BattleRoom, Room } from "../src/Room";
 import type { User } from "../src/User";
-import type { RoomOptions, ModchatLevel } from "./Room";
+import type { IBattleRoom, RoomOptions, ModchatLevel } from "./Room";
 import type { TourUpdateData, TourEndData } from "./Tour";
+import type { Dict } from "./utils";
 import type { RawData } from "ws";
 
 /* eslint-disable no-unused-vars, @typescript-eslint/no-explicit-any */
@@ -27,6 +28,9 @@ export interface ClientOptions {
 export interface ClientEventNames {
     READY: "ready";
     QUERY_RESPONSE: "queryResponse";
+    BATTLE_LIST: "battleList";
+    BATTLE_START: "battleStart";
+    BATTLE_END: "battleEnd";
     RAW_DATA: "rawData";
     MODCHAT: "modchat";
     MODJOIN: "modjoin";
@@ -57,6 +61,9 @@ export interface ClientEventNames {
 export interface ClientEvents {
     ready: [client?: undefined];
     queryResponse: [event: string];
+    battleList: [rooms: Dict<IBattleRoom>];
+    battleStart: [room: BattleRoom];
+    battleEnd: [room: BattleRoom, status: "win" | "tie", winner?: User];
     rawData: [message: string, room: Room];
     modchat: [modchatLevel: ModchatLevel, room: Room];
     modjoin: [modjoinLevel: ModchatLevel, room: Room];

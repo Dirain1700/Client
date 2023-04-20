@@ -12,7 +12,7 @@ import { WebSocket } from "ws";
 import { ClientUser } from "./ClientUser";
 import { TimeoutError, AccessError, PSAPIError } from "./Error";
 import { Message } from "./Message";
-import { Room } from "./Room";
+import { BattleRoom, Room } from "./Room";
 import { Tools } from "./Tools";
 import { Tournament } from "./Tour";
 import { User } from "./User";
@@ -35,9 +35,10 @@ import type {
     PostLoginOptions,
 } from "../types/Client";
 import type { MessageInput } from "../types/Message";
-import type { RoomOptions } from "../types/Room";
+import type { IBattleRoom, RoomOptions } from "../types/Room";
 import type { TourUpdateData, EliminationBracket, RoundRobinBracket, TourEndData } from "../types/Tour";
 import type { UserOptions } from "../types/User";
+import type { Dict } from "../types/utils";
 
 const MAIN_HOST = "sim3.psim.us";
 const ROOM_FETCH_COOLDOWN = 5000;
@@ -45,6 +46,9 @@ const USER_FETCH_COOLDOWN = 3000;
 const Events: ClientEventNames = {
     READY: "ready",
     QUERY_RESPONSE: "queryResponse",
+    BATTLE_LIST: "battleList",
+    BATTLE_START: "battleStart",
+    BATTLE_END: "battleEnd",
     RAW_DATA: "rawData",
     MODCHAT: "modchat",
     MODJOIN: "modjoin",
@@ -87,6 +91,7 @@ export class Client extends EventEmitter {
     private _autoReconnect: NodeJS.Timeout | undefined = undefined;
     events = Events;
     rooms: {
+        battles: Collection<string, BattleRoom>;
         cache: Collection<string, Room>;
         raw: Collection<string, RoomOptions>;
         fetch: (roomid: string, force?: boolean) => Promise<Room>;
@@ -143,7 +148,12 @@ export class Client extends EventEmitter {
             challstr: defineOptions,
         });
         this.user = null;
-        this.rooms = { cache: new Collection(), raw: new Collection(), fetch: this.fetchRoom.bind(this) };
+        this.rooms = {
+            battles: new Collection(),
+            cache: new Collection(),
+            raw: new Collection(),
+            fetch: this.fetchRoom.bind(this),
+        };
         this.users = { cache: new Collection(), raw: new Collection(), fetch: this.fetchUser.bind(this) };
     }
 
@@ -477,6 +487,7 @@ export class Client extends EventEmitter {
         );
 
         for (const m of arr) {
+            this.time = Date.now();
             const { roomid, userid, type, raw, text, measure } = m;
             let expection = "";
 
@@ -533,20 +544,25 @@ export class Client extends EventEmitter {
             if (text.startsWith("|/cmd ")) {
                 const type = Tools.toId(text.split(" ")[1]!);
                 let target = Tools.toRoomId(text.split(" ")[2]!);
-                if (type === "userdetails") {
-                    target = Tools.toId(target);
-                    const user = this.users.cache.get(target);
-                    if (user && Date.now() - user.lastFetchTime < USER_FETCH_COOLDOWN) {
-                        const pUser = this.userdetailsQueue.find((e) => e.id === target);
-                        if (pUser) pUser.resolve(user);
-                        continue;
+                switch (type) {
+                    case "userdetails": {
+                        target = Tools.toId(target);
+                        const user = this.users.cache.get(target);
+                        if (user && Date.now() - user.lastFetchTime < USER_FETCH_COOLDOWN) {
+                            const pUser = this.userdetailsQueue.find((e) => e.id === target);
+                            if (pUser) pUser.resolve(user);
+                            continue;
+                        }
+                        break;
                     }
-                } else {
-                    const room = this.rooms.cache.get(Tools.toRoomId(target));
-                    if (room && Date.now() - room.lastFetchTime < ROOM_FETCH_COOLDOWN) {
-                        const pRoom = this.roominfoQueue.find((e) => e.id === target);
-                        if (pRoom) pRoom.resolve(room);
-                        continue;
+                    case "roominfo": {
+                        const room = this.rooms.cache.get(Tools.toRoomId(target));
+                        if (room && Date.now() - room.lastFetchTime < ROOM_FETCH_COOLDOWN) {
+                            const pRoom = this.roominfoQueue.find((e) => e.id === target);
+                            if (pRoom) pRoom.resolve(room);
+                            continue;
+                        }
+                        break;
                     }
                 }
             }
@@ -619,7 +635,7 @@ export class Client extends EventEmitter {
         roomid = Tools.toRoomId(roomid);
         if (!roomid) throw new PSAPIError("EMPTY", "Room");
         if (!this.rooms.cache.has(roomid)) throw new PSAPIError("ROOM_NONEXIST", roomid);
-        this.noreplySend("|/l " + roomid);
+        this.noreplySend("|/leave " + roomid);
     }
 
     async onMessage(message: string): Promise<void> {
@@ -641,6 +657,7 @@ export class Client extends EventEmitter {
                       },
                       this
                   );
+        if (room && room.type === "battle") room.visibility = "public";
 
         for (let i = 0; i < lines.length; i++) {
             const line: string | undefined = lines[i]!.trim();
@@ -700,6 +717,7 @@ export class Client extends EventEmitter {
     async parseMessage(rawMessage: string, room: Room | null | undefined): Promise<void> {
         const eventName: string = rawMessage.split("|")[1] as string;
         const event: string[] = rawMessage.split("|").slice(2)!;
+        let battleRoom = room ? this.rooms.battles.get(room.id) : undefined;
 
         function isRoomNotEmp(r: Room | null | undefined): r is Room {
             return !!r && !!r.roomid && r.exists;
@@ -794,9 +812,13 @@ export class Client extends EventEmitter {
             case "init": {
                 if (!isRoomNotEmp(room)) return;
                 if (room.id.startsWith("view-")) return void this.emit(Events.OPEN_HTML_PAGE, room);
-
-                room = await this.fetchRoom(room.id, true);
+                await this.fetchRoom(room.id, true);
+                room.update();
                 room.addUser(this.user!.name);
+                if (room.type === "battle" && !this.rooms.battles.has(room.id)) {
+                    battleRoom = new BattleRoom(room, this, true);
+                    this.rooms.battles.set(room.id, battleRoom);
+                }
                 this.emit(Events.CLIENT_ROOM_ADD, room);
 
                 break;
@@ -807,7 +829,8 @@ export class Client extends EventEmitter {
                 if (room.id.startsWith("view-")) this.emit(Events.CLOSE_HTML_PAGE, room!);
                 else this.emit(Events.CLIENT_ROOM_REMOVE, room!);
 
-                if (this.rooms.cache.has(room.id)) this.rooms.cache.delete(room!.id);
+                if (this.rooms.battles.has(room.id)) this.rooms.battles.delete(room.id);
+                if (this.rooms.cache.has(room.id)) this.rooms.cache.delete(room.id);
                 if (room.visibility === "public") room.fetch();
                 break;
             }
@@ -822,6 +845,98 @@ export class Client extends EventEmitter {
                 }
                 break;
             }
+
+            case "title": {
+                if (room) {
+                    room.title = event.join("|");
+                    this.rooms.cache.set(room.id, room);
+                    if (battleRoom) {
+                        battleRoom.title = event.join("|");
+                        this.rooms.battles.set(battleRoom.id, battleRoom);
+                        this.fetchBattleRoom(room.id);
+                    }
+                }
+                break;
+            }
+
+            case "player": {
+                if (!room || room.type !== "battle") break;
+                if (!battleRoom) {
+                    battleRoom = new BattleRoom(room, this, true);
+                    this.rooms.battles.set(battleRoom.id, battleRoom);
+                }
+                battleRoom.setPlayers({ [event[0]!]: this.getUser(event[1]!)! });
+                battleRoom.setRating({ [event[0]!]: parseInt(event[3]!) });
+                this.fetchBattleRoom(room.id);
+                this.rooms.battles.set(battleRoom.id, battleRoom);
+
+                break;
+            }
+
+            case "tier": {
+                if (!room || room.type !== "battle") break;
+                if (!battleRoom) {
+                    battleRoom = new BattleRoom(room, this, true);
+                    this.rooms.battles.set(battleRoom.id, battleRoom);
+                }
+                this.fetchBattleRoom(room.id);
+                battleRoom.setTier(event.join("|"));
+                this.rooms.battles.set(battleRoom.id, battleRoom);
+                break;
+            }
+
+            case "turn": {
+                if (!room || room.type !== "battle") break;
+                if (!battleRoom) {
+                    battleRoom = new BattleRoom(room, this, true);
+                    this.rooms.battles.set(battleRoom.id, battleRoom);
+                }
+                battleRoom.turn = parseInt(event[0]!);
+                this.rooms.battles.set(battleRoom.id, battleRoom);
+                break;
+            }
+
+            case "rule": {
+                if (!room || room.type !== "battle") break;
+                if (!battleRoom) {
+                    battleRoom = new BattleRoom(room, this, true);
+                    this.rooms.battles.set(battleRoom.id, battleRoom);
+                }
+                battleRoom.addRule(event.join("|"));
+                this.rooms.battles.set(battleRoom.id, battleRoom);
+                break;
+            }
+
+            case "poke": {
+                if (!room || room.type !== "battle") break;
+                if (!battleRoom) {
+                    battleRoom = new BattleRoom(room, this, true);
+                    this.rooms.battles.set(battleRoom.id, battleRoom);
+                }
+                const name = event[1]!.split(",")[0]!,
+                    gendar = (event[1]!.split(",")[1] ?? "N").trim() as "M" | "F" | "N";
+                battleRoom.addPokemon(event[0] as "p1" | "p2", { name, gendar });
+                this.rooms.battles.set(battleRoom.id, battleRoom);
+                break;
+            }
+
+            case "start": {
+                if (!room) break;
+                battleRoom = await this.fetchBattleRoom(room.id);
+                this.emit(Events.BATTLE_START, battleRoom);
+                break;
+            }
+
+            case "win":
+            case "tie": {
+                if (!room) break;
+                battleRoom = await this.fetchBattleRoom(room.id);
+                let winner: User | undefined = undefined;
+                if (eventName === "win") winner = await this.fetchUser(event.join("|"));
+                this.emit(Events.BATTLE_END, battleRoom, eventName, winner);
+                break;
+            }
+
             case "queryresponse": {
                 const client = this;
                 switch (event[0]) {
@@ -834,11 +949,8 @@ export class Client extends EventEmitter {
                         }
                         if (!roominfo || !roominfo.id) return;
                         this.rooms.raw.set(roominfo.id, roominfo);
-                        if (roominfo.users && !this.rooms.cache.has(roominfo.id)) {
-                            await Tools.sleep(this.throttleInterval);
-                            roominfo.users
-                                .filter((u) => !client.users.cache.has(Tools.toId(u)))
-                                .forEach((u) => this.noreplySend(`|/cmd userdetails ${Tools.toId(u)}`));
+                        if (roominfo.users) {
+                            roominfo.users.forEach((u) => this.noreplySend(`|/cmd userdetails ${Tools.toId(u)}`));
                         }
 
                         const PendingRoom: PromisedRoom[] = this.roominfoQueue.filter((r) => r.id === roominfo!.id);
@@ -857,6 +969,9 @@ export class Client extends EventEmitter {
                             }
 
                             break;
+                        }
+                        if (roominfo.id.startsWith("battle-")) {
+                            this.addBattleRoom(roominfo);
                         }
 
                         PendingRoom.forEach((e) => e.resolve(this.addRoom(roominfo!)));
@@ -901,10 +1016,16 @@ export class Client extends EventEmitter {
                         PendingUser.forEach((e) => e.resolve(user));
                         break;
                     }
+                    case "roomlist": {
+                        const rooms = JSON.parse(event.slice(1).join("|")) as { rooms: Dict<IBattleRoom> };
+                        this.emit(Events.BATTLE_LIST, rooms.rooms);
+                        break;
+                    }
                 }
                 this.emit(Events.QUERY_RESPONSE, event.slice(1).join("|"));
                 break;
             }
+
             case "chat":
             case "c": {
                 if (!isRoomNotEmp(room)) return;
@@ -1017,8 +1138,7 @@ export class Client extends EventEmitter {
                 if (!isRoomNotEmp(room)) return;
                 this.fetchRoom(room.id);
                 const name = event.join("|"),
-                    id = Tools.toId(event.join("|")),
-                    user = await this.fetchUser(id);
+                    user = await this.fetchUser(name);
                 user.addRoom(room.id);
                 room.addUser(name);
                 this.emit(Events.ROOM_USER_ADD, room, user);
@@ -1407,5 +1527,45 @@ export class Client extends EventEmitter {
         if (fetched !== false) room.setLastFetchTime();
         this.rooms.cache.set(room.roomid!, room);
         return room as Room;
+    }
+
+    fetchBattleList(param: string): void {
+        return this.noreplySend(`|/cmd roomlist ${param}`);
+    }
+
+    fetchBattleRoom(roomid: string, force?: boolean): Promise<BattleRoom> {
+        return this.fetchRoom(roomid, !!force).then((room) => {
+            const battleRoom = this.rooms.battles.get(room.id)!;
+            this.rooms.battles.set(battleRoom.roomid, battleRoom);
+            return battleRoom;
+        });
+    }
+
+    addBattleRoom(input: RoomOptions, fetched?: boolean): BattleRoom {
+        if (typeof input !== "object" || !input.roomid) throw new PSAPIError("EMPTY", "BattleRoom");
+
+        let room: BattleRoom | undefined = this.rooms.battles.get(input.roomid);
+        if (!room) {
+            room = new BattleRoom(input, this) as BattleRoom;
+            this.noreplySend(`|/cmd roominfo ${input.id}`);
+        } else {
+            for (const [k, v] of Object.entries(input)) {
+                if (k === "client" || k === "error") continue;
+                // @ts-expect-error props exists in room
+                if (k in room) room[k] = v;
+            }
+        }
+        if (input.users) {
+            for (const id of input.users) {
+                const user = this.getUser(id);
+                if (!user) continue;
+                room.userCollection.set(user.userid, user);
+            }
+        }
+        room.visibility = "public";
+        room.setUsers();
+        if (fetched !== false) room.setLastFetchTime();
+        this.rooms.battles.set(room.roomid!, room);
+        return room as BattleRoom;
     }
 }
