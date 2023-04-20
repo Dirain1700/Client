@@ -610,7 +610,10 @@ export class Client extends EventEmitter {
             this.outGoingMessage.push(message as IOutGoingMessage<User>);
         }
 
-        if (!this.sendTimer) this.sendTimer = setInterval(() => this.runOutGoingMessage(), this.throttleInterval);
+        if (!this.sendTimer) {
+            this.runOutGoingMessage();
+            this.sendTimer = setInterval(() => this.runOutGoingMessage(), this.throttleInterval);
+        }
         return;
     }
 
