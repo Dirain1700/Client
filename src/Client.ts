@@ -487,7 +487,6 @@ export class Client extends EventEmitter {
         );
 
         for (const m of arr) {
-            this.time = Date.now();
             const { roomid, userid, type, raw, text, measure } = m;
             let expection = "";
 

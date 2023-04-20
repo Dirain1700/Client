@@ -111,7 +111,7 @@ export class Room {
             const user = this.client.getUser(u);
             if (!user) break;
             this.userCollection.set(user.userid, user);
-        };
+        }
         return this;
     }
 
