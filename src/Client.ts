@@ -1160,7 +1160,7 @@ export class Client extends EventEmitter {
                 fetchedUser.setIsOnline();
                 user.removeRoom(room.id);
                 this.emit(Events.ROOM_USER_REMOVE, room, user);
-                if (!user.rooms.size) this.users.cache.delete(user.id);
+                if (!fetchedUser.rooms.size) this.users.cache.delete(fetchedUser.id);
                 break;
             }
 
