@@ -1150,7 +1150,7 @@ export class Client extends EventEmitter {
                 const name = event.join("|"),
                     user = await this.fetchUser(name);
                 user.addRoom(room.id);
-                room.addUser(name);
+                room.update().addUser(name);
                 this.emit(Events.ROOM_USER_ADD, room, user);
                 break;
             }
@@ -1161,7 +1161,7 @@ export class Client extends EventEmitter {
                 if (!isRoomNotEmp(room)) return;
                 this.fetchRoom(room.id);
                 const id = Tools.toId(event.join("|"));
-                room.removeUser(id);
+                room.update().removeUser(id);
                 const user =
                     this.getUser(id) ?? new User({ id, userid: id, name: event.join("|"), rooms: false }, this);
                 const fetchedUser = await user.fetch();
@@ -1195,7 +1195,8 @@ export class Client extends EventEmitter {
                 this.emit(Events.USER_RENAME, New, Old);
                 this.users.cache.delete(Old);
                 if (room) {
-                    room.update();
+                    room.update().removeUser(Old);
+                    room.addUser(New.userid);
                     if (room.tour) room.tour.renameUser(Old, New.userid);
                 }
                 break;
