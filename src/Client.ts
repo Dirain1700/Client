@@ -952,7 +952,13 @@ export class Client extends EventEmitter {
                         if (!roominfo || !roominfo.id) return;
                         this.rooms.raw.set(roominfo.id, roominfo);
                         if (roominfo.users) {
-                            roominfo.users.forEach((u) => this.noreplySend(`|/cmd userdetails ${Tools.toId(u)}`));
+                            roominfo.users
+                                .filter((u): boolean => {
+                                    const user = this.users.cache.get(Tools.toId(u));
+                                    if (!user || Date.now() - user.lastFetchTime >= 15 * 1000) return true;
+                                    return false;
+                                })
+                                .forEach((u) => this.noreplySend(`|/cmd userdetails ${Tools.toId(u)}`));
                         }
 
                         const PendingRoom: PromisedRoom[] = this.roominfoQueue.filter((r) => r.id === roominfo!.id);
