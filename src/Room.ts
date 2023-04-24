@@ -105,11 +105,11 @@ export class Room {
             this.client.fetchUser(u);
             const previousUser = this.userCollection.get(Tools.toId(u));
             if (previousUser) {
-                this.userCollection.set(previousUser.userid, previousUser);
-                break;
+                this.userCollection.set(previousUser.userid, previousUser.update());
+                continue;
             }
             const user = this.client.getUser(u);
-            if (!user) break;
+            if (!user) continue;
             this.userCollection.set(user.userid, user);
         }
         return this;
