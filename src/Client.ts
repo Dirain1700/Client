@@ -995,10 +995,12 @@ export class Client extends EventEmitter {
                         if (!userdetails || !userdetails.userid) return;
                         this.users.raw.set(userdetails.id, userdetails);
                         if (userdetails.id === this.status.id!) {
+                            this.addUser(userdetails);
                             if (this.user) {
                                 this.user.update();
                                 for (const [k, v] of Object.entries(userdetails)) {
                                     if (k === "rooms") {
+                                        this.user.rooms.clear();
                                         for (const r of Object.keys(userdetails.rooms).map((r) =>
                                             Tools.toRoomId(r.replace(/^[^a-z0-9]/i, ""))
                                         )) {
@@ -1458,6 +1460,7 @@ export class Client extends EventEmitter {
             }
         }
         if (input.rooms) {
+            user.rooms.clear();
             const rooms = Object.keys(input.rooms).map((r) => r.replace(/^[^a-z0-9]/i, ""));
             for (const id of rooms) {
                 const room = this.getRoom(id);
@@ -1525,6 +1528,7 @@ export class Client extends EventEmitter {
             }
         }
         if (input.users) {
+            room.userCollection.clear();
             for (const id of input.users) {
                 const user = this.getUser(id);
                 if (!user) continue;
