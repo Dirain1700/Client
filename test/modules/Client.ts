@@ -8,8 +8,6 @@ import { createTestRoom, createTestUser } from "../test-tools";
 
 import type { Room } from "@dist/cjs/index";
 
-const testMessageContent = new Date().toISOString() + ": test message by mocha";
-
 describe("Client", function () {
     describe("Tournament", function () {
         const mocha1 = createTestUser({ name: "mocha 1" });

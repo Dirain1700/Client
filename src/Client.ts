@@ -475,12 +475,8 @@ export class Client extends EventEmitter {
         });
     }
 
-    wsReady(): boolean {
-        return this.ws && this.ws.readyState;
-    }
-
     private runOutGoingMessage(): void {
-        if (!this.wsReady()) return;
+        if (!this.ws || !this.ws.readyState) return;
         if (!this.outGoingMessage.length) {
             clearTimeout(this.sendTimer);
             this.sendTimer = undefined;
@@ -1370,7 +1366,8 @@ export class Client extends EventEmitter {
 
             userid = Tools.toId(userid);
             const previousUser = client.getUser(userid);
-            if (previousUser && Date.now() - previousUser.lastFetchTime < USER_FETCH_COOLDOWN) return resolve(previousUser);
+            if (previousUser && Date.now() - previousUser.lastFetchTime < USER_FETCH_COOLDOWN)
+                return resolve(previousUser);
 
             const time = Date.now().toString();
             const user = {
@@ -1508,10 +1505,11 @@ export class Client extends EventEmitter {
             };
             client.roominfoQueue.push(r);
             client.noreplySend(`|/cmd roominfo ${roomid}`);
-            if (client.wsReady()) setTimeout(r.reject, 5 * 1000, {
-                id: roomid,
-                error: "timeout",
-            });
+            if (client.ws && !!client.ws.readyState)
+                setTimeout(r.reject, 5 * 1000, {
+                    id: roomid,
+                    error: "timeout",
+                });
         });
     }
 
