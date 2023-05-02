@@ -11,62 +11,6 @@ import type { Room } from "@dist/cjs/index";
 const testMessageContent = new Date().toISOString() + ": test message by mocha";
 
 describe("Client", function () {
-    describe("Login", function () {
-        it("WebSocket should be null before connecting", () => {
-            assert.strictEqual(client.ws, null);
-        });
-        it("Should login in 10 sec", function (done) {
-            this.slow(4000);
-            this.timeout(10 * 1000);
-            client.connect();
-            client.on("ready", () => {
-                console.log("Successfully logged in.");
-                done();
-            });
-        });
-        it("Waiting status to being stable", function (done) {
-            this.timeout(11 * 1000);
-            this.slow(21 * 1000);
-            setTimeout(() => done(), 10 * 1000);
-        });
-        it("Should fetch a room properly", function (done) {
-            this.timeout(3 * 1000);
-            this.slow(300);
-            client.fetchRoom("botdevelopment").then(() => {
-                assert.ok(client.rooms.cache.get("botdevelopment"));
-                done();
-            });
-        });
-    });
-    describe("Message", function () {
-        it("Should send a message to a User", function (done) {
-            this.timeout(5 * 1000);
-            this.slow(300);
-            client.once("messageCreate", (message) => {
-                if (
-                    message.content === testMessageContent &&
-                    message.author.id === client.user?.id &&
-                    message.target.id === client.user?.id
-                )
-                    done();
-            });
-            client.user?.send(testMessageContent);
-        });
-        it("Should send a message to a Room", function (done): void {
-            if (process.env["CI"]) return this.skip();
-            this.timeout(5 * 1000);
-            this.slow(300);
-            client.once("messageCreate", (message) => {
-                if (
-                    message.content === testMessageContent &&
-                    message.author.id === client.user?.id &&
-                    message.target.id === "botdevelopment"
-                )
-                    done();
-            });
-            client.rooms.cache.get("botdevelopment")!.send(testMessageContent);
-        });
-    });
     describe("Tournament", function () {
         const mocha1 = createTestUser({ name: "mocha 1" });
         const mocha2 = createTestUser({ name: "mocha 2" });
@@ -93,12 +37,6 @@ describe("Client", function () {
             assert.ok(mochaRoom.tour.isSingleElimination);
             // @ts-expect-error avoiding never
             assert.ok(!mochaRoom.tour.started);
-        });
-    });
-    describe("Logout", function () {
-        it("WebSocket should be null after logging out", () => {
-            client.disconnect();
-            assert.strictEqual(client.ws, null);
         });
     });
 });

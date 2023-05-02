@@ -41,8 +41,8 @@ import type { UserOptions } from "../types/User";
 import type { Dict } from "../types/utils";
 
 const MAIN_HOST = "sim3.psim.us";
-const ROOM_FETCH_COOLDOWN = 5000;
-const USER_FETCH_COOLDOWN = 3000;
+const ROOM_FETCH_COOLDOWN = 12000;
+const USER_FETCH_COOLDOWN = 7000;
 const Events: ClientEventNames = {
     READY: "ready",
     QUERY_RESPONSE: "queryResponse",
@@ -475,8 +475,12 @@ export class Client extends EventEmitter {
         });
     }
 
+    wsReady(): boolean {
+        return this.ws && this.ws.readyState;
+    }
+
     private runOutGoingMessage(): void {
-        if (!this.ws) return;
+        if (!this.wsReady()) return;
         if (!this.outGoingMessage.length) {
             clearTimeout(this.sendTimer);
             this.sendTimer = undefined;
@@ -1365,6 +1369,8 @@ export class Client extends EventEmitter {
             if (userid.length === 1 && ["&", "~"].includes(userid)) return resolve(client.getUser("&")!);
 
             userid = Tools.toId(userid);
+            const previousUser = client.getUser(userid);
+            if (previousUser && Date.now() - previousUser.lastFetchTime < USER_FETCH_COOLDOWN) return resolve(previousUser);
 
             const time = Date.now().toString();
             const user = {
@@ -1502,7 +1508,7 @@ export class Client extends EventEmitter {
             };
             client.roominfoQueue.push(r);
             client.noreplySend(`|/cmd roominfo ${roomid}`);
-            setTimeout(r.reject, 5 * 1000, {
+            if (client.wsReady()) setTimeout(r.reject, 5 * 1000, {
                 id: roomid,
                 error: "timeout",
             });
