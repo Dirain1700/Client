@@ -41,8 +41,8 @@ import type { UserOptions } from "../types/User";
 import type { Dict } from "../types/utils";
 
 const MAIN_HOST = "sim3.psim.us";
-const ROOM_FETCH_COOLDOWN = 12000;
-const USER_FETCH_COOLDOWN = 7000;
+const ROOM_FETCH_COOLDOWN = 10000;
+const USER_FETCH_COOLDOWN = 5000;
 const Events: ClientEventNames = {
     READY: "ready",
     QUERY_RESPONSE: "queryResponse",
@@ -565,6 +565,7 @@ export class Client extends EventEmitter {
                     }
                 }
             }
+            console.log(text);
             this.ws.send(text);
         }
     }
