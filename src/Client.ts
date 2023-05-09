@@ -42,7 +42,7 @@ import type { Dict } from "../types/utils";
 
 const MAIN_HOST = "sim3.psim.us";
 const ROOM_FETCH_COOLDOWN = 10000;
-const USER_FETCH_COOLDOWN = 5000;
+const USER_FETCH_COOLDOWN = 10000;
 const Events: ClientEventNames = {
     READY: "ready",
     QUERY_RESPONSE: "queryResponse",
@@ -88,7 +88,6 @@ export class Client extends EventEmitter {
     throttleInterval: 25 | 100 | 600 = 600;
     //eslint-disable-next-line @typescript-eslint/no-explicit-any
     ws: WebSocket | null = null;
-    private _autoReconnect: NodeJS.Timeout | undefined = undefined;
     events = Events;
     rooms: {
         battles: Collection<string, BattleRoom>;
@@ -136,7 +135,6 @@ export class Client extends EventEmitter {
         };
         Object.defineProperties(this, {
             options: defineOptions,
-            _autoReconnect: defineOptions,
             sendTimer: defineOptions,
             userdetailsQueue: defineOptions,
             roominfoQueue: defineOptions,
@@ -248,23 +246,35 @@ export class Client extends EventEmitter {
                             this.closed = false;
                             this.setEventListeners();
 
-                            if (this.ws!.readyState === 0)
-                                this._autoReconnect = setInterval(() => {
+                            console.log(this.ws?.readyState);
+                            if (!this.ws) {
+                                this.ws = null;
+                                console.log("Retrying login cause failed to establish WebSocket connection...");
+                                return this.connect();
+                            }
+                            if (this.ws!.readyState === 0) {
+                                setTimeout(() => {
+                                    console.log(this.ws?.readyState);
                                     if (this.ws!.readyState === 1) {
-                                        clearInterval(this._autoReconnect);
-                                        this._autoReconnect = undefined;
+                                        return;
                                     }
                                     console.log("Retrying login cause the server had no response...");
+                                    this.ws!.terminate();
                                     this.ws = null;
                                     this.connect();
-                                }, this.options.autoReconnect);
+                                }, 10 * 1000);
+                            }
+
+                            this.ws!.on("open", console.log);
 
                             this.ws!.on("message", (message: ws.MessageEvent) => {
+                                console.log(message.toString());
                                 this.onMessage(message.toString());
                             });
 
                             this.ws!.on("close", () => {
-                                if (!this.closed) this._autoReconnect = setInterval(() => this.connect(), 1000 * 30);
+                                (console.log("closed"))
+                                if (!this.closed) this.connect();
                             });
                         }
                     } else console.log("Error: failed to get data for server " + this.serverURL);
@@ -459,19 +469,17 @@ export class Client extends EventEmitter {
                 if ((response.statusCode ?? 200) >= 400) {
                     this.emit(Events.CLIENT_ERROR, data);
                     this.disconnect();
-                    await Tools.sleep(5000);
+                    await Tools.sleep(3000);
                     this.connect();
-                    this._autoReconnect = setInterval(() => this.connect(), 1000 * 30);
                 }
             });
 
             setTimeout(async () => {
                 if (ended) return;
                 this.disconnect();
-                await Tools.sleep(5000);
+                await Tools.sleep(3000);
                 this.connect();
-                this._autoReconnect = setInterval(() => this.connect(), 1000 * 30);
-            }, 15 * 1000);
+            });
         });
     }
 
@@ -763,7 +771,6 @@ export class Client extends EventEmitter {
                 this.status.name = event[0]!.substring(1) as string;
                 this.status.id = Tools.toId(this.status.name);
                 if (!event[0]!.startsWith(" Guest")) {
-                    clearTimeout(this._autoReconnect);
                     this.status.loggedIn = true;
                     this.noreplySend("|/ip");
                     if (this.options.autoJoin?.length)
