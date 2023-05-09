@@ -273,7 +273,7 @@ export class Client extends EventEmitter {
                             });
 
                             this.ws!.on("close", () => {
-                                (console.log("closed"))
+                                console.log("closed");
                                 if (!this.closed) this.connect();
                             });
                         }
