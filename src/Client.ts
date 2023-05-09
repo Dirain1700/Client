@@ -246,7 +246,6 @@ export class Client extends EventEmitter {
                             this.closed = false;
                             this.setEventListeners();
 
-                            console.log(this.ws?.readyState);
                             if (!this.ws) {
                                 this.ws = null;
                                 console.log("Retrying login cause failed to establish WebSocket connection...");
@@ -254,7 +253,6 @@ export class Client extends EventEmitter {
                             }
                             if (this.ws!.readyState === 0) {
                                 setTimeout(() => {
-                                    console.log(this.ws?.readyState);
                                     if (this.ws!.readyState === 1) {
                                         return;
                                     }
@@ -262,18 +260,14 @@ export class Client extends EventEmitter {
                                     this.ws!.terminate();
                                     this.ws = null;
                                     this.connect();
-                                }, 10 * 1000);
+                                }, 20 * 1000);
                             }
 
-                            this.ws!.on("open", console.log);
-
                             this.ws!.on("message", (message: ws.MessageEvent) => {
-                                console.log(message.toString());
                                 this.onMessage(message.toString());
                             });
 
                             this.ws!.on("close", () => {
-                                console.log("closed");
                                 if (!this.closed) this.connect();
                             });
                         }
@@ -573,7 +567,6 @@ export class Client extends EventEmitter {
                     }
                 }
             }
-            console.log(text);
             this.ws.send(text);
         }
     }
