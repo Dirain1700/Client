@@ -38,8 +38,8 @@
         "dist"
     ],
     "scripts": {
-        "lint": "eslint .",
-        "lint-fix": "eslint --fix .",
+        "lint": "eslint --cache .",
+        "lint-fix": "eslint --cache --fix .",
         "test": "npm run esbuild && npm run mocha",
         "mocha": "node --enable-source-maps --max-old-space-size=2048 dist/test/index.js",
         "write": "prettier --write .",
