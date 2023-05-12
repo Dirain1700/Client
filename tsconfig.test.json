@@ -13,6 +13,5 @@
         "declarationMap": false,
         "noEmit": true
     },
-    "include": ["test/**/*.ts"],
-    "exclude": ["src/**/*.ts", "types/**/*.ts"]
+    "include": ["test/**/*.ts"]
 }
