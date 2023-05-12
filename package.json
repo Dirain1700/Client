@@ -57,7 +57,8 @@
         "build": "npm run write && npm run lint-fix && npm run esbuild && npm run emitDeclaration",
         "build-esbuild": "tsc -p tsconfig.build.json",
         "esbuild": "node --enable-source-maps build.js",
-        "prepublishOnly": "npm run check && (npm run generate-exports & npm run copy-dts & npm run build-esbuild) && npm run lint && npm run emitDeclaration && npm run esbuild"
+        "prepublishOnly": "npm run check && (npm run generate-exports & npm run copy-dts & npm run build-esbuild) && npm run lint && npm run emitDeclaration && npm run esbuild",
+        "ncu": "npx -p npm-check-updates  -c \"ncu -u\""
     },
     "keywords": [],
     "author": "Dirain1700",
