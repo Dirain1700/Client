@@ -20,8 +20,15 @@
     "overrides": [
         {
             "files": ["*/**/*.ts"],
-            "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+            "extends": [
+                "eslint:recommended",
+                "plugin:@typescript-eslint/recommended",
+                "plugin:@typescript-eslint/recommended-requiring-type-checking"
+            ],
             "parser": "@typescript-eslint/parser",
+            "parserOptions": {
+                "project": ["./tsconfig.cjs.json"]
+            },
             "plugins": ["@typescript-eslint", "import"],
             "rules": {
                 "no-unused-vars": "off",
@@ -32,6 +39,7 @@
                 "@typescript-eslint/no-this-alias": "off",
                 "@typescript-eslint/no-non-null-assertion": "off",
                 "@typescript-eslint/no-unused-vars": "error",
+                "@typescript-eslint/restrict-plus-operands": "off",
                 "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
                 "import/order": [
                     "error",
@@ -69,6 +77,26 @@
                         "newlines-between": "always-and-inside-groups"
                     }
                 ]
+            }
+        },
+        {
+            "files": ["test/**/*.ts"],
+            "parserOptions": {
+                "project": ["./tsconfig.test.json"]
+            },
+            "settings": {
+                "import/resolver": {
+                    "typescript": {
+                        "alwaysTryTypes": true,
+                        "project": "./tsconfig.test.json"
+                    },
+                    "alias": {
+                        "map": [
+                            ["@dist", "./dist/cjs/index"]
+                        ],
+                        "extentions": ["*.ts", "*.js"]
+                    }
+                }
             }
         }
     ]
