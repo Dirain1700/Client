@@ -51,7 +51,7 @@ export function createTestPlayer(activity: Activity, init?: Partial<UserOptions>
     if (!init.rooms) init.rooms = false;
 
     // @ts-expect-error something is wrong
-    return new Player(init as UserOptions, activity as Activity, true);
+    return new Player(init as UserOptions, activity, true);
 }
 
 export function createTestEliminationTournament(

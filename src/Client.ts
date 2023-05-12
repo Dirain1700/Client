@@ -34,6 +34,7 @@ import type {
     ServerConfig,
     PostLoginOptions,
 } from "../types/Client";
+import type { UserSettings } from "../types/ClientUser";
 import type { MessageInput } from "../types/Message";
 import type { IBattleRoom, RoomOptions } from "../types/Room";
 import type { TourUpdateData, EliminationBracket, RoundRobinBracket, TourEndData } from "../types/Tour";
@@ -251,7 +252,7 @@ export class Client extends EventEmitter {
                                 console.log("Retrying login cause failed to establish WebSocket connection...");
                                 return this.connect();
                             }
-                            if (this.ws!.readyState === 0) {
+                            if (this.ws.readyState === 0) {
                                 setTimeout(() => {
                                     if (this.ws!.readyState === 1) {
                                         return;
@@ -263,11 +264,11 @@ export class Client extends EventEmitter {
                                 }, 20 * 1000);
                             }
 
-                            this.ws!.on("message", (message: ws.MessageEvent) => {
+                            this.ws.on("message", (message: ws.MessageEvent) => {
                                 this.onMessage(message.toString());
                             });
 
-                            this.ws!.on("close", () => {
+                            this.ws.on("close", () => {
                                 if (!this.closed) this.connect();
                             });
                         }
@@ -406,7 +407,11 @@ export class Client extends EventEmitter {
                 }
                 let responseData: { assertion?: string; username?: string; loggedin?: boolean } = {};
                 try {
-                    responseData = JSON.parse(data.substring(1));
+                    responseData = JSON.parse(data.substring(1)) as {
+                        assertion?: string;
+                        username?: string;
+                        loggedin?: boolean;
+                    };
                     if (responseData.assertion) {
                         assertion = responseData.assertion;
                     } else {
@@ -458,21 +463,25 @@ export class Client extends EventEmitter {
                 data += chunk;
             });
 
-            response.on("end", async () => {
+            response.on("end", () => {
                 ended = true;
                 if ((response.statusCode ?? 200) >= 400) {
                     this.emit(Events.CLIENT_ERROR, data);
                     this.disconnect();
-                    await Tools.sleep(3000);
-                    this.connect();
+                    Tools.sleep(3000)
+                        .then(() => this.connect())
+                        // Never happens
+                        .catch(console.error);
                 }
             });
 
-            setTimeout(async () => {
+            setTimeout(() => {
                 if (ended) return;
                 this.disconnect();
-                await Tools.sleep(3000);
-                this.connect();
+                Tools.sleep(3000)
+                    .then(() => this.connect())
+                    // Never happens
+                    .catch(console.error);
             });
         });
     }
@@ -511,7 +520,7 @@ export class Client extends EventEmitter {
                 let promise: PendingMessage;
                 if (typeof userid === "string") {
                     promise = {
-                        id: userid!,
+                        id: userid,
                         content: expection,
                         sentTime: Date.now(),
                         received: false,
@@ -585,12 +594,18 @@ export class Client extends EventEmitter {
         function toRoom(
             options: IRoomOutGoingMessageOptions | IUserOutGoingMessageOptions
         ): options is IRoomOutGoingMessageOptions {
-            return (options as any).roomid && (options as any).roomid !== "";
+            return (
+                !!(options as any as IRoomOutGoingMessageOptions).roomid &&
+                (options as any as IRoomOutGoingMessageOptions).roomid !== ""
+            );
         }
         function toUser(
             options: IRoomOutGoingMessageOptions | IUserOutGoingMessageOptions
         ): options is IUserOutGoingMessageOptions {
-            return (options as any).userid && (options as any).userid !== "";
+            return (
+                !!(options as any as IUserOutGoingMessageOptions).userid &&
+                (options as any as IUserOutGoingMessageOptions).userid !== ""
+            );
         }
         /* eslint-enable */
 
@@ -607,8 +622,8 @@ export class Client extends EventEmitter {
             message.type ??= "pm-chat";
             this.outGoingMessage.push(message as IOutGoingMessage<User>);
         } else {
-            (message as IUserOutGoingMessageOptions).type = "command";
-            (message as IUserOutGoingMessageOptions).measure = false;
+            message.type = "command";
+            message.measure = false;
             this.outGoingMessage.push(message as IOutGoingMessage<User>);
         }
 
@@ -642,7 +657,7 @@ export class Client extends EventEmitter {
         this.noreplySend("|/leave " + roomid);
     }
 
-    async onMessage(message: string): Promise<void> {
+    onMessage(message: string): void {
         const lines: string[] = message.trim().split("\n");
         let roomid: string;
         if (lines[0]!.startsWith(">")) {
@@ -668,7 +683,7 @@ export class Client extends EventEmitter {
             if (!line) continue;
 
             try {
-                this.parseMessage(line!, room);
+                void this.parseMessage(line, room);
 
                 if (line.startsWith("|init|")) {
                     const page = room!.type === "html";
@@ -676,13 +691,13 @@ export class Client extends EventEmitter {
                     for (let n = i + 1; n < lines.length; n++) {
                         let nextLine: string = lines[n]!.trim();
                         if (page) {
-                            if (nextLine!.startsWith("|pagehtml|")) {
-                                this.parseMessage(nextLine, room!);
+                            if (nextLine.startsWith("|pagehtml|")) {
+                                void this.parseMessage(nextLine, room);
                                 break;
                             }
                         } else if (chat) {
-                            if (nextLine!.startsWith("|users|")) {
-                                this.parseMessage(nextLine.trim(), room!);
+                            if (nextLine.startsWith("|users|")) {
+                                void this.parseMessage(nextLine.trim(), room);
                                 for (let p = n + 1; p < lines.length; p++) {
                                     nextLine = lines[p]!.trim();
                                     if (nextLine.startsWith("|c:|")) continue;
@@ -691,17 +706,17 @@ export class Client extends EventEmitter {
                                         nextLine.startsWith("|raw|<div class=\"infobox infobox-roomintro\">") &&
                                         nextLine.endsWith("</div>")
                                     ) {
-                                        this.parseMessage(nextLine!, room);
+                                        void this.parseMessage(nextLine, room);
                                         continue;
                                         // prettier-ignore
                                     } else if (
                                         nextLine.startsWith("|raw|<div class=\"broadcast-blue\">") &&
                                         nextLine.endsWith("</div>")
                                     ) {
-                                        this.parseMessage(nextLine, room!);
+                                        void this.parseMessage(nextLine, room);
                                         continue;
                                     } else if (nextLine.startsWith("|:|")) {
-                                        this.parseMessage(nextLine, room!);
+                                        void this.parseMessage(nextLine, room);
                                         continue;
                                     }
                                 }
@@ -761,7 +776,7 @@ export class Client extends EventEmitter {
             }
 
             case "updateuser": {
-                this.status.name = event[0]!.substring(1) as string;
+                this.status.name = event[0]!.substring(1);
                 this.status.id = Tools.toId(this.status.name);
                 if (!event[0]!.startsWith(" Guest")) {
                     this.status.loggedIn = true;
@@ -782,7 +797,7 @@ export class Client extends EventEmitter {
                             this
                         );
                     if (this.status.id) await this.fetchUser(this.status.id, true);
-                    if (this.user) this.user.settings = JSON.parse(event[3] as string);
+                    if (this.user?.settings) this.user.settings = JSON.parse(event[3] as string) as UserSettings;
                     this.emit(Events.READY);
                 }
                 break;
@@ -829,12 +844,12 @@ export class Client extends EventEmitter {
             case "deinit": {
                 if (!isRoomNotEmp(room)) return;
                 room.removeUser(this.user!.userid);
-                if (room.id.startsWith("view-")) this.emit(Events.CLOSE_HTML_PAGE, room!);
-                else this.emit(Events.CLIENT_ROOM_REMOVE, room!);
+                if (room.id.startsWith("view-")) this.emit(Events.CLOSE_HTML_PAGE, room);
+                else this.emit(Events.CLIENT_ROOM_REMOVE, room);
 
                 if (this.rooms.battles.has(room.id)) this.rooms.battles.delete(room.id);
                 if (this.rooms.cache.has(room.id)) this.rooms.cache.delete(room.id);
-                if (room.visibility === "public") room.fetch();
+                if (room.visibility === "public") void room.fetch();
                 break;
             }
             case "html": {
@@ -856,7 +871,7 @@ export class Client extends EventEmitter {
                     if (battleRoom) {
                         battleRoom.title = event.join("|");
                         this.rooms.battles.set(battleRoom.id, battleRoom);
-                        this.fetchBattleRoom(room.id);
+                        void this.fetchBattleRoom(room.id);
                     }
                 }
                 break;
@@ -870,7 +885,7 @@ export class Client extends EventEmitter {
                 }
                 battleRoom.setPlayers({ [event[0]!]: this.getUser(event[1]!)! });
                 battleRoom.setRating({ [event[0]!]: parseInt(event[3]!) });
-                this.fetchBattleRoom(room.id);
+                void this.fetchBattleRoom(room.id);
                 this.rooms.battles.set(battleRoom.id, battleRoom);
 
                 break;
@@ -882,7 +897,7 @@ export class Client extends EventEmitter {
                     battleRoom = new BattleRoom(room, this, true);
                     this.rooms.battles.set(battleRoom.id, battleRoom);
                 }
-                this.fetchBattleRoom(room.id);
+                void this.fetchBattleRoom(room.id);
                 battleRoom.setTier(event.join("|"));
                 this.rooms.battles.set(battleRoom.id, battleRoom);
                 break;
@@ -995,7 +1010,7 @@ export class Client extends EventEmitter {
                         }
                         if (!userdetails || !userdetails.userid) return;
                         this.users.raw.set(userdetails.id, userdetails);
-                        if (userdetails.id === this.status.id!) {
+                        if (userdetails.id === this.status.id) {
                             this.addUser(userdetails);
                             if (this.user) {
                                 this.user.update();
@@ -1011,7 +1026,8 @@ export class Client extends EventEmitter {
                                         }
                                     } else if (k !== "client") {
                                         // @ts-expect-error props should exists in ClientUser
-                                        if (k in this.user) this.user[k] = v;
+                                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                                        if (k in this.user) this.user[k as keyof ClientUser] = v as valueof<ClientUser>;
                                     }
                                 }
                             } else this.user = new ClientUser(userdetails, client);
@@ -1043,7 +1059,7 @@ export class Client extends EventEmitter {
                 if (!event[0] || !Tools.toId(event[0])) break;
                 room = this.rooms.cache.get(room.id) ?? room;
                 const author = this.getUser(event[0]!) ?? (await this.fetchUser(event[0]!)),
-                    content = event.slice(1).join("|") as string,
+                    content = event.slice(1).join("|"),
                     message = new Message<Room>({
                         author: author,
                         content: content,
@@ -1055,7 +1071,7 @@ export class Client extends EventEmitter {
                     } as MessageInput<Room>);
                 if (!this.user) return;
                 for (const element of this.PromisedChat) {
-                    if (element.id === message.target.roomid && this.user!.userid === message.author.userid) {
+                    if (element.id === message.target.roomid && this.user.userid === message.author.userid) {
                         element.received = true;
                         break;
                     }
@@ -1081,7 +1097,7 @@ export class Client extends EventEmitter {
                     } as MessageInput<Room>);
                 if (this.user) {
                     for (const element of this.PromisedChat) {
-                        if (element.id === message.target.roomid && this.user!.userid === message.author.userid) {
+                        if (element.id === message.target.roomid && this.user.userid === message.author.userid) {
                             element.received = true;
                             break;
                         }
@@ -1147,7 +1163,7 @@ export class Client extends EventEmitter {
             case "J":
             case "join": {
                 if (!isRoomNotEmp(room)) return;
-                this.fetchRoom(room.id);
+                void this.fetchRoom(room.id);
                 const name = event.join("|"),
                     user = await this.fetchUser(name);
                 user.addRoom(room.id);
@@ -1160,7 +1176,7 @@ export class Client extends EventEmitter {
             case "L":
             case "leave": {
                 if (!isRoomNotEmp(room)) return;
-                this.fetchRoom(room.id);
+                void this.fetchRoom(room.id);
                 const id = Tools.toId(event.join("|"));
                 room.update().removeUser(id);
                 const user =
@@ -1176,7 +1192,7 @@ export class Client extends EventEmitter {
             case "n":
             case "N":
             case "name": {
-                if (room) this.fetchRoom(room.id);
+                if (room) void this.fetchRoom(room.id);
                 const Old = Tools.toId(event[1] as string),
                     New =
                         this.users.cache.get(Old) ??
@@ -1190,7 +1206,7 @@ export class Client extends EventEmitter {
                             this
                         );
 
-                New.fetch();
+                void New.fetch();
                 New.alts.push(Old);
                 this.users.cache.set(New.userid, New);
                 this.emit(Events.USER_RENAME, New, Old);
@@ -1235,7 +1251,7 @@ export class Client extends EventEmitter {
                     }
 
                     case "update": {
-                        const data: TourUpdateData = JSON.parse(tourEvent[0]!);
+                        const data: TourUpdateData = JSON.parse(tourEvent[0]!) as TourUpdateData;
                         if (room.tour) room.tour.update(data);
 
                         this.emit(Events.TOUR_UPDATE, room, data);
@@ -1265,7 +1281,7 @@ export class Client extends EventEmitter {
                     case "disqualify": {
                         const user: string = tourEvent.join("|");
                         if (room.tour) room.tour.removePlayer(user);
-                        this.emit(Events.TOUR_LEAVE, room, this.getUser(user)!);
+                        this.emit(Events.TOUR_LEAVE, room, this.getUser(user));
                         break;
                     }
 
@@ -1334,7 +1350,7 @@ export class Client extends EventEmitter {
                     }
 
                     case "end": {
-                        const data: TourEndData = JSON.parse(tourEvent[0]!);
+                        const data: TourEndData = JSON.parse(tourEvent[0]!) as TourEndData;
                         room.update();
                         if (room.tour) {
                             room.tour.update(data);
@@ -1356,7 +1372,7 @@ export class Client extends EventEmitter {
             }
 
             default:
-                this.emit(eventName as string, event);
+                this.emit(eventName, event);
         }
     }
 
@@ -1444,7 +1460,7 @@ export class Client extends EventEmitter {
                         )
                     );
                 }
-                this.users.fetch(input.userid);
+                void this.users.fetch(input.userid);
             } else {
                 const altUser = this.users.cache.get(input.userid)!;
                 if (!altUser.alts.includes(input.id)) altUser.alts.push(input.id);
@@ -1453,15 +1469,16 @@ export class Client extends EventEmitter {
         }
         if (!user) {
             user = new User(input, this);
-            this.fetchUser(input.userid, false);
+            void this.fetchUser(input.userid, false);
         } else {
             if (user.alts.length && input.alts?.length)
-                for (const id of input.alts!) if (!user.alts.includes(id)) user.alts.push(id);
+                for (const id of input.alts) if (!user.alts.includes(id)) user.alts.push(id);
             delete input.alts;
             for (const [k, v] of Object.entries(input)) {
                 if (k === "rooms" || k === "client") continue;
                 // @ts-expect-error props exists in user
-                if (k in user) user[k] = v;
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                if (k in user) user[k as keyof typeof user] = v as valueof<typeof user>;
             }
         }
         if (input.rooms) {
@@ -1475,8 +1492,8 @@ export class Client extends EventEmitter {
         }
         if (fetched !== false) user.setLastFetchTime();
         user.setIsOnline();
-        this.users.cache.set(user!.userid, user!);
-        return user as User;
+        this.users.cache.set(user.userid, user);
+        return user;
     }
 
     fetchRoom(roomid: string, force?: boolean): Promise<Room> {
@@ -1496,7 +1513,7 @@ export class Client extends EventEmitter {
                     if (room instanceof TimeoutError) reject(room);
                     else if (room.error) {
                         if (room.error === "timeout") {
-                            if (force) setTimeout(client.fetchRoom.bind(client), 5 * 1000, roomid, true);
+                            if (force) setTimeout(() => void client.fetchRoom(roomid, true), 5 * 1000);
                             else reject(new TimeoutError(`fetchRoom(roomid: ${roomid})`));
                         } else reject(new AccessError(`fetchRoom(roomid: ${roomid})`, room.error));
                     } else if (client.rooms.cache.has(roomid)) resolve(client.rooms.cache.get(roomid)!);
@@ -1524,13 +1541,14 @@ export class Client extends EventEmitter {
 
         let room: Room | undefined = this.rooms.cache.get(input.roomid);
         if (!room) {
-            room = new Room(input, this) as Room;
+            room = new Room(input, this);
             this.noreplySend(`|/cmd roominfo ${input.id}`);
         } else {
             for (const [k, v] of Object.entries(input)) {
                 if (k === "client" || k === "error") continue;
                 // @ts-expect-error props exists in room
-                if (k in room) room[k] = v;
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                if (k in room) room[k as keyof typeof room] = v as valueof<typeof room>;
             }
         }
         if (input.users) {
@@ -1543,8 +1561,8 @@ export class Client extends EventEmitter {
         }
         room.setVisibility();
         if (fetched !== false) room.setLastFetchTime();
-        this.rooms.cache.set(room.roomid!, room);
-        return room as Room;
+        this.rooms.cache.set(room.roomid, room);
+        return room;
     }
 
     fetchBattleList(param: string): void {
@@ -1564,13 +1582,14 @@ export class Client extends EventEmitter {
 
         let room: BattleRoom | undefined = this.rooms.battles.get(input.roomid);
         if (!room) {
-            room = new BattleRoom(input, this) as BattleRoom;
+            room = new BattleRoom(input, this);
             this.noreplySend(`|/cmd roominfo ${input.id}`);
         } else {
             for (const [k, v] of Object.entries(input)) {
                 if (k === "client" || k === "error") continue;
                 // @ts-expect-error props exists in room
-                if (k in room) room[k] = v;
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                if (k in room) room[k as keyof typeof room] = v as valueof<typeof room>;
             }
         }
         if (input.users) {
@@ -1583,7 +1602,7 @@ export class Client extends EventEmitter {
         room.visibility = "public";
         room.setUsers();
         if (fetched !== false) room.setLastFetchTime();
-        this.rooms.battles.set(room.roomid!, room);
-        return room as BattleRoom;
+        this.rooms.battles.set(room.roomid, room);
+        return room;
     }
 }

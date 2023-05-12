@@ -22,15 +22,13 @@ describe("Client", function () {
             assert.strictEqual(mochaRoom.tour, null);
             assert.ok(client.rooms.cache.get("mocha"));
             assert.strictEqual(client.rooms.cache.get("mocha")?.userCollection?.size, 2);
-            client.parseMessage("|tournament|create|gen8randombattle|Single Elimination|128", mochaRoom);
+            void client.parseMessage("|tournament|create|gen8randombattle|Single Elimination|128", mochaRoom);
             mochaRoom.update();
             assert.ok(mochaRoom.tour);
             // @ts-expect-error avoiding never
-            assert.strictEqual(Tools.toId(mochaRoom.tour.format), "gen8randombattle");
+            assert.strictEqual(Tools.toId(mochaRoom.tour.format as string), "gen8randombattle");
             // @ts-expect-error avoiding never
             assert.strictEqual(mochaRoom.tour.playerCap, 128);
-            // @ts-expect-error avoiding never
-            assert.strictEqual(Tools.toId(mochaRoom.tour.format), "gen8randombattle");
             // @ts-expect-error avoiding never
             assert.ok(mochaRoom.tour.isSingleElimination);
             // @ts-expect-error avoiding never

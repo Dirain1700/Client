@@ -224,8 +224,7 @@ export class User {
         if (room instanceof Room) return room.hasRank(rank, this);
         if (!Tools.rankSymbols.includes(rank as GroupSymbol))
             rank = Tools.toGroupSymbol(rank as Exclude<typeof rank, GroupSymbol>);
-        if (!Tools.rankSymbols.includes(auth as GroupSymbol))
-            auth = Tools.toGroupSymbol(auth as Exclude<typeof rank, GroupSymbol>);
+        if (!Tools.rankSymbols.includes(auth)) auth = Tools.toGroupSymbol(auth as Exclude<typeof rank, GroupSymbol>);
         return Tools.isHigherRank(auth, rank as GroupSymbol);
     }
 

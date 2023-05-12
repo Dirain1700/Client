@@ -18,7 +18,7 @@ export class ClientUser extends User {
 
     setAvatar(avatar: string | number): Promise<User> {
         if (typeof avatar === "number") avatar = String(avatar);
-        this.client.noreplySend(`|/avatar ${avatar as string}`);
+        this.client.noreplySend(`|/avatar ${avatar}`);
         return this.client.fetchUser(this.userid);
     }
 

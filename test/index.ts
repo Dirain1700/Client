@@ -3,8 +3,9 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import { Client } from "@dist/cjs/index";
 import Mocha from "mocha";
+
+import { Client } from "@dist/cjs/index";
 
 if (!process.env.TEST_BOT_PASS || !process.env.TEST_BOT_NAME)
     throw new Error("Test account's username or password was not provided.");

@@ -102,7 +102,7 @@ export class Room {
 
     setUsers(): this {
         for (const u of this.users) {
-            this.client.fetchUser(u);
+            void this.client.fetchUser(u);
             const previousUser = this.userCollection.get(Tools.toId(u));
             if (previousUser) {
                 this.userCollection.set(previousUser.userid, previousUser.update());
@@ -120,9 +120,8 @@ export class Room {
         if (!userid) return this;
         const user = this.client.getUser(userid);
         if (!user) return this;
-        if (this.users.map(Tools.toId).includes(userid)) {
-            const nameIndex = this.users.map(Tools.toId).indexOf(userid);
-            if (nameIndex === -1) return this;
+        const nameIndex = this.users.map((u) => Tools.toId(u)).indexOf(userid);
+        if (nameIndex !== -1) {
             this.users.splice(nameIndex, 1);
         }
         this.users.push(user.group + user.name);
@@ -133,7 +132,7 @@ export class Room {
     removeUser(userid: string): this {
         userid = Tools.toId(userid);
         if (userid) {
-            const nameIndex = this.users.map(Tools.toId).indexOf(userid);
+            const nameIndex = this.users.map((u) => Tools.toId(u)).indexOf(userid);
             if (nameIndex === -1) return this;
             this.users.splice(nameIndex, 1);
         }
@@ -349,7 +348,7 @@ export class Room {
         return new Promise((resolve, reject) => {
             const CollectorOptions: MessageWaits<Room> = {
                 id: Date.now().toString(),
-                roomid: this.roomid!,
+                roomid: this.roomid,
                 messages: [],
                 filter: options.filter,
                 max: options.max,
@@ -462,15 +461,14 @@ export class Room {
     hasRank(rank: GroupNames | GroupSymbol, user: User | string): boolean {
         if ((user instanceof User && user.locked) || !rank) return false;
         let auth = this.getRank(user);
-        if (!Tools.rankSymbols.includes(auth as GroupSymbol))
-            auth = Tools.toGroupSymbol(auth as Exclude<typeof auth, GroupSymbol>);
+        if (!Tools.rankSymbols.includes(auth)) auth = Tools.toGroupSymbol(auth as Exclude<typeof auth, GroupSymbol>);
         if (!Tools.rankSymbols.includes(rank as GroupSymbol))
             rank = Tools.toGroupSymbol(rank as Exclude<typeof rank, GroupSymbol>);
         return Tools.isHigherRank(auth, rank as GroupSymbol);
     }
 
     isMuted(userid: string): boolean {
-        const mutedUsers = this.users.filter((e) => e.startsWith("!")).map(Tools.toId);
+        const mutedUsers = this.users.filter((e) => e.startsWith("!")).map((u) => Tools.toId(u));
         if (!mutedUsers.length) return false;
         userid = Tools.toId(userid);
         return mutedUsers.includes(userid);
