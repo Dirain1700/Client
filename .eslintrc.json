@@ -92,7 +92,7 @@
                     },
                     "alias": {
                         "map": [
-                            ["@dist", "./dist/cjs/index"]
+                            ["@dist", "./dist/src/index"]
                         ],
                         "extentions": ["*.ts", "*.js"]
                     }
