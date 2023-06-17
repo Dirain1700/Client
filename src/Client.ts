@@ -747,15 +747,17 @@ export class Client extends EventEmitter {
                 if (!isRoomNotEmp(room)) return;
                 const modchatLevel = Tools.isModchatHTML(event.join("|"));
                 if (modchatLevel !== false) {
+                    const previousModchatLevel = room.modchat;
                     room.modchat = modchatLevel;
                     this.rooms.cache.set(room.roomid, room);
-                    this.emit(Events.MODCHAT, modchatLevel, room);
+                    this.emit(Events.MODCHAT, room, modchatLevel, previousModchatLevel);
                 }
                 const modjoinLevel = Tools.isModjoinHTML(event.join("|"), room.modchat);
                 if (modjoinLevel !== false) {
+                    const previousModjoinLevel = room.modjoin;
                     room.modjoin = modjoinLevel;
                     this.rooms.cache.set(room.roomid, room);
-                    this.emit(Events.MODJOIN, modjoinLevel, room);
+                    this.emit(Events.MODJOIN, room, modjoinLevel, previousModjoinLevel);
                 } else this.emit(Events.RAW_DATA, event.join("|")!, room);
                 break;
             }

@@ -65,8 +65,8 @@ export interface ClientEvents {
     battleStart: [room: BattleRoom];
     battleEnd: [room: BattleRoom, status: "win" | "tie", winner?: User];
     rawData: [message: string, room: Room];
-    modchat: [modchatLevel: ModchatLevel, room: Room];
-    modjoin: [modjoinLevel: ModchatLevel, room: Room];
+    modchat: [room: Room, modchatLevel: ModchatLevel, previousModchatLevel: ModchatLevel];
+    modjoin: [room: Room, modjoinLevel: ModchatLevel, previousModjoinLevel: ModchatLevel];
     messageCreate: [message: Message<User | Room>];
     messageDelete: [message: Message<User | Room>];
     roomUserAdd: [room: Room, user: User];
