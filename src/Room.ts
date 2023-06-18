@@ -518,9 +518,20 @@ export class Room {
         return false;
     }
 
-    getOnlineStaffs(ignoreGlobals?: boolean): Collection<string, User> {
+    getOnlineStaffs(ignoreGlobals?: boolean, checkAlts?: boolean): Collection<string, User> {
         return this.userCollection.filter((u) => {
-            if (!this.isStaff(u)) return false;
+            if (!this.isStaff(u)) {
+                if (checkAlts) {
+                    return u.alts.some((a) => {
+                        if (ignoreGlobals) return this.isRoomStaff(a);
+                        else {
+                            const altUser = this.client.getUser(a);
+                            if (altUser) return this.isStaff(altUser);
+                            else return false;
+                        }
+                    });
+                } else return false;
+            }
             if (ignoreGlobals) {
                 if (!this.isRoomStaff(u.userid)) return false;
                 else return true;

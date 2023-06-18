@@ -129,6 +129,11 @@ export class User {
         return this;
     }
 
+    addAlt(alt: string): void {
+        alt = Tools.toId(alt);
+        if (!this.alts.includes(alt) && this.userid !== alt) this.alts.push(alt);
+    }
+
     fetch(useCache?: boolean): Promise<User> {
         return this.client.fetchUser(this.id, !!useCache);
     }

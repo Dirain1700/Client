@@ -1187,7 +1187,12 @@ export class Client extends EventEmitter {
                 fetchedUser.setIsOnline();
                 user.removeRoom(room.id);
                 this.emit(Events.ROOM_USER_REMOVE, room, user);
-                if (!fetchedUser.rooms.size) this.users.cache.delete(fetchedUser.id);
+                console.log(fetchedUser);
+                console.log(user);
+                if (!fetchedUser.rooms.size) {
+                    this.users.cache.delete(fetchedUser.id);
+                    if (user.alts.length) user.alts.forEach((u) => this.users.cache.delete(u));
+                }
                 break;
             }
 
@@ -1195,28 +1200,37 @@ export class Client extends EventEmitter {
             case "N":
             case "name": {
                 if (room) void this.fetchRoom(room.id);
-                const Old = Tools.toId(event[1] as string),
-                    New =
-                        this.users.cache.get(Old) ??
-                        new User(
-                            {
-                                id: Tools.toId(event[0]!),
-                                userid: Tools.toId(event[0]!),
-                                name: event[0]!,
-                                rooms: false,
-                            },
-                            this
-                        );
+                const previousName = Tools.toId(event[1] as string);
+                const renameFrom = this.getUser(previousName);
+                const renameTo = new User(
+                    {
+                        id: Tools.toId(event[0]!),
+                        userid: Tools.toId(event[0]!),
+                        name: event[0]!,
+                        rooms: renameFrom?.rooms ? Tools.clone(renameFrom.rooms) : false,
+                        avatar: renameFrom?.avatar ?? undefined,
+                        guestNumber: renameFrom?.guestNumber,
+                        alts: renameFrom?.alts ? Tools.clone(renameFrom.alts) : [],
+                    },
+                    this
+                );
 
-                void New.fetch();
-                New.alts.push(Old);
-                this.users.cache.set(New.userid, New);
-                this.emit(Events.USER_RENAME, New, Old);
-                this.users.cache.delete(Old);
+                void renameTo.fetch();
+                this.users.cache.set(renameTo.userid, renameTo);
+                if (renameFrom) {
+                    renameFrom.addAlt(renameTo.userid);
+                    if (room) renameFrom.removeRoom(room.roomid);
+                    this.users.cache.set(renameFrom.id, renameFrom);
+                    renameTo.addAlt(renameFrom.userid);
+                }
+                this.users.cache.set(renameTo.userid, renameTo);
+                console.log(renameFrom);
+                console.log(renameTo);
+                this.emit(Events.USER_RENAME, renameTo, renameFrom!);
                 if (room) {
-                    room.update().removeUser(Old);
-                    room.addUser(New.userid);
-                    if (room.tour) room.tour.renameUser(Old, New.userid);
+                    room.update().removeUser(previousName);
+                    room.addUser(renameTo.userid);
+                    if (room.tour) room.tour.renameUser(previousName, renameTo.userid);
                 }
                 break;
             }

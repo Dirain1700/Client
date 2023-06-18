@@ -1,5 +1,7 @@
 "use strict";
 
+import { cloneDeep } from "lodash";
+
 import type { ModchatLevel } from "../types/Room";
 import type { GroupSymbol, GroupNames } from "../types/UserGroups";
 
@@ -193,5 +195,9 @@ export class Tools {
             if (!level) return false;
             return level as ModchatLevel;
         } else return false;
+    }
+
+    static clone<T>(obj: T): T {
+        return cloneDeep(obj);
     }
 }
