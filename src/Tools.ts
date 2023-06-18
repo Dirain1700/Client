@@ -3,7 +3,7 @@
 import { cloneDeep } from "lodash";
 
 import type { ModchatLevel } from "../types/Room";
-import type { GroupSymbol, GroupNames } from "../types/UserGroups";
+import type { AuthLevel, GroupSymbol, GroupNames } from "../types/UserGroups";
 
 const MODCHAT_REGEX =
     /<div class="broadcast-red"><strong>Moderated chat was set to (?<level>(unlocked|autoconfirmed|whitelist|trusted|&|#|★|\*|@|%|☆|§|\+|\^))!<\/strong><br \/>Only users of rank (unlocked|autoconfirmed|whitelist|trusted|&|#|★|\*|@|%|☆|§|\+|\^) and higher can talk.<\/div>/;
@@ -50,6 +50,27 @@ const ESCAPED_NUMBER_SINGLE_QUOTE = "&#39;";
 const ESCAPED_NUMBER_SLASH = "&#47;";
 
 export class Tools {
+    static readonly auths: AuthLevel[] = [
+        "~",
+        "&",
+        "#",
+        "★",
+        "*",
+        "@",
+        "%",
+        "☆",
+        "§",
+        "+",
+        "whitelist",
+        "trusted",
+        "^",
+        "autoconfirmed",
+        " ",
+        "unlocked",
+        "!",
+        "‽",
+    ];
+
     static readonly rankSymbols: Array<GroupSymbol & string> = [
         "~", //OldAdmin
         "&", //NewAdmin
@@ -127,14 +148,29 @@ export class Tools {
         return this.rankSymbols[this.rankNames.indexOf(rank as GroupNames) + 1]!;
     }
 
-    static sortByRank(arr: GroupSymbol[]): GroupSymbol[] {
-        arr.sort((a, b) => this.rankSymbols.indexOf(a) - this.rankSymbols.indexOf(b));
-        return arr;
+    static sortByAuth(arr: AuthLevel[]): AuthLevel[] {
+        const clone = this.clone(arr);
+        clone.sort((a, b) => this.auths.indexOf(a) - this.auths.indexOf(b));
+        return clone;
     }
 
-    static isHigherRank(comparePosition: GroupSymbol, standard: GroupSymbol): boolean {
-        if (comparePosition === standard) return true;
-        return [comparePosition, standard].toString() === this.sortByRank([comparePosition, standard]).toString();
+    static sortByRank(arr: GroupSymbol[]): GroupSymbol[] {
+        const clone = this.clone(arr);
+        clone.sort((a, b) => this.rankSymbols.indexOf(a) - this.rankSymbols.indexOf(b));
+        return clone;
+    }
+
+    static isHigherAuth(comparePosition: AuthLevel | null, base: AuthLevel | null, strict?: boolean): boolean {
+        if (comparePosition === base) return !strict;
+        return (
+            [comparePosition ?? " ", base ?? " "].toString() ===
+            this.sortByAuth([comparePosition ?? " ", base ?? " "]).toString()
+        );
+    }
+
+    static isHigherRank(comparePosition: GroupSymbol, base: GroupSymbol, strict?: boolean): boolean {
+        if (comparePosition === base) return !strict;
+        return [comparePosition, base].toString() === this.sortByRank([comparePosition, base]).toString();
     }
 
     static escapeHTML(html: string): string {
