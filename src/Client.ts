@@ -1187,8 +1187,6 @@ export class Client extends EventEmitter {
                 fetchedUser.setIsOnline();
                 user.removeRoom(room.id);
                 this.emit(Events.ROOM_USER_REMOVE, room, user);
-                console.log(fetchedUser);
-                console.log(user);
                 if (!fetchedUser.rooms.size) {
                     this.users.cache.delete(fetchedUser.id);
                     if (user.alts.length) user.alts.forEach((u) => this.users.cache.delete(u));
@@ -1224,8 +1222,6 @@ export class Client extends EventEmitter {
                     renameTo.addAlt(renameFrom.userid);
                 }
                 this.users.cache.set(renameTo.userid, renameTo);
-                console.log(renameFrom);
-                console.log(renameTo);
                 this.emit(Events.USER_RENAME, renameTo, renameFrom!);
                 if (room) {
                     room.update().removeUser(previousName);
