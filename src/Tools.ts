@@ -71,7 +71,7 @@ export class Tools {
         "‽",
     ];
 
-    static readonly rankSymbols: Array<GroupSymbol & string> = [
+    static readonly rankSymbols: Array<GroupSymbol> = [
         "~", //OldAdmin
         "&", //NewAdmin
         "#", //RoomOwner
@@ -88,7 +88,7 @@ export class Tools {
         "‽", //Locked
     ];
 
-    static readonly rankNames: Array<GroupNames & string> = [
+    static readonly rankNames: Array<GroupNames> = [
         "admin",
         "roomowner",
         "bot",
@@ -132,7 +132,7 @@ export class Tools {
         return new Promise((r) => setTimeout(r, t));
     }
 
-    static toGroupName(rank: GroupSymbol & string): GroupNames;
+    static toGroupName(rank: GroupSymbol): GroupNames;
     static toGroupName(rank: string): GroupNames;
     static toGroupName(rank: string): GroupNames {
         if (rank === "~") rank = "&";
@@ -140,7 +140,7 @@ export class Tools {
         return this.rankNames[this.rankSymbols.indexOf(rank as GroupSymbol) - 1]!;
     }
 
-    static toGroupSymbol(rank: GroupNames & string): GroupSymbol;
+    static toGroupSymbol(rank: GroupNames): GroupSymbol;
     static toGroupSymbol(rank: string): GroupSymbol;
     static toGroupSymbol(rank: string): GroupSymbol {
         rank = this.toId(rank);

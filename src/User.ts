@@ -185,7 +185,7 @@ export class User {
         });
     }
 
-    checkCan(permission: string & GlobalPermissions, strict?: boolean): boolean {
+    checkCan(permission: GlobalPermissions, strict?: boolean): boolean {
         if (this.locked) {
             if (strict) throw new PSAPIError("PERMISSION_DENIED", " ", "‽");
             else return false;

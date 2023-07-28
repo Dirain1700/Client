@@ -27,6 +27,7 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
     isSingleElimination: boolean;
     type: T extends EliminationBracket ? "Elimination" : "Round Robin";
     round: {
+        // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
         name: keyof typeof Generators | string;
         number: number;
     };

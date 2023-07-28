@@ -21,7 +21,7 @@ export interface EliminationBracketData {
               },
               {
                   team: string;
-              }
+              },
           ]
         | EliminationBracketData;
     state: "finished" | "inprogress" | "challenging" | "available" | "unavailable";

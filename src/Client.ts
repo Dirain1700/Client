@@ -162,7 +162,7 @@ export class Client extends EventEmitter {
         event: Exclude<U, keyof ClientEvents>,
         listener: (...args: any[]) => void
     ): this;
-    public on<K extends keyof ClientEvents | string | symbol>(
+    public on<K extends string | symbol>(
         event: K extends keyof ClientEvents ? K : Exclude<K, keyof ClientEvents>,
         listener: (...args: any[]) => void
     ): this {
@@ -174,7 +174,7 @@ export class Client extends EventEmitter {
         event: Exclude<U, keyof ClientEvents>,
         listener: (...args: any[]) => void
     ): this;
-    public once<K extends keyof ClientEvents | string | symbol>(
+    public once<K extends string | symbol>(
         event: K extends keyof ClientEvents ? K : Exclude<K, keyof ClientEvents>,
         listener: (...args: any[]) => void
     ): this {
@@ -187,7 +187,7 @@ export class Client extends EventEmitter {
         event: Exclude<U, keyof ClientEvents>,
         ...args: unknown[]
     ): boolean;
-    public emit<K extends keyof ClientEvents | string | symbol>(
+    public emit<K extends string | symbol>(
         event: K extends keyof ClientEvents ? K : Exclude<K, keyof ClientEvents>,
         ...args: K extends keyof ClientEvents ? ClientEvents[K] : unknown[]
     ): boolean {
@@ -265,7 +265,9 @@ export class Client extends EventEmitter {
                             }
 
                             this.ws.on("message", (message: ws.MessageEvent) => {
-                                this.onMessage(message.toString());
+                                // This should be allowed because message.data is probably Buffer or String
+                                // eslint-disable-next-line @typescript-eslint/no-base-to-string
+                                this.onMessage(message.data.toString());
                             });
 
                             this.ws.on("close", () => {

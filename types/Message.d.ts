@@ -3,7 +3,7 @@ import type { Message } from "../src/Message";
 import type { Room } from "../src/Room";
 import type { User } from "../src/User";
 
-export interface MessageInput<T extends User | Room | unknown> {
+export interface MessageInput<T extends User | Room> {
     author: User;
     content: string;
     target: T;

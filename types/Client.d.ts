@@ -88,7 +88,7 @@ export interface ClientEvents {
         result: "win" | "loss" | "draw",
         score: [number, number],
         recorded: "success" | "fail",
-        battle: string
+        battle: string,
     ];
     tourStart: [room: Room, players: number];
     tourEnd: [room: Room, data: TourEndData | null, force: boolean];

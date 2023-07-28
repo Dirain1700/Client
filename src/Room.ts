@@ -25,6 +25,7 @@ export class Room {
     modjoin: ModchatLevel;
     tour: Tournament | null = null;
     auth: {
+        // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
         [key: GroupSymbol | string]: string[];
     };
     userCollection: Collection<string, User>;
@@ -410,7 +411,7 @@ export class Room {
         return rank;
     }
 
-    checkCan(permission: string & RoomPermissions, user: User | string, strict?: boolean): boolean {
+    checkCan(permission: RoomPermissions, user: User | string, strict?: boolean): boolean {
         if (!this.exists || !this.auth) {
             if (strict) throw new PSAPIError("EMPTY", "Room");
             else return false;
