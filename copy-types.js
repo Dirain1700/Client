@@ -12,5 +12,5 @@ for (const FileName of readdirSync(ReadBasePath)) {
     const WriteFilePath = WriteBasePath + "/" + FileName;
     // prettier-ignore
     const Changes = readFileSync(ReadFilePath, "utf-8").replaceAll(regex, "\"../../src/").trim();
-    writeFileSync(WriteFilePath, runFormat(Changes));
+    runFormat(Changes).then((formatted) => writeFileSync(WriteFilePath, formatted));
 }
