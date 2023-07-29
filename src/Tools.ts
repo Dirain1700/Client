@@ -3,11 +3,11 @@
 import { cloneDeep } from "lodash";
 
 import type { ModchatLevel } from "../types/Room";
+import type { ILogMessageDetails } from "../types/Tools";
 import type { AuthLevel, GroupSymbol, GroupNames } from "../types/UserGroups";
 
 const MODCHAT_REGEX =
     /<div class="broadcast-red"><strong>Moderated chat was set to (?<level>(unlocked|autoconfirmed|whitelist|trusted|&|#|★|\*|@|%|☆|§|\+|\^))!<\/strong><br \/>Only users of rank (unlocked|autoconfirmed|whitelist|trusted|&|#|★|\*|@|%|☆|§|\+|\^) and higher can talk.<\/div>/;
-('<div class="broadcast-red"><strong>Moderated chat was set to ^!</strong><br />Only users of rank ^ and higher can talk.</div>');
 const MODCHAT_DISABLE_STRING =
     '<div class="broadcast-blue"><strong>Moderated chat was disabled!</strong><br />Anyone may talk now.</div>';
 
@@ -19,6 +19,24 @@ const MODJOIN_DISABLE_STRING =
     '<div class="broadcast-blue"><strong>This room is no longer invite only!</strong><br />Anyone may now join.</div>';
 const MODJOIN_REGEX =
     /<div class="broadcast-red"><strong>This room is now invite only!<\/strong><br \/>Users must be rank (?<level>(unlocked|autoconfirmed|whitelist|trusted|&|#|★|\*|@|%|☆|§|\+|\^)) or invited with <code>\/invite<\/code> to join<\/div>/;
+const clearTextRegex =
+    /(?<target>^.{2,20})'s messages were cleared from (?<room>.{2,20}) by (?<staff>.{2,20})\.( \((?<reason>.*)\))?/;
+const clearLinesRegex =
+    /(?<lines>^\d{1,3}) of (?<target>.{2,20})'s messages were cleared from (?<room>.{2,20}) by (?<staff>.{2,20})\.( \((?<reason>.*)\))?/;
+const warnRegex = /(?<target>.{2,20}) was warned by (?<staff>.{2,20})\.( \((?<reason>.*)\))?/;
+const roomBanRegex =
+    /(?<target>^.{2,20}) was banned (for (?<duration>a week) )?from (?<room>.{2,20}) by (?<staff>.{2,20})\.( \((?<reason>.*)\))?/;
+const blackListRegex =
+    /(?<target>^.{2,20}) was blacklisted from (?<room>.{2,20}) by (?<staff>.{2,20})(for (?<duration>ten years) )?\.( \((?<reason>.*)\))?/;
+const globalBanRegex = /(?<target>^.{2,20}) was globally banned by (?<staff>.{2,20})\.\((?<reason>.*)\)/;
+const lockRegex =
+    /(?<target>^.{2,20}) was locked from talking (for (?<duration>a week|a month) )?by (?<staff>.{2,20})\.( \((?<reason>.*)\))?/;
+const muteRegex =
+    /(?<target>^.{2,20}) was muted by (?<staff>.{2,20}) for (?<duration>(7 minutes|1 hour))\.( \((?<reason>.*)\))?/;
+const promoteRegex =
+    /(?<target>^.{2,20}) was ((promoted to (?<auth>(Room|Global) (Prize Winner|Voice|Bot|Driver|Moderator)))|appointed to Room Owner) by (?<staff>.{2,20})\./;
+const demoteRegex =
+    /\((?<target>.{2,20}) was demoted to (?<auth>(Room|Global) (regular user|Prize Winner|Voice|Bot|Driver|Moderator)) by (?<staff>.{2,20})\.\)/;
 
 const AND = "&";
 const LESS_THAN = "<";
@@ -235,5 +253,110 @@ export class Tools {
 
     static clone<T>(obj: T): T {
         return cloneDeep(obj);
+    }
+
+    static getLogDetails(message: string) {
+        const logDetails: ILogMessageDetails = {
+            target: "",
+            staff: "",
+            action: "",
+            isPunish: false,
+            editRoom: false,
+        };
+
+        /* eslint-disable @typescript-eslint/no-non-null-assertion */
+        if (message.match(clearLinesRegex)) {
+            logDetails.isPunish = true;
+            logDetails.editRoom = false;
+            const { lines, target, room, staff, reason } = message.match(clearLinesRegex)!.groups ?? {};
+            logDetails.lines = parseInt(this.toId(lines!));
+            logDetails.target = target!;
+            logDetails.room = room;
+            logDetails.staff = staff!;
+            logDetails.reason = reason;
+            logDetails.action = "cleartext";
+        } else if (message.match(clearTextRegex)) {
+            logDetails.isPunish = true;
+            logDetails.editRoom = false;
+            const { target, room, staff, reason } = message.match(clearTextRegex)!.groups ?? {};
+            logDetails.target = target!;
+            logDetails.room = room;
+            logDetails.staff = staff!;
+            logDetails.reason = reason;
+            logDetails.action = "cleartext";
+        } else if (message.match(warnRegex)) {
+            logDetails.isPunish = true;
+            logDetails.editRoom = false;
+            const { target, staff, reason } = message.match(warnRegex)!.groups ?? {};
+            logDetails.target = target!;
+            logDetails.staff = staff!;
+            logDetails.reason = reason;
+            logDetails.action = "warn";
+        } else if (message.match(roomBanRegex)) {
+            logDetails.isPunish = true;
+            logDetails.editRoom = false;
+            const { target, duration, room, staff, reason } = message.match(roomBanRegex)!.groups ?? {};
+            logDetails.target = target!;
+            logDetails.room = room;
+            logDetails.duration = duration;
+            logDetails.staff = staff!;
+            logDetails.reason = reason;
+            logDetails.action = "roomban";
+        } else if (message.match(blackListRegex)) {
+            logDetails.isPunish = true;
+            logDetails.editRoom = false;
+            const { target, duration, room, staff, reason } = message.match(blackListRegex)!.groups ?? {};
+            logDetails.target = target!;
+            logDetails.room = room;
+            logDetails.duration = duration ?? "a year";
+            logDetails.staff = staff!;
+            logDetails.reason = reason;
+            logDetails.action = "blacklist";
+        } else if (message.match(globalBanRegex)) {
+            logDetails.isPunish = true;
+            logDetails.editRoom = false;
+            const { target, staff, reason } = message.match(lockRegex)!.groups ?? {};
+            logDetails.target = target!;
+            logDetails.duration = "7 days";
+            logDetails.staff = staff!;
+            logDetails.reason = reason;
+            logDetails.action = "globalban";
+        } else if (message.match(lockRegex)) {
+            logDetails.isPunish = true;
+            logDetails.editRoom = false;
+            const { target, duration, staff, reason } = message.match(lockRegex)!.groups ?? {};
+            logDetails.target = target!;
+            logDetails.duration = duration ?? "2 days";
+            logDetails.staff = staff!;
+            logDetails.reason = reason;
+            logDetails.action = "lock";
+        } else if (message.match(muteRegex)) {
+            logDetails.isPunish = true;
+            logDetails.editRoom = true;
+            const { target, duration, staff, reason } = message.match(muteRegex)!.groups ?? {};
+            logDetails.target = target!;
+            logDetails.duration = duration;
+            logDetails.staff = staff!;
+            logDetails.reason = reason;
+            logDetails.action = "mute";
+        } else if (message.match(promoteRegex)) {
+            logDetails.isPunish = false;
+            logDetails.editRoom = true;
+            const { target, auth, staff } = message.match(promoteRegex)!.groups ?? {};
+            logDetails.target = target!;
+            logDetails.auth = auth;
+            logDetails.staff = staff!;
+            logDetails.action = "promote";
+        } else if (message.match(demoteRegex)) {
+            logDetails.isPunish = false;
+            logDetails.editRoom = true;
+            const { target, auth, staff } = message.match(demoteRegex)!.groups ?? {};
+            logDetails.target = target!;
+            logDetails.auth = auth;
+            logDetails.staff = staff!;
+            logDetails.action = "demote";
+        }
+        return logDetails;
+        /* eslint-enable */
     }
 }

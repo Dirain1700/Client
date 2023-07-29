@@ -267,7 +267,7 @@ export class Client extends EventEmitter {
                             this.ws.on("message", (message: ws.MessageEvent) => {
                                 // This should be allowed because message.data is probably Buffer or String
                                 // eslint-disable-next-line @typescript-eslint/no-base-to-string
-                                this.onMessage(message.data.toString());
+                                this.onMessage(message.toString());
                             });
 
                             this.ws.on("close", () => {
@@ -1060,19 +1060,27 @@ export class Client extends EventEmitter {
             case "chat":
             case "c": {
                 if (!isRoomNotEmp(room)) return;
-                if (!event[0] || !Tools.toId(event[0])) break;
+                if (!event[0]) break;
                 room = this.rooms.cache.get(room.id) ?? room;
-                const author = this.getUser(event[0]!) ?? (await this.fetchUser(event[0]!)),
-                    content = event.slice(1).join("|"),
-                    message = new Message<Room>({
-                        author: author,
-                        content: content,
-                        type: "Room",
-                        target: room,
-                        raw: rawMessage,
-                        time: Date.now(),
-                        client: this,
-                    } as MessageInput<Room>);
+                const content = event.slice(1).join("|");
+                if (content.startsWith("/log")) {
+                    const logDetails = Tools.getLogDetails(content);
+                    if (logDetails.staff) event[0] = logDetails.staff;
+                    if (logDetails.room && logDetails.editRoom)
+                        room = await this.fetchRoom(room.id).catch(() => this.getRoom(room!.id)!);
+                    if (logDetails.isPunish || logDetails.action === "promote" || logDetails.action === "demote")
+                        void (await this.fetchUser(logDetails.target));
+                }
+                const author = this.getUser(event[0]!) ?? (await this.fetchUser(event[0]!));
+                const message = new Message<Room>({
+                    author: author,
+                    content: content,
+                    type: "Room",
+                    target: room,
+                    raw: rawMessage,
+                    time: Date.now(),
+                    client: this,
+                } as MessageInput<Room>);
                 if (!this.user) return;
                 for (const element of this.PromisedChat) {
                     if (element.id === message.target.roomid && this.user.userid === message.author.userid) {
@@ -1088,11 +1096,19 @@ export class Client extends EventEmitter {
                 if (!isRoomNotEmp(room)) return;
                 room = this.rooms.cache.get(room.id);
                 if (!isRoomNotEmp(room)) return;
+                const content = event.slice(2).join("|");
+                if (content.startsWith("/log")) {
+                    const logDetails = Tools.getLogDetails(content);
+                    if (logDetails.staff) event[1] = logDetails.staff;
+                    if (logDetails.room && logDetails.editRoom)
+                        room = await this.fetchRoom(room.id).catch(() => this.getRoom(room!.id)!);
+                    if (logDetails.isPunish || logDetails.action === "promote" || logDetails.action === "demote")
+                        void (await this.fetchUser(logDetails.target));
+                }
                 const by = this.getUser(event[1]!) ?? (await this.fetchUser(event[1]!)),
-                    value = event.slice(2).join("|"),
                     message = new Message<Room>({
                         author: by,
-                        content: value,
+                        content,
                         type: "Room",
                         target: room,
                         raw: rawMessage,
@@ -1108,7 +1124,7 @@ export class Client extends EventEmitter {
                     }
                 }
                 this.emit(Events.MESSAGE_CREATE, message);
-                if (this.options.prefix && value.startsWith(this.options.prefix)) this.emit(Events.COMMAND_EMIT);
+                if (this.options.prefix && content.startsWith(this.options.prefix)) this.emit(Events.COMMAND_EMIT);
                 break;
             }
 
