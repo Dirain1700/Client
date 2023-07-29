@@ -35,5 +35,5 @@ const IndexTS = readFileSync("./src/index.ts", "utf-8");
 const IndexTSInput =
     IndexTS.split("export type")[0] + "export type {\n" + AllNameSpaces.join(",\n") + "\n} from \"../types/index\";";
 
-writeFileSync("./types/index.d.ts", runFormat(FileInput));
-writeFileSync("./src/index.ts", runFormat(IndexTSInput));
+runFormat(FileInput).then((formatted) => writeFileSync("./types/index.d.ts", formatted));
+runFormat(IndexTSInput).then((formatted) => writeFileSync("./src/index.ts", formatted));
