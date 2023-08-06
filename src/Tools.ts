@@ -27,7 +27,7 @@ const warnRegex = /(?<target>.{2,20}) was warned by (?<staff>.{2,20})\.( \((?<re
 const roomBanRegex =
     /(?<target>^.{2,20}) was banned (for (?<duration>a week) )?from (?<room>.{2,20}) by (?<staff>.{2,20})\.( \((?<reason>.*)\))?/;
 const blackListRegex =
-    /(?<target>^.{2,20}) was blacklisted from (?<room>.{2,20}) by (?<staff>.{2,20})(for (?<duration>ten years) )?\.( \((?<reason>.*)\))?/;
+    /\((?<target>^.{2,20}) was blacklisted from (?<room>.{2,20}) by (?<staff>.{2,20})(for (?<duration>ten years) )?\.( \((?<reason>.*)\))?\)/;
 const globalBanRegex = /(?<target>^.{2,20}) was globally banned by (?<staff>.{2,20})\.\((?<reason>.*)\)/;
 const lockRegex =
     /(?<target>^.{2,20}) was locked from talking (for (?<duration>a week|a month) )?by (?<staff>.{2,20})\.( \((?<reason>.*)\))?/;
@@ -267,7 +267,7 @@ export class Tools {
 
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
         if (message.match(clearLinesRegex)) {
-            logDetails.isPunish = true;
+            logDetails.isPunish = false;
             logDetails.editRoom = false;
             const { lines, target, room, staff, reason } = message.match(clearLinesRegex)!.groups ?? {};
             logDetails.lines = parseInt(this.toId(lines!));
@@ -277,7 +277,7 @@ export class Tools {
             logDetails.reason = reason;
             logDetails.action = "cleartext";
         } else if (message.match(clearTextRegex)) {
-            logDetails.isPunish = true;
+            logDetails.isPunish = false;
             logDetails.editRoom = false;
             const { target, room, staff, reason } = message.match(clearTextRegex)!.groups ?? {};
             logDetails.target = target!;
@@ -299,7 +299,7 @@ export class Tools {
             const { target, duration, room, staff, reason } = message.match(roomBanRegex)!.groups ?? {};
             logDetails.target = target!;
             logDetails.room = room;
-            logDetails.duration = duration;
+            logDetails.duration = duration ?? "2 days";
             logDetails.staff = staff!;
             logDetails.reason = reason;
             logDetails.action = "roomban";
