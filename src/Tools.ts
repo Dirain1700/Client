@@ -34,7 +34,7 @@ const lockRegex =
 const muteRegex =
     /(?<target>^.{2,20}) was muted by (?<staff>.{2,20}) for (?<duration>(7 minutes|1 hour))\.( \((?<reason>.*)\))?/;
 const promoteRegex =
-    /(?<target>^.{2,20}) was ((promoted to (?<auth>(Room|Global) (Prize Winner|Voice|Bot|Driver|Moderator)))|appointed to Room Owner) by (?<staff>.{2,20})\./;
+    /(?<target>^.{2,20}) was ((promoted to (?<auth>(Room|Global) (Prize Winner|Voice|Bot|Driver|Moderator)))|appointed (?<owner>Room Owner)) by (?<staff>.{2,20})\./;
 const demoteRegex =
     /\((?<target>.{2,20}) was demoted to (?<auth>(Room|Global) (regular user|Prize Winner|Voice|Bot|Driver|Moderator)) by (?<staff>.{2,20})\.\)/;
 
@@ -342,9 +342,9 @@ export class Tools {
         } else if (message.match(promoteRegex)) {
             logDetails.isPunish = false;
             logDetails.editRoom = true;
-            const { target, auth, staff } = message.match(promoteRegex)!.groups ?? {};
+            const { target, auth, owner, staff } = message.match(promoteRegex)!.groups ?? {};
             logDetails.target = target!;
-            logDetails.auth = auth;
+            logDetails.auth = owner || auth;
             logDetails.staff = staff!;
             logDetails.action = "promote";
         } else if (message.match(demoteRegex)) {
