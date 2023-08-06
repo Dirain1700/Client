@@ -55,9 +55,9 @@
         "emit:esm": "tsc -p tsconfig.esm.json",
         "ci": "npm run check && npm run lint && npm run tsc",
         "build": "npm run write && npm run esbuild && npm run emitDeclaration && npm run lint-fix",
-        "build-esbuild": "tsc -p tsconfig.build.json",
+        "prebuild": "tsc -p tsconfig.build.json",
         "esbuild": "node --enable-source-maps build.js",
-        "prepublishOnly": "npm run check && (npm run generate-exports & npm run copy-dts & npm run build-esbuild) && npm run esbuild && npm run emitDeclaration && npm run lint",
+        "prepublishOnly": "npm run check && (npm run generate-exports & npm run copy-dts & npm run prebuild) && npm run esbuild && npm run emitDeclaration && npm run lint",
         "ncu": "npx -p npm-check-updates  -c \"ncu -u\""
     },
     "keywords": [],
