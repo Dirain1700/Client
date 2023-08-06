@@ -37,6 +37,8 @@ const promoteRegex =
     /(?<target>^.{2,20}) was ((promoted to (?<auth>(Room|Global) (Prize Winner|Voice|Bot|Driver|Moderator)))|appointed (?<owner>Room Owner)) by (?<staff>.{2,20})\./;
 const demoteRegex =
     /\((?<target>.{2,20}) was demoted to (?<auth>(Room|Global) (regular user|Prize Winner|Voice|Bot|Driver|Moderator)) by (?<staff>.{2,20})\.\)/;
+const banwordRegex =
+    /\(The banword(?<multiple>s)? (?<words>'.{1,}') (was|were) (?<actionType>added|removed) by (?<staff>.{2,20})\.\)/;
 
 const AND = "&";
 const LESS_THAN = "<";
@@ -257,7 +259,6 @@ export class Tools {
 
     static getLogDetails(message: string) {
         const logDetails: ILogMessageDetails = {
-            target: "",
             staff: "",
             action: "",
             isPunish: false,
@@ -355,6 +356,25 @@ export class Tools {
             logDetails.auth = auth;
             logDetails.staff = staff!;
             logDetails.action = "demote";
+        } else if (message.match(banwordRegex)) {
+            logDetails.isPunish = false;
+            logDetails.editRoom = false;
+            const { multiple, words, actionType, staff } = message.match(banwordRegex)!.groups ?? {};
+            if (words) {
+                if (multiple) {
+                    try {
+                        logDetails.banwords = words.split(",").map((e) => e.trim().replace(/^'/, "").replace(/'$/, ""));
+                        // eslint-disable-next-line no-empty
+                    } catch (e) {}
+                } else {
+                    logDetails.banwords = [words.trim().replace(/^'/, "").replace(/'$/, "")];
+                }
+            } else {
+                logDetails.banwords = [];
+            }
+            logDetails.action =
+                actionType === "added" ? "addbanword" : actionType === "removed" ? "removebanword" : ("" as never);
+            logDetails.staff = staff!;
         }
         return logDetails;
         /* eslint-enable */

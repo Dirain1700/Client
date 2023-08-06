@@ -1068,7 +1068,10 @@ export class Client extends EventEmitter {
                     if (logDetails.staff) event[0] = logDetails.staff;
                     if (logDetails.room && logDetails.editRoom)
                         room = await this.fetchRoom(room.id).catch(() => this.getRoom(room!.id)!);
-                    if (logDetails.isPunish || logDetails.action === "promote" || logDetails.action === "demote")
+                    if (
+                        (logDetails.isPunish || logDetails.action === "promote" || logDetails.action === "demote") &&
+                        logDetails.target
+                    )
                         void (await this.fetchUser(logDetails.target));
                 }
                 const author = this.getUser(event[0]!) ?? (await this.fetchUser(event[0]!));
@@ -1102,7 +1105,10 @@ export class Client extends EventEmitter {
                     if (logDetails.staff) event[1] = logDetails.staff;
                     if (logDetails.room && logDetails.editRoom)
                         room = await this.fetchRoom(room.id).catch(() => this.getRoom(room!.id)!);
-                    if (logDetails.isPunish || logDetails.action === "promote" || logDetails.action === "demote")
+                    if (
+                        (logDetails.isPunish || logDetails.action === "promote" || logDetails.action === "demote") &&
+                        logDetails.target
+                    )
                         void (await this.fetchUser(logDetails.target));
                 }
                 const by = this.getUser(event[1]!) ?? (await this.fetchUser(event[1]!)),
