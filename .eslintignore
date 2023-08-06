@@ -1,2 +1,4 @@
 dist/*
 foo*
+build.*
+!build.ts

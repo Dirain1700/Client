@@ -9,6 +9,7 @@ import { globSync } from "glob";
 import { cloneDeep } from "lodash";
 
 const outputDir = path.resolve(__dirname, "dist");
+const builder = __filename.replace(/\.js$/, ".ts");
 const targetFiles = globSync(["src/**/*.ts", "data/**/*.ts", "config/**/*.ts"]);
 const targetTestFiles = globSync(["test/**/*.ts"]);
 
@@ -25,6 +26,14 @@ const config = {
 fs.rmSync(outputDir, { recursive: true });
 
 console.log("Transpiling to CommonJS...");
+
+// @ts-expect-error format should be assignable
+// prettier-ignore
+buildSync(Object.assign(cloneDeep(config), {
+    entryPoints: [builder],
+    format: "cjs",
+    outdir: __dirname,
+}));
 
 // @ts-expect-error format should be assignable
 // prettier-ignore
