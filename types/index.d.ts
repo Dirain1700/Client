@@ -30,6 +30,21 @@ export type { awaitMessageOptions, MessageInput, MessageWaits } from "./Message"
 export type { IBattlePokemonType, IBattleRoom, ModchatLevel, RoomOptions, RoomPermissions } from "./Room";
 
 export type {
+    IBanWordDetails,
+    IBlacklistDetails,
+    IDemoteDetails,
+    IGlobalBanDetails,
+    ILockDetails,
+    ILogMessageDetails,
+    IMuteDetails,
+    IPromoteDetails,
+    IRoomBanDetails,
+    IUnrecognizedMessage,
+    ModlogActionType,
+    PromotionAuthType,
+} from "./Tools";
+
+export type {
     EliminationBracket,
     EliminationBracketData,
     IRRBattleStatus,

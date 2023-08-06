@@ -3,7 +3,20 @@
 import { cloneDeep } from "lodash";
 
 import type { ModchatLevel } from "../types/Room";
-import type { ILogMessageDetails } from "../types/Tools";
+import type {
+    ILogMessageDetails,
+    IWarnDetails,
+    ICleartextDetails,
+    IRoomBanDetails,
+    IBlacklistDetails,
+    IGlobalBanDetails,
+    ILockDetails,
+    IMuteDetails,
+    IPromoteDetails,
+    IDemoteDetails,
+    IBanWordDetails,
+    IUnrecognizedMessage,
+} from "../types/Tools";
 import type { AuthLevel, GroupSymbol, GroupNames } from "../types/UserGroups";
 
 const MODCHAT_REGEX =
@@ -257,126 +270,148 @@ export class Tools {
         return cloneDeep(obj);
     }
 
-    static getLogDetails(message: string) {
-        const logDetails: ILogMessageDetails = {
-            staff: "",
-            action: "",
-            isPunish: false,
-            editRoom: false,
-        };
-
+    static getLogDetails(message: string): ILogMessageDetails {
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
         if (message.match(clearLinesRegex)) {
-            logDetails.isPunish = false;
-            logDetails.editRoom = false;
             const { lines, target, room, staff, reason } = message.match(clearLinesRegex)!.groups ?? {};
-            logDetails.lines = parseInt(this.toId(lines!));
-            logDetails.target = target!;
-            logDetails.room = room;
-            logDetails.staff = staff!;
-            logDetails.reason = reason;
-            logDetails.action = "cleartext";
+            return {
+                action: "cleartext",
+                target: target!,
+                lines: parseInt(this.toId(lines!)),
+                room: room!,
+                staff: staff!,
+                reason,
+                isPunish: false,
+                editRoom: false,
+            } as ICleartextDetails;
         } else if (message.match(clearTextRegex)) {
-            logDetails.isPunish = false;
-            logDetails.editRoom = false;
             const { target, room, staff, reason } = message.match(clearTextRegex)!.groups ?? {};
-            logDetails.target = target!;
-            logDetails.room = room;
-            logDetails.staff = staff!;
-            logDetails.reason = reason;
-            logDetails.action = "cleartext";
+            return {
+                action: "cleartext",
+                target: target!,
+                room: room!,
+                staff: staff!,
+                reason,
+                isPunish: false,
+                editRoom: false,
+            } as ICleartextDetails;
         } else if (message.match(warnRegex)) {
-            logDetails.isPunish = true;
-            logDetails.editRoom = false;
             const { target, staff, reason } = message.match(warnRegex)!.groups ?? {};
-            logDetails.target = target!;
-            logDetails.staff = staff!;
-            logDetails.reason = reason;
-            logDetails.action = "warn";
+            return {
+                action: "warn",
+                target: target!,
+                staff: staff!,
+                reason,
+                isPunish: true,
+                editRoom: false,
+            } as IWarnDetails;
         } else if (message.match(roomBanRegex)) {
-            logDetails.isPunish = true;
-            logDetails.editRoom = false;
             const { target, duration, room, staff, reason } = message.match(roomBanRegex)!.groups ?? {};
-            logDetails.target = target!;
-            logDetails.room = room;
-            logDetails.duration = duration ?? "2 days";
-            logDetails.staff = staff!;
-            logDetails.reason = reason;
-            logDetails.action = "roomban";
+            return {
+                action: "roomban",
+                target: target!,
+                staff: staff!,
+                room: room!,
+                duration: duration || "2 days",
+                reason,
+                isPunish: true,
+                editRoom: false,
+            } as IRoomBanDetails;
         } else if (message.match(blackListRegex)) {
-            logDetails.isPunish = true;
-            logDetails.editRoom = false;
             const { target, duration, room, staff, reason } = message.match(blackListRegex)!.groups ?? {};
-            logDetails.target = target!;
-            logDetails.room = room;
-            logDetails.duration = duration ?? "a year";
-            logDetails.staff = staff!;
-            logDetails.reason = reason;
-            logDetails.action = "blacklist";
+            return {
+                action: "blacklist",
+                target: target!,
+                staff: staff!,
+                room: room!,
+                duration: duration || "a year",
+                reason: reason!,
+                isPunish: true,
+                editRoom: false,
+            } as IBlacklistDetails;
         } else if (message.match(globalBanRegex)) {
-            logDetails.isPunish = true;
-            logDetails.editRoom = false;
             const { target, staff, reason } = message.match(lockRegex)!.groups ?? {};
-            logDetails.target = target!;
-            logDetails.duration = "7 days";
-            logDetails.staff = staff!;
-            logDetails.reason = reason;
-            logDetails.action = "globalban";
+            return {
+                action: "globalban",
+                target: target!,
+                staff: staff!,
+                duration: "7 days",
+                reason: reason!,
+                isPunish: true,
+                editRoom: false,
+            } as IGlobalBanDetails;
         } else if (message.match(lockRegex)) {
-            logDetails.isPunish = true;
-            logDetails.editRoom = false;
             const { target, duration, staff, reason } = message.match(lockRegex)!.groups ?? {};
-            logDetails.target = target!;
-            logDetails.duration = duration ?? "2 days";
-            logDetails.staff = staff!;
-            logDetails.reason = reason;
-            logDetails.action = "lock";
+            return {
+                action: "lock",
+                target: target!,
+                staff: staff!,
+                duration: duration || "2 days",
+                reason,
+                isPunish: true,
+                editRoom: false,
+            } as ILockDetails;
         } else if (message.match(muteRegex)) {
-            logDetails.isPunish = true;
-            logDetails.editRoom = true;
             const { target, duration, staff, reason } = message.match(muteRegex)!.groups ?? {};
-            logDetails.target = target!;
-            logDetails.duration = duration;
-            logDetails.staff = staff!;
-            logDetails.reason = reason;
-            logDetails.action = "mute";
+            return {
+                action: "mute",
+                target: target!,
+                staff: staff!,
+                duration: duration!,
+                reason,
+                isPunish: true,
+                editRoom: true,
+            } as IMuteDetails;
         } else if (message.match(promoteRegex)) {
-            logDetails.isPunish = false;
-            logDetails.editRoom = true;
             const { target, auth, owner, staff } = message.match(promoteRegex)!.groups ?? {};
-            logDetails.target = target!;
-            logDetails.auth = owner || auth;
-            logDetails.staff = staff!;
-            logDetails.action = "promote";
+            return {
+                action: "promote",
+                target: target!,
+                staff: staff!,
+                auth: owner || auth,
+                isPunish: false,
+                editRoom: true,
+            } as IPromoteDetails;
         } else if (message.match(demoteRegex)) {
-            logDetails.isPunish = false;
-            logDetails.editRoom = true;
             const { target, auth, staff } = message.match(demoteRegex)!.groups ?? {};
-            logDetails.target = target!;
-            logDetails.auth = auth;
-            logDetails.staff = staff!;
-            logDetails.action = "demote";
+            return {
+                action: "demote",
+                target: target!,
+                staff: staff!,
+                auth: auth!,
+                isPunish: false,
+                editRoom: true,
+            } as IDemoteDetails;
         } else if (message.match(banwordRegex)) {
-            logDetails.isPunish = false;
-            logDetails.editRoom = false;
             const { multiple, words, actionType, staff } = message.match(banwordRegex)!.groups ?? {};
+            let banwords: string[] = [];
             if (words) {
                 if (multiple) {
                     try {
-                        logDetails.banwords = words.split(",").map((e) => e.trim().replace(/^'/, "").replace(/'$/, ""));
+                        banwords = words.split(",").map((e) => e.trim().replace(/^'/, "").replace(/'$/, ""));
                         // eslint-disable-next-line no-empty
                     } catch (e) {}
                 } else {
-                    logDetails.banwords = [words.trim().replace(/^'/, "").replace(/'$/, "")];
+                    banwords = [words.trim().replace(/^'/, "").replace(/'$/, "")];
                 }
             } else {
-                logDetails.banwords = [];
+                // This should never happen
+                banwords = [];
             }
-            logDetails.action =
-                actionType === "added" ? "addbanword" : actionType === "removed" ? "removebanword" : ("" as never);
-            logDetails.staff = staff!;
+            return {
+                action:
+                    actionType === "added" ? "addbanword" : actionType === "removed" ? "removebanword" : ("" as never),
+                staff: staff!,
+                banwords,
+                isPunish: false,
+                editRoom: false,
+            } as IBanWordDetails;
+        } else {
+            return {
+                action: "unrecognized",
+                staff: "",
+            } as IUnrecognizedMessage;
         }
-        return logDetails;
         /* eslint-enable */
     }
 }
