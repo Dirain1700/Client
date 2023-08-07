@@ -52,28 +52,37 @@ export abstract class Activity {
     getPlayer(name: string): Player | undefined {
         const id = Tools.toId(name);
         // like "Guest 0000000"
-        const userid: string | undefined = this.client.users.raw.get(id)?.userid;
-        const offline = (userid ? this.client.users.raw.get(userid)?.userid ?? "" : "").startsWith("guest");
-        if (offline) return new Player({ id, userid: id, name, rooms: false }, this);
-        return this.players.get(id) ?? this.pastPlayers.get(id);
+        const player = this.players.get(id) ?? this.pastPlayers.get(id);
+        if (player) return player;
+        if (id.startsWith("guest")) {
+            return new Collection<string, Player>()
+                .concat(this.players, this.pastPlayers)
+                .find((u) => u.guestNumber === id.replace(/guest/i, ""));
+        }
+        return;
     }
 
     addPlayer(name: string): Player | undefined {
         if (Tools.toId(name).startsWith("guest")) return;
         const user = this.client.users.raw.get(Tools.toId(name));
-        if (!user || !user.rooms) {
-            this.sayError("USER_NOT_FOUND", name);
-            return;
-        }
+        if (!user) return;
         const player = new Player(user, this);
         this.players.set(player.id, player);
         return player;
     }
 
-    removePlayer(name: string, played?: boolean): Player | undefined {
+    removePlayer(name: string, played?: boolean, attempt?: number): Player | undefined {
+        attempt ??= 1;
         const player = this.players.get(Tools.toId(name));
         if (!player) {
-            if (!Tools.toId(name).startsWith("guest")) this.sayError("USER_NOT_FOUND", name);
+            if (attempt >= 3) return;
+            if (!Tools.toId(name).startsWith("guest"))
+                return this.removePlayer(
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                    this.client.users.cache.find((u) => u.guestNumber === name.replace(/guest/i, ""))?.name!,
+                    !!played,
+                    attempt++
+                );
             return;
         }
         this.players.delete(player.id);
@@ -84,10 +93,17 @@ export abstract class Activity {
         return player;
     }
 
-    eliminatePlayer(name: string): Player | undefined {
+    eliminatePlayer(name: string, attempt?: number): Player | undefined {
+        attempt ??= 1;
         const player = this.players.get(Tools.toId(name));
         if (!player) {
-            if (!Tools.toId(name).startsWith("guest")) this.sayError("USER_NOT_FOUND", name);
+            if (attempt >= 3) return;
+            if (!Tools.toId(name).startsWith("guest"))
+                return this.eliminatePlayer(
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                    this.client.users.cache.find((u) => u.guestNumber === name.replace(/guest/i, ""))?.name!,
+                    attempt++
+                );
             return;
         }
         player.eliminate();
@@ -96,14 +112,15 @@ export abstract class Activity {
         return player;
     }
 
-    renameUser(oldUser: string, newUser: string): Player | undefined {
+    renamePlayer(oldUser: string, newUser: string): Player | undefined {
         const oldPlayer = this.getPlayer(Tools.toId(oldUser));
         if (!oldPlayer) return;
-        const user = this.client.users.cache.get(Tools.toId(newUser));
+        const newId = Tools.toId(newUser);
+        const user = this.client.users.raw.get(newId);
         if (!user) return;
         if (user.avatar === null) user.avatar = 1;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const newPlayer = new Player(user as any as UserOptions, this);
+        const newPlayer = new Player(user, this);
         newPlayer.eliminated = oldPlayer.eliminated;
         newPlayer.isPlayed = oldPlayer.isPlayed;
         newPlayer.online = true;
@@ -113,18 +130,16 @@ export abstract class Activity {
     }
 
     addPoints(name: string, points: number): Player | null {
-        const player = this.players.get(Tools.toId(name));
+        const player = this.getPlayer(Tools.toId(name));
         if (!player) {
-            if (!Tools.toId(name).startsWith("guest")) this.sayError("USER_NOT_FOUND", name);
             return null;
         }
         return player.addPoints(points);
     }
 
     removePoints(name: string, points: number): Player | null {
-        const player = this.players.get(Tools.toId(name));
+        const player = this.getPlayer(Tools.toId(name));
         if (!player) {
-            if (!Tools.toId(name).startsWith("guest")) this.sayError("USER_NOT_FOUND", name);
             return null;
         }
         return player.removePoints(points);

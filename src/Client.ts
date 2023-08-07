@@ -1231,7 +1231,7 @@ export class Client extends EventEmitter {
                     this
                 );
 
-                void renameTo.fetch();
+                void (await renameTo.fetch());
                 this.users.cache.set(renameTo.userid, renameTo);
                 if (renameFrom) {
                     renameFrom.addAlt(renameTo.userid);
@@ -1244,7 +1244,14 @@ export class Client extends EventEmitter {
                 if (room) {
                     room.update().removeUser(previousName);
                     room.addUser(renameTo.userid);
-                    if (room.tour) room.tour.renameUser(previousName, renameTo.userid);
+                    if (room.tour) {
+                        const renamed = room.tour.renamePlayer(previousName, renameTo.name);
+                        if (!renamed && !this.users.raw.has(renameTo.id)) {
+                            void this.fetchUser(renameTo.id).then(() =>
+                                room!.tour!.renamePlayer(previousName, renameTo.name)
+                            );
+                        }
+                    }
                 }
                 break;
             }
@@ -1302,7 +1309,12 @@ export class Client extends EventEmitter {
 
                     case "join": {
                         const user: string = tourEvent.join("|");
-                        if (room.tour) room.tour.addPlayer(user);
+                        if (room.tour) {
+                            let player = room.tour.addPlayer(user);
+                            if (!player) {
+                                player = await this.fetchUser(user).then(() => room!.tour!.addPlayer(user)!);
+                            }
+                        }
                         this.emit(Events.TOUR_JOIN, room, this.getUser(user)!);
                         break;
                     }
@@ -1319,7 +1331,12 @@ export class Client extends EventEmitter {
                         const user1 = tourEvent[0]!,
                             user2 = tourEvent[1]!;
                         if (room.tour) {
-                            room.tour.renameUser(user1, user2);
+                            const newPlayer = room.tour.renamePlayer(user1, user2);
+                            if (!newPlayer) {
+                                if (this.users.raw.has(user1)) void (await this.fetchUser(user1));
+                                if (this.users.raw.has(user2)) void (await this.fetchUser(user2));
+                                room.tour.renamePlayer(user1, user2);
+                            }
                         }
                         this.emit(Events.TOUR_REPLACE, room, this.getUser(user1), this.getUser(user2));
                         break;
