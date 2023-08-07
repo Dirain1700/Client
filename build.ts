@@ -59,10 +59,8 @@ console.log("Transpiling test modules...");
 // @ts-expect-error format should be assignable
 // prettier-ignore
 build(Object.assign(cloneDeep(config), {
-    bundle: true,
     entryPoints: targetTestFiles,
     format: "cjs",
-    minify: true,
     outdir: "dist/test",
     tsconfig: path.resolve(__dirname, "tsconfig.test.json"),
     plugins: [
