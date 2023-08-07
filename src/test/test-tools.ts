@@ -1,8 +1,8 @@
 "use strict";
 
-import { Room, User, Tools, Tournament, Player } from "@dist/cjs/index";
+import { Room, User, Tools, Tournament, Player } from "../index";
 
-import type { RoomOptions, UserOptions, Activity, EliminationBracket, RoundRobinBracket } from "../src/index";
+import type { RoomOptions, UserOptions, Activity, EliminationBracket, RoundRobinBracket } from "../index";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -49,8 +49,6 @@ export function createTestPlayer(activity: Activity, init?: Partial<UserOptions>
     }
     if (!init.avatar) init.avatar = "skierf";
     if (!init.rooms) init.rooms = false;
-
-    // @ts-expect-error something is wrong
     return new Player(init as UserOptions, activity, true);
 }
 

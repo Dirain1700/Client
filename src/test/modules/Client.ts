@@ -2,11 +2,11 @@
 
 import * as assert from "node:assert";
 
-import { Tools } from "@dist/cjs/index";
+import { Tools } from "../../index";
 
 import { createTestRoom, createTestUser } from "../test-tools";
 
-import type { Room } from "@dist/cjs/index";
+import type { Room } from "../../index";
 
 describe("Client", function () {
     describe("Tournament", function () {

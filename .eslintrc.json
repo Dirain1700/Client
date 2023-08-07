@@ -19,7 +19,7 @@
     },
     "overrides": [
         {
-            "files": ["*/**/*.ts"],
+            "files": ["src/**/*.ts", "types/*.ts"],
             "extends": [
                 "eslint:recommended",
                 "plugin:@typescript-eslint/recommended",
@@ -77,26 +77,6 @@
                         "newlines-between": "always-and-inside-groups"
                     }
                 ]
-            }
-        },
-        {
-            "files": ["test/**/*.ts"],
-            "parserOptions": {
-                "project": ["./tsconfig.test.json"]
-            },
-            "settings": {
-                "import/resolver": {
-                    "typescript": {
-                        "alwaysTryTypes": true,
-                        "project": "./tsconfig.test.json"
-                    },
-                    "alias": {
-                        "map": [
-                            ["@dist", "./dist/src/index"]
-                        ],
-                        "extentions": ["*.ts", "*.js"]
-                    }
-                }
             }
         }
     ]
