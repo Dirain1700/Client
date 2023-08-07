@@ -1310,7 +1310,7 @@ export class Client extends EventEmitter {
                     case "join": {
                         const user: string = tourEvent.join("|");
                         if (room.tour) {
-                            let player = room.tour.addPlayer(user);
+                            const player = room.tour.addPlayer(user);
                             if (!player) {
                                 void (await this.fetchUser(user).then(() => room!.tour!.addPlayer(user)!));
                             }
