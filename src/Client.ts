@@ -1312,7 +1312,7 @@ export class Client extends EventEmitter {
                         if (room.tour) {
                             let player = room.tour.addPlayer(user);
                             if (!player) {
-                                player = await this.fetchUser(user).then(() => room!.tour!.addPlayer(user)!);
+                                void (await this.fetchUser(user).then(() => room!.tour!.addPlayer(user)!));
                             }
                         }
                         this.emit(Events.TOUR_JOIN, room, this.getUser(user)!);
@@ -1333,8 +1333,8 @@ export class Client extends EventEmitter {
                         if (room.tour) {
                             const newPlayer = room.tour.renamePlayer(user1, user2);
                             if (!newPlayer) {
-                                if (this.users.raw.has(user1)) void (await this.fetchUser(user1));
-                                if (this.users.raw.has(user2)) void (await this.fetchUser(user2));
+                                if (!this.users.raw.has(user1)) void (await this.fetchUser(user1));
+                                if (!this.users.raw.has(user2)) void (await this.fetchUser(user2));
                                 room.tour.renamePlayer(user1, user2);
                             }
                         }
