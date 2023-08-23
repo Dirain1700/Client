@@ -40,7 +40,7 @@ const warnRegex = /(?<target>.{2,20}) was warned by (?<staff>.{2,20})\.( \((?<re
 const roomBanRegex =
     /(?<target>^.{2,20}) was banned (for (?<duration>a week) )?from (?<room>.{2,20}) by (?<staff>.{2,20})\.( \((?<reason>.*)\))?/;
 const blackListRegex =
-    /\((?<target>^.{2,20}) was blacklisted from (?<room>.{2,20}) by (?<staff>.{2,20})(for (?<duration>ten years) )?\.( \((?<reason>.*)\))?\)/;
+    /\((?<target>.{2,20}) was blacklisted from (?<room>.{2,20}) by (?<staff>.{2,20})(for (?<duration>ten years) )?\.( \((?<reason>.*)\))?\)/;
 const globalBanRegex = /(?<target>^.{2,20}) was globally banned by (?<staff>.{2,20})\.\((?<reason>.*)\)/;
 const lockRegex =
     /(?<target>^.{2,20}) was locked from talking (for (?<duration>a week|a month) )?by (?<staff>.{2,20})\.( \((?<reason>.*)\))?/;
