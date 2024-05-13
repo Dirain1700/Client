@@ -124,6 +124,6 @@ export class Tournament<T extends EliminationBracket | RoundRobinBracket = Elimi
         if (!this.ended || this.forceEnded) return [];
         const players = new Collection<string, Player>().concat(this.players, this.pastPlayers);
         const maxScore = players.map((e) => e.score).reduce((p, c) => Math.max(c, p), -1 * players.size);
-        return players.filter((e) => e.score === maxScore).toJSON();
+        return [...players.filter((e) => e.score === maxScore).values()];
     }
 }

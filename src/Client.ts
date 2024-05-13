@@ -737,7 +737,7 @@ export class Client extends EventEmitter {
 
     async parseMessage(rawMessage: string, room: Room | null | undefined): Promise<void> {
         const eventName: string = rawMessage.split("|")[1] as string;
-        const event: string[] = rawMessage.split("|").slice(2)!;
+        const event: string[] = rawMessage.split("|").slice(2);
         let battleRoom = room ? this.rooms.battles.get(room.id) : undefined;
 
         function isRoomNotEmp(r: Room | null | undefined): r is Room {
@@ -760,21 +760,21 @@ export class Client extends EventEmitter {
                     room.modjoin = modjoinLevel;
                     this.rooms.cache.set(room.roomid, room);
                     this.emit(Events.MODJOIN, room, modjoinLevel, previousModjoinLevel);
-                } else this.emit(Events.RAW_DATA, event.join("|")!, room);
+                } else this.emit(Events.RAW_DATA, event.join("|"), room);
                 break;
             }
             case "formats": {
                 let key: string = "";
                 let valueArr: string[] = [];
                 let i = 1;
-                for (const format of event.slice(1)!) {
+                for (const format of event.slice(1)) {
                     i++;
                     if (!format.startsWith("[")) {
                         if (valueArr.length) this.formats[key] = valueArr;
                         key = format;
                         valueArr = [];
                     } else valueArr.push(format.split(",")[0]!);
-                    if (i === event.slice(1)!.length) this.formats[key] = valueArr;
+                    if (i === event.slice(1).length) this.formats[key] = valueArr;
                 }
                 break;
             }
@@ -1002,7 +1002,7 @@ export class Client extends EventEmitter {
                             this.addBattleRoom(roominfo);
                         }
 
-                        PendingRoom.forEach((e) => e.resolve(this.addRoom(roominfo!)));
+                        PendingRoom.forEach((e) => e.resolve(this.addRoom(roominfo)));
                         break;
                     }
                     case "userdetails": {
@@ -1041,7 +1041,7 @@ export class Client extends EventEmitter {
                         const user = this.addUser(userdetails);
                         if (!user) break;
                         const PendingUser: PromisedUser[] = this.userdetailsQueue.filter(
-                            (u) => u.id === userdetails!.id
+                            (u) => u.id === userdetails.id
                         );
                         if (!PendingUser.length) break;
                         PendingUser.forEach((e) => e.resolve(user));
@@ -1071,7 +1071,7 @@ export class Client extends EventEmitter {
                     if (logDetails.isPunish || logDetails.action === "promote" || logDetails.action === "demote")
                         void (await this.fetchUser(logDetails.target));
                 }
-                const author = this.getUser(event[0]!) ?? (await this.fetchUser(event[0]!));
+                const author = this.getUser(event[0]) ?? (await this.fetchUser(event[0]));
                 const message = new Message<Room>({
                     author: author,
                     content: content,
@@ -1153,7 +1153,7 @@ export class Client extends EventEmitter {
                     author = await this.fetchUser(authorName, true);
                     sendTo = await this.fetchUser(receiverName, true);
                 }
-                const value = event.slice(2).join("|")!;
+                const value = event.slice(2).join("|");
                 let target: User;
                 if (author.id === this.status.id) target = sendTo;
                 else target = author;
