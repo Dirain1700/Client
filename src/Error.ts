@@ -41,7 +41,7 @@ export class PSAPIError extends Error {
             }
 
             case "PERMISSION_DENIED": {
-                message = "Permission denied: Expected " + args[0]! ?? " but got " + args[1]!;
+                message = "Permission denied: Expected " + args[0]! + " but got " + args[1]!;
                 break;
             }
 
